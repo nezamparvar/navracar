@@ -18,10 +18,18 @@ if (file_exists($debugLogPath)) {
     function navarakar_log($level, $message, $context = []) { /* no-op — logs/activity.log هنوز فعال نیست */ }
 }
 
+// بعد از آپلود روی سرور، این سه خط را با مشخصات واقعی دیتابیستان پر کنید.
+// این فایل عمداً بدون مقدار در گیت نگهداری می‌شود تا رمز دیتابیس هیچ‌وقت commit نشود؛
+// آپلودهای بعدی همین فایل را جایگزین می‌کنند، پس این سه خط را دوباره پر کنید.
 $DB_HOST = 'localhost';
-$DB_NAME = 'navralim_cal';      // نام دیتابیس
-$DB_USER = 'navralim_car';      // یوزرنیم دیتابیس
-$DB_PASS = 'TxJadq@ZqG0C8U(D';  // پسورد دیتابیس
+$DB_NAME = '';
+$DB_USER = '';
+$DB_PASS = '';
+
+if ($DB_NAME === '' || $DB_USER === '') {
+    http_response_code(500);
+    die('مشخصات دیتابیس وارد نشده. فایل db-config.php را روی سرور باز کنید و $DB_NAME / $DB_USER / $DB_PASS را پر کنید.');
+}
 
 try {
     $pdo = new PDO(
