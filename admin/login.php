@@ -130,7 +130,7 @@ $expired = isset($_GET['expired']);
       </div>
       <button type="submit">ورود به پنل</button>
     </form>
-    <div class="foot">دسترسی از طریق create-admin.php ساخته می‌شود</div>
+    <div class="foot">حساب مدیر را از بخش «کاربران» در پنل مدیریت کنید</div>
   </div>
 </body>
 </html>

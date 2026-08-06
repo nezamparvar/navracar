@@ -1,8 +1,6 @@
 -- ==========================================================
 -- ناوراکار — پایگاه داده محاسبه‌گر هزینه واردات خودرو (نسخه کامل با CRM)
--- برای نصب تازه: کل این فایل را ایمپورت کنید.
--- برای ارتقای نصب قبلی که قبلاً schema.sql قدیمی را اجرا کرده‌اید،
--- به‌جای این فایل، schema-update.sql را اجرا کنید.
+-- کل این فایل را در یک دیتابیس خالی Import کنید.
 -- ==========================================================
 
 CREATE TABLE IF NOT EXISTS admin_users (
@@ -13,6 +11,11 @@ CREATE TABLE IF NOT EXISTS admin_users (
   role VARCHAR(20) NOT NULL DEFAULT 'admin', -- 'admin' یا 'sales'
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- حساب مدیر پیش‌فرض — بلافاصله بعد از اولین ورود از admin/users.php رمز را تغییر دهید.
+-- یوزرنیم: admin | رمز: Navrakar@2026
+INSERT IGNORE INTO admin_users (id, username, password_hash, full_name, role) VALUES
+(1, 'admin', '$2y$12$N6bTcV0IdYIHGR6B16vNI.b8NzTwgKwLtz/OIGHscmPQA9vS8rdRC', 'مدیر سیستم', 'admin');
 
 CREATE TABLE IF NOT EXISTS calculation_logs (
   id INT AUTO_INCREMENT PRIMARY KEY,

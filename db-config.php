@@ -18,10 +18,12 @@ if (file_exists($debugLogPath)) {
     function navarakar_log($level, $message, $context = []) { /* no-op — logs/activity.log هنوز فعال نیست */ }
 }
 
-$DB_HOST = 'localhost';
-$DB_NAME = 'navralim_cal';      // نام دیتابیس
-$DB_USER = 'navralim_car';      // یوزرنیم دیتابیس
-$DB_PASS = 'TxJadq@ZqG0C8U(D';  // پسورد دیتابیس
+$credentialsPath = __DIR__ . '/db-credentials.php';
+if (!file_exists($credentialsPath)) {
+    http_response_code(500);
+    die('فایل db-credentials.php پیدا نشد. از روی db-credentials.example.php یک نسخه بسازید و اطلاعات دیتابیستان را داخلش وارد کنید.');
+}
+require $credentialsPath;
 
 try {
     $pdo = new PDO(
