@@ -18,12 +18,18 @@ if (file_exists($debugLogPath)) {
     function navarakar_log($level, $message, $context = []) { /* no-op — logs/activity.log هنوز فعال نیست */ }
 }
 
-$credentialsPath = __DIR__ . '/db-credentials.php';
-if (!file_exists($credentialsPath)) {
+// بعد از آپلود روی سرور، این سه خط را با مشخصات واقعی دیتابیستان پر کنید.
+// این فایل عمداً بدون مقدار در گیت نگهداری می‌شود تا رمز دیتابیس هیچ‌وقت commit نشود؛
+// آپلودهای بعدی همین فایل را جایگزین می‌کنند، پس این سه خط را دوباره پر کنید.
+$DB_HOST = 'localhost';
+$DB_NAME = '';
+$DB_USER = '';
+$DB_PASS = '';
+
+if ($DB_NAME === '' || $DB_USER === '') {
     http_response_code(500);
-    die('فایل db-credentials.php پیدا نشد. از روی db-credentials.example.php یک نسخه بسازید و اطلاعات دیتابیستان را داخلش وارد کنید.');
+    die('مشخصات دیتابیس وارد نشده. فایل db-config.php را روی سرور باز کنید و $DB_NAME / $DB_USER / $DB_PASS را پر کنید.');
 }
-require $credentialsPath;
 
 try {
     $pdo = new PDO(
