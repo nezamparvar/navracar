@@ -59,8 +59,8 @@
             </div>
         @endif
 
-        <div class="grid grid-cols-1 gap-8 lg:grid-cols-5">
-            <div class="lg:col-span-3 space-y-6">
+        <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div class="space-y-6">
                 @if ($l->images->isNotEmpty())
                     <div x-data="{ active: 0, images: @js($l->images->map(fn($i) => $i->url())->values()) }" class="space-y-2">
                         <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-ink-100">
@@ -93,6 +93,17 @@
                     </p>
                 </div>
 
+                <div class="flex flex-wrap gap-3">
+                    <a href="{{ $waUae }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
+                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> مشاوره واتساپ (امارات)
+                    </a>
+                    <a href="{{ $waIran }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
+                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> مشاوره واتساپ (ایران)
+                    </a>
+                </div>
+            </div>
+
+            <div>
                 @if (! empty($specs))
                     <x-card title="مشخصات فنی" icon="list">
                         <dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
@@ -105,22 +116,13 @@
                         </dl>
                     </x-card>
                 @endif
-
-                <div class="flex flex-wrap gap-3">
-                    <a href="{{ $waUae }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
-                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> مشاوره واتساپ (امارات)
-                    </a>
-                    <a href="{{ $waIran }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
-                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> مشاوره واتساپ (ایران)
-                    </a>
-                </div>
             </div>
+        </div>
 
-            <div class="lg:col-span-2">
-                <x-card title="جدول محاسبه هزینه واردات" icon="calculator" subtitle="قیمت خودرو به‌صورت خودکار از قیمت درهم این آگهی پر شده — همه مقادیر قابل ویرایش هستند.">
-                    <x-car-calculator :listing="$l" :free-rate="$freeRate" :customs-rate="$customsRate" />
-                </x-card>
-            </div>
+        <div class="mt-8">
+            <x-card title="جدول محاسبه هزینه واردات" icon="calculator" subtitle="قیمت خودرو به‌صورت خودکار از قیمت درهم این آگهی پر شده — همه مقادیر قابل ویرایش هستند.">
+                <x-car-calculator :listing="$l" :free-rate="$freeRate" :customs-rate="$customsRate" />
+            </x-card>
         </div>
     </div>
 </x-layouts.public>

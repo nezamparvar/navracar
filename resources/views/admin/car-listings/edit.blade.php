@@ -1,4 +1,6 @@
-@php($l = $listing)
+@php
+    $l = $listing;
+@endphp
 
 <x-layouts.admin :page-title="$pageTitle" :page-subtitle="'منبع: '.$l->source_url">
 
