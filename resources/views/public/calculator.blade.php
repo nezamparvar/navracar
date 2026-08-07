@@ -7,7 +7,6 @@
 <title>ناوراکار | محاسبه‌گر هزینه واردات خودرو</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
-<style>
   :root{
     --ink:#1A1730; --ink-soft:#6B6584; --bg:#F7F5F1; --surface:#FFFFFF; --surface-alt:#F1EDE6;
     --border:#E4DFD3; --primary:#2D2657; --primary-dark:#171433; --primary-light:#EDE9F7;
@@ -120,6 +119,7 @@
   .card h2{margin:0 0 5px;font-size:1.06rem;font-weight:800;color:var(--primary-dark);display:flex;align-items:center;gap:9px;}
   .card h2 .num{width:34px;height:34px;border-radius:10px;background:linear-gradient(160deg,var(--primary-light),#fff);color:var(--primary);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
   .card h2 .num svg{width:19px;height:19px;}
+  .card h2 > svg{width:19px;height:19px;flex-shrink:0;color:var(--amber-dark);}
   .card .sub{font-size:.85rem;color:var(--ink-soft);margin:0 0 14px;}
 
   .disclaimer-box{display:flex;align-items:flex-start;gap:10px;background:#FFF7ED;border:1px solid #FCD9A8;color:#9C5B0E;border-radius:12px;padding:12px 14px;font-size:.8rem;margin:12px 0 4px;line-height:1.7;}
@@ -338,7 +338,6 @@
     header.site, .hero, .process-strip, .wiz-wrap, .wiz-nav, footer{display:none !important;}
     .print-only{display:block !important;max-width:800px;margin:0 auto;}
   }
-</style>
 </style>
 </head>
 <body>
@@ -1806,7 +1805,6 @@ function resetWizard(){
 
 calc();
 goToStep('start');
-</script>
 </script>
 </body>
 </html>

@@ -39,7 +39,7 @@
     </form>
 
     <div
-        x-data="kanbanBoard(@json($lossReasons->pluck('reason')))"
+        x-data='kanbanBoard(@json($lossReasons->pluck("reason")))'
         class="flex gap-4 overflow-x-auto pb-4"
     >
         @foreach ($stages as $stage)

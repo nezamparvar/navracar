@@ -3,7 +3,7 @@
 @endphp
 <x-layouts.admin :page-title="$pageTitle" :page-subtitle="$sub">
 
-    <div x-data="invoiceForm(@json($prefill['breakdown']), @json($prefill['invoice_type']), @json($prefill['currency']))" class="mx-auto max-w-3xl">
+    <div x-data='invoiceForm(@json($prefill["breakdown"]), @json($prefill["invoice_type"]), @json($prefill["currency"]))' class="mx-auto max-w-3xl">
         <x-card>
             <form method="POST" action="{{ route('admin.invoices.store') }}" class="space-y-4">
                 @csrf
