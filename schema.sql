@@ -111,6 +111,7 @@ CREATE TABLE IF NOT EXISTS invoices (
   car_label VARCHAR(255),
   category VARCHAR(100),
   breakdown_json TEXT,
+  calc_inputs_json TEXT NULL,
   total_amount DECIMAL(18,2) DEFAULT 0,
   discount_amount DECIMAL(18,2) DEFAULT 0,
   currency VARCHAR(10) DEFAULT 'toman',

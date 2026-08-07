@@ -17,14 +17,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['status'])) {
     }
 }
 
-$breakdown = json_decode($inv['breakdown_json'] ?? '[]', true) ?: [];
+$isSingleItem = ($inv['invoice_type'] ?? 'full') === 'single_item';
+$decoded = json_decode($inv['breakdown_json'] ?? ($isSingleItem ? '[]' : '{}'), true) ?: [];
+$breakdown = $isSingleItem ? $decoded : [];
+$customsRows = !$isSingleItem ? ($decoded['customs'] ?? []) : [];
+$plateRows = !$isSingleItem ? ($decoded['plate'] ?? []) : [];
+$carInfo = !$isSingleItem ? ($decoded['car'] ?? []) : [];
+$shipping = !$isSingleItem ? ($decoded['shipping'] ?? []) : [];
+$calcTotals = !$isSingleItem ? ($decoded['totals'] ?? []) : [];
 $discount = (float)($inv['discount_amount'] ?? 0);
 $grandTotal = (float)$inv['total_amount'];
 $payable = $grandTotal - $discount;
 $currency = $inv['currency'] ?? 'toman';
 $unitLabel = $currency === 'aed' ? 'درهم (AED)' : 'تومان';
 $exRate = (float)($inv['exchange_rate'] ?? 0);
-$isSingleItem = ($inv['invoice_type'] ?? 'full') === 'single_item';
 ?>
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -105,11 +111,16 @@ $isSingleItem = ($inv['invoice_type'] ?? 'full') === 'single_item';
           <?php if (!$isSingleItem): ?>
           <div><span>خودرو</span><?= htmlspecialchars($inv['car_label'] ?: '-') ?></div>
           <div><span>دسته خودرو</span><?= htmlspecialchars($inv['category'] ?: '-') ?></div>
+          <?php if (!empty($carInfo['priceAED'])): ?>
+          <div><span>قیمت خودرو (درهم)</span><?= number_format($carInfo['priceAED']) ?> AED</div>
+          <div><span>قیمت خودرو (معادل تومانی)</span><?= number_format($carInfo['priceToman'] ?? 0) ?> تومان</div>
+          <?php endif; ?>
           <?php endif; ?>
           <?php if ($inv['customer_address']): ?><div style="grid-column:1/-1;"><span>آدرس</span><?= htmlspecialchars($inv['customer_address']) ?></div><?php endif; ?>
         </div>
       </div>
 
+      <?php if ($isSingleItem): ?>
       <div class="ps-h3">تفکیک هزینه‌ها <span style="font-size:.72rem;color:var(--ink-soft);font-weight:600;">(واحد: <?= $unitLabel ?>)</span></div>
       <table class="ps-table">
         <thead><tr><th>شرح</th><th>نرخ / توضیح</th><th>مبلغ</th></tr></thead>
@@ -119,8 +130,45 @@ $isSingleItem = ($inv['invoice_type'] ?? 'full') === 'single_item';
           <?php endforeach; ?>
         </tbody>
       </table>
+      <?php else: ?>
+      <div class="ps-h3">تفکیک هزینه‌های ترخیص گمرکی</div>
+      <table class="ps-table">
+        <thead><tr><th>شرح</th><th>نرخ / توضیح</th><th>مبلغ (تومان)</th></tr></thead>
+        <tbody>
+          <?php foreach ($customsRows as $row): ?>
+          <tr><td><?= htmlspecialchars($row['label'] ?? '') ?></td><td style="color:var(--ink-soft);font-size:.8rem;"><?= htmlspecialchars($row['rate'] ?? '') ?></td><td class="amt"><?= number_format($row['amount'] ?? 0) ?></td></tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
 
-      <div class="ps-h3">جمع‌بندی</div>
+      <div class="ps-h3">تفکیک هزینه‌های پلاک انتظامی</div>
+      <table class="ps-table">
+        <thead><tr><th>شرح</th><th>نرخ / توضیح</th><th>مبلغ (تومان)</th></tr></thead>
+        <tbody>
+          <?php foreach ($plateRows as $row): ?>
+          <tr><td><?= htmlspecialchars($row['label'] ?? '') ?></td><td style="color:var(--ink-soft);font-size:.8rem;"><?= htmlspecialchars($row['rate'] ?? '') ?></td><td class="amt"><?= number_format($row['amount'] ?? 0) ?></td></tr>
+          <?php endforeach; ?>
+        </tbody>
+      </table>
+
+      <div class="ps-h3">حمل و مجوزها</div>
+      <table class="ps-table">
+        <tbody>
+          <tr><td colspan="2">حمل دریایی و صدور مجوزها</td><td class="amt"><?= number_format($shipping['seaFreight'] ?? 0) ?> + <?= number_format($shipping['permits'] ?? 0) ?> تومان</td></tr>
+        </tbody>
+      </table>
+
+      <div class="ps-h3">جمع‌بندی محاسبه</div>
+      <table class="ps-table">
+        <tbody>
+          <tr><td colspan="2">جمع کل بدون سود خدمات</td><td class="amt"><?= number_format($calcTotals['totalNoProfit'] ?? 0) ?> تومان</td></tr>
+          <tr><td colspan="2">سود خدمات ناوراکار</td><td class="amt"><?= number_format($calcTotals['serviceProfit'] ?? 0) ?> تومان</td></tr>
+          <tr class="total-row"><td colspan="2">جمع کل نهایی</td><td class="amt"><?= number_format($calcTotals['totalWithProfit'] ?? 0) ?> تومان</td></tr>
+        </tbody>
+      </table>
+      <?php endif; ?>
+
+      <div class="ps-h3">جمع‌بندی نهایی پیش‌فاکتور</div>
       <table class="ps-table">
         <tbody>
           <tr><td colspan="2">جمع کل قبل از تخفیف</td><td class="amt"><?= number_format($grandTotal) ?> <?= $unitLabel ?></td></tr>
