@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Public\CalculationLogController;
 use App\Http\Controllers\Public\CalculatorController;
+use App\Http\Controllers\Public\CarPriceController;
 use App\Http\Controllers\Public\LeadFormController;
 use App\Http\Controllers\Public\QuoteController;
 use App\Http\Controllers\Public\VinLogController;
@@ -14,3 +15,7 @@ Route::post('/vin-checks', [VinLogController::class, 'store'])->name('public.vin
 
 Route::get('/lead-form', [LeadFormController::class, 'create'])->name('public.lead-form');
 Route::post('/lead-form', [LeadFormController::class, 'store'])->name('public.lead-form.store');
+
+Route::get('/car-prices', [CarPriceController::class, 'index'])->name('public.car-prices.index');
+Route::get('/car-prices/sitemap.xml', [CarPriceController::class, 'sitemap'])->name('public.car-prices.sitemap');
+Route::get('/car-prices/{carListing}', [CarPriceController::class, 'show'])->name('public.car-prices.show');

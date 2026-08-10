@@ -19,6 +19,8 @@
         ['route' => 'admin.invoices.index', 'label' => 'پیش‌فاکتورها', 'icon' => 'invoice'],
     ];
     $adminNavItems = [
+        ['route' => 'admin.car-listings.index', 'label' => 'آگهی‌های دابیزل', 'icon' => 'car'],
+        ['route' => 'admin.settings.edit', 'label' => 'تنظیمات نرخ ارز', 'icon' => 'target'],
         ['route' => 'admin.templates.index', 'label' => 'قالب‌های پیام', 'icon' => 'message'],
         ['route' => 'admin.users.index', 'label' => 'کاربران', 'icon' => 'users'],
         ['route' => 'admin.activity-log.index', 'label' => 'لاگ سیستم', 'icon' => 'terminal'],

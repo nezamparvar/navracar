@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\CalculationLogController;
+use App\Http\Controllers\Admin\CarListingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\KanbanController;
 use App\Http\Controllers\Admin\MessageTemplateController;
 use App\Http\Controllers\Admin\RequestController;
+use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\TemplateUseController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VinCheckController;
@@ -59,5 +61,21 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         });
 
         Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+
+        Route::prefix('car-listings')->name('car-listings.')->group(function () {
+            Route::get('/', [CarListingController::class, 'index'])->name('index');
+            Route::post('/', [CarListingController::class, 'store'])->name('store');
+            Route::get('/{carListing}/edit', [CarListingController::class, 'edit'])->name('edit');
+            Route::put('/{carListing}', [CarListingController::class, 'update'])->name('update');
+            Route::delete('/{carListing}', [CarListingController::class, 'destroy'])->name('destroy');
+            Route::post('/{carListing}/publish', [CarListingController::class, 'publish'])->name('publish');
+            Route::post('/{carListing}/unpublish', [CarListingController::class, 'unpublish'])->name('unpublish');
+            Route::post('/{carListing}/refetch', [CarListingController::class, 'refetch'])->name('refetch');
+            Route::post('/{carListing}/images', [CarListingController::class, 'storeImage'])->name('images.store');
+            Route::delete('/{carListing}/images/{image}', [CarListingController::class, 'destroyImage'])->name('images.destroy');
+        });
+
+        Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
+        Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
     });
 });
