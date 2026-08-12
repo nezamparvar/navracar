@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\CarListing;
+use App\Models\MenuItem;
 use App\Models\Setting;
 
 class CalculatorController extends Controller
@@ -24,6 +25,7 @@ class CalculatorController extends Controller
             'contactUae' => Setting::get(Setting::WHATSAPP_UAE),
             'contactTehran' => Setting::get(Setting::TEHRAN_OFFICE_PHONE),
             'carListings' => $listings,
+            'menuItems' => MenuItem::active()->get(),
         ]);
     }
 }

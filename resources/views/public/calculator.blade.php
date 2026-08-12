@@ -67,9 +67,10 @@
     .process-item span{font-size:.72rem;}
   }
   .process-strip.wiz-hidden{display:none;}
+  .wiz-hidden{display:none;}
 
   /* ===== Wizard shell ===== */
-  .wiz-wrap{padding:14px 0 110px;}
+  .wiz-wrap{padding:14px 0 110px;scroll-margin-top:90px;}
   .wiz-progress{display:flex;justify-content:center;align-items:center;gap:6px;padding:8px 0 20px;flex-wrap:wrap;}
   .wiz-dot{width:30px;height:30px;border-radius:50%;background:var(--surface);border:2px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:800;color:var(--ink-soft);flex-shrink:0;}
   .wiz-dot.done{background:var(--primary);border-color:var(--primary);color:#fff;}
@@ -356,7 +357,7 @@
 <body>
 <header class="site">
   <div class="wrap header-row">
-    <div class="brand">
+    <a href="{{ route('public.home') }}" class="brand" style="text-decoration:none;color:inherit;">
       <div class="brand-mark">
         <svg viewBox="0 0 24 24" fill="none" stroke="#1A1200" stroke-width="1.9"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/><circle cx="7" cy="18.5" r="1.6" fill="#1A1200" stroke="none"/><circle cx="17" cy="18.5" r="1.6" fill="#1A1200" stroke="none"/></svg>
       </div>
@@ -364,13 +365,18 @@
         <div class="name">ناوراکار</div>
         <div class="tag">محاسبه‌گر رسمی هزینه واردات خودرو</div>
       </div>
-    </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    </a>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <a href="{{ route('public.car-prices.index') }}" class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/></svg>
         <span class="lbl-full">قیمت خودروها</span>
       </a>
-      <a href="https://navaracar.com" target="_blank" class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
+      @foreach ($menuItems as $item)
+        <a href="{{ $item->url }}" @if($item->opens_new_tab) target="_blank" rel="noopener" @endif class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
+          <span class="lbl-full">{{ $item->label }}</span>
+        </a>
+      @endforeach
+      <a href="{{ route('public.home') }}" class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg>
         <span class="lbl-full">سایت اصلی</span>
       </a>
@@ -792,10 +798,10 @@ const leafIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" str
 const categories = [
   {id:'ev',   label:'هیبرید / برقی', coef:1.00, icon:leafIcon},
   {id:'c1500',label:'زیر ۱۵۰۰ سی‌سی', coef:1.10, icon:gaugeIcon('6.4,11.7')},
-  {id:'c2000',label:'۱۵۰۱ تا ۲۰۰۰', coef:1.20, icon:gaugeIcon('8.7,9.4')},
-  {id:'c2500',label:'۲۰۰۱ تا ۲۵۰۰', coef:1.30, icon:gaugeIcon('12,8.5')},
-  {id:'c3000',label:'۲۵۰۱ تا ۳۰۰۰', coef:1.45, icon:gaugeIcon('15.3,9.4')},
-  {id:'c3001',label:'بالای ۳۰۰۱', coef:1.65, icon:gaugeIcon('17.6,11.7')},
+  {id:'c2000',label:'۱۵۰۰ تا ۲۰۰۰ سی‌سی', coef:1.20, icon:gaugeIcon('8.7,9.4')},
+  {id:'c2500',label:'۲۰۰۰ تا ۲۵۰۰ سی‌سی', coef:1.30, icon:gaugeIcon('12,8.5')},
+  {id:'c3000',label:'۲۵۰۰ تا ۳۰۰۰ سی‌سی', coef:1.45, icon:gaugeIcon('15.3,9.4')},
+  {id:'c3001',label:'بالای ۳۰۰۰ سی‌سی', coef:1.65, icon:gaugeIcon('17.6,11.7')},
 ];
 let activeCat = categories[1];
 const catButtons = {};
@@ -1411,8 +1417,12 @@ function calc(){
     ['هزینه استاندارد', `${(r.standard*100).toFixed(2)}٪ از ارزش گمرکی`, r.standard*CIF],
   ];
   const sumCustoms10 = customsRows.reduce((s,row)=>s+row[2],0);
+  const seaFreight = seaFreightAED * freeRate;
+  const permits = permitsAED * freeRate;
+  customsRows.push(['حمل دریایی', 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', seaFreight]);
+  customsRows.push(['هزینه صدور مجوزهای واردات', 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', permits]);
   customsRows.push(['انبارداری، دموراژ و THC','مبلغ دستی وارد شده', storage]);
-  const sumCustomsAll = sumCustoms10 + storage;
+  const sumCustomsAll = sumCustoms10 + seaFreight + permits + storage;
 
   const plateRows = [
     ['خرید گواهی اسقاط', `${(r.scrapCert*100).toFixed(2)}٪ از ارزش گمرکی`, r.scrapCert*CIF],
@@ -1423,10 +1433,7 @@ function calc(){
   ];
   const sumPlate = plateRows.reduce((s,row)=>s+row[2],0);
 
-  const seaFreight = seaFreightAED * freeRate;
-  const permits = permitsAED * freeRate;
-
-  const totalNoProfit = sumCustomsAll + sumPlate + realPriceToman + seaFreight + permits;
+  const totalNoProfit = sumCustomsAll + sumPlate + realPriceToman;
   const serviceProfitAmt = r.serviceProfit * (sumCustoms10 + sumPlate + seaFreight + permits);
   const totalWithProfit = totalNoProfit + serviceProfitAmt;
 
@@ -1450,16 +1457,15 @@ function calc(){
   const palette = ['#2952E0','#FF8A1E','#8B5CF6','#5B6478','#16A34A','#9FB2FF'];
   renderDonut(document.getElementById('donutWrap'), [
     {label:'سود بازرگانی', value:dutyProfit, color:palette[0]},
-    {label:'سایر حقوق و عوارض گمرکی', value:sumCustomsAll-dutyProfit, color:palette[1]},
+    {label:'سایر حقوق و عوارض گمرکی (شامل حمل و مجوز)', value:sumCustomsAll-dutyProfit, color:palette[1]},
     {label:'پلاک انتظامی', value:sumPlate, color:palette[2]},
     {label:'قیمت خودرو', value:realPriceToman, color:palette[3]},
-    {label:'حمل و مجوزها', value:seaFreight+permits, color:palette[4]},
     {label:'سود خدمات ناوراکار', value:serviceProfitAmt, color:palette[5]},
   ]);
   renderBars(document.getElementById('barRows'), [
-    {label:'ترخیص گمرکی', value:sumCustomsAll, color:palette[0]},
+    {label:'ترخیص گمرکی (شامل حمل و مجوز)', value:sumCustomsAll, color:palette[0]},
     {label:'پلاک انتظامی', value:sumPlate, color:palette[1]},
-    {label:'کالا + حمل + مجوز', value:realPriceToman+seaFreight+permits, color:palette[3]},
+    {label:'قیمت خودرو', value:realPriceToman, color:palette[3]},
     {label:'سود خدمات', value:serviceProfitAmt, color:palette[4]},
   ]);
 
@@ -1474,7 +1480,6 @@ function calc(){
     ...customsRows.map(row=>({label:row[0], rate:row[1], amount:fmt(row[2])+' تومان'})),
     ...plateRows.map(row=>({label:row[0], rate:row[1], amount:fmt(row[2])+' تومان'})),
     {label:'قیمت خودرو (اصل کالا)', rate:'-', amount:fmt(realPriceToman)+' تومان'},
-    {label:'حمل دریایی و صدور مجوزها', rate:'-', amount:fmt(seaFreight+permits)+' تومان'},
   ];
   lastTotals = {
     'جمع کل بدون سود': fmt(totalNoProfit)+' تومان',
@@ -1783,7 +1788,10 @@ function goToStep(step){
   document.querySelector(`.wiz-step[data-step="${step}"]`).classList.add('active');
   renderWizProgress();
 
-  document.querySelector('.process-strip').classList.toggle('wiz-hidden', step !== 'start');
+  const isStart = step === 'start';
+  document.querySelector('.process-strip').classList.toggle('wiz-hidden', !isStart);
+  document.querySelector('.hero-band').classList.toggle('wiz-hidden', !isStart);
+  document.querySelector('.hero-disclaimer-wrap').classList.toggle('wiz-hidden', !isStart);
 
   const nav = document.getElementById('wizNav');
   const prevBtn = document.getElementById('wizPrevBtn');
@@ -1801,7 +1809,8 @@ function goToStep(step){
     else if(step === 'result'){ nextBtn.innerHTML = 'ادامه به درخواست نهایی <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>'; }
     else { nextBtn.innerHTML = 'بعدی <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>'; }
   }
-  window.scrollTo({top:0, behavior:'smooth'});
+  const target = isStart ? document.querySelector('header.site') : document.querySelector('.wiz-wrap');
+  target?.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 document.querySelectorAll('.start-opt').forEach(btn=>{

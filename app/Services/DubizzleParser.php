@@ -27,18 +27,48 @@ class DubizzleParser
         try {
             $response = Http::withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
-                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-                'Accept-Language' => 'en-US,en;q=0.9',
+                'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+                'Accept-Language' => 'en-US,en;q=0.9,ar;q=0.8',
+                'Accept-Encoding' => 'gzip, deflate, br',
+                'Referer' => 'https://www.google.com/',
+                'Sec-Ch-Ua' => '"Chromium";v="124", "Google Chrome";v="124", "Not-A.Brand";v="99"',
+                'Sec-Ch-Ua-Mobile' => '?0',
+                'Sec-Ch-Ua-Platform' => '"Windows"',
+                'Sec-Fetch-Dest' => 'document',
+                'Sec-Fetch-Mode' => 'navigate',
+                'Sec-Fetch-Site' => 'cross-site',
+                'Upgrade-Insecure-Requests' => '1',
             ])->timeout(25)->connectTimeout(10)->get($url);
         } catch (\Throwable $e) {
             return ['html' => null, 'error' => 'خطا در اتصال: '.$e->getMessage()];
         }
 
         if (! $response->successful()) {
-            return ['html' => null, 'error' => 'دریافت صفحه ناموفق بود (کد '.$response->status().'). ممکن است دابیزل درخواست خودکار را مسدود کرده باشد — HTML صفحه را دستی پیست کنید.'];
+            return [
+                'html' => null,
+                'error' => 'دریافت صفحه ناموفق بود (کد '.$response->status().'). دابیزل معمولاً درخواست‌های خودکار از سرورها را مسدود می‌کند (حفاظت ضد ربات) — '
+                    .'این محدودیت مربوط به IP سرور است، نه یک باگ در سایت. راه‌حل: صفحهٔ آگهی را در مرورگر خودتان باز کنید، روی آن راست‌کلیک و «مشاهدهٔ کد صفحه / View Page Source» را بزنید، '
+                    .'کل کد HTML را کپی کنید و در کادر «یا HTML صفحه را دستی پیست کنید» همین فرم پیست کنید.',
+            ];
         }
 
         return ['html' => $response->body(), 'error' => null];
+    }
+
+    /**
+     * فیلدهای کلیدی که برای تشخیص موفقیت/شکست استخراج بررسی می‌شوند — برای
+     * پیام خطای دقیق (کدام data-testid پیدا نشد) نه فقط «ناموفق بود».
+     *
+     * @return array<string, bool>
+     */
+    public function diagnostics(string $html): array
+    {
+        return [
+            'عنوان آگهی (listing-name)' => $this->extractSimple($html, 'listing-name') !== null,
+            'قیمت (listing-price)' => $this->extractPrice($html) !== null,
+            'سال ساخت (listing-year-value)' => $this->extractSimple($html, 'listing-year-value') !== null,
+            'کارکرد (listing-kilometers-value)' => $this->extractSimple($html, 'listing-kilometers-value') !== null,
+        ];
     }
 
     /**

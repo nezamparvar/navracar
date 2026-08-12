@@ -3,16 +3,20 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Mail\ProformaInvoiceMail;
 use App\Mail\QuoteRequestReceived;
 use App\Models\QuoteRequest;
 use App\Services\GeoLookupService;
+use App\Services\ProformaPdfGenerator;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\URL;
 
 class QuoteController extends Controller
 {
-    public function store(Request $request, GeoLookupService $geo)
+    public function store(Request $request, GeoLookupService $geo, ProformaPdfGenerator $pdfGenerator)
     {
         // Honeypot: bots fill hidden fields — silently report success without saving.
         if (! empty($request->input('website'))) {
@@ -76,10 +80,45 @@ class QuoteController extends Controller
             ActivityLogger::error('ارسال ایمیل درخواست استعلام ناموفق بود', ['error' => $e->getMessage(), 'id' => $lead->id]);
         }
 
-        $message = $emailOk
-            ? 'درخواست با موفقیت ثبت و ارسال شد.'
-            : 'درخواست شما ثبت شد؛ اما ارسال ایمیل با تأخیر مواجه شد. کارشناسان از پنل مدیریت آن را می‌بینند.';
+        $pdfUrl = null;
+        $customerEmailOk = null;
+        if (! empty($breakdown)) {
+            try {
+                $pdfPath = $pdfGenerator->fromQuoteRequest($lead);
+                $pdfUrl = URL::signedRoute('public.quote-requests.pdf', ['quoteRequest' => $lead->id]);
 
-        return response()->json(['success' => true, 'id' => $lead->id, 'message' => $message]);
+                if ($lead->email) {
+                    try {
+                        Mail::to($lead->email)->send(new ProformaInvoiceMail($lead, Storage::disk('public')->path($pdfPath)));
+                        $customerEmailOk = true;
+                    } catch (\Throwable $e) {
+                        $customerEmailOk = false;
+                        ActivityLogger::error('ارسال ایمیل پیش‌فاکتور به مشتری ناموفق بود', ['error' => $e->getMessage(), 'id' => $lead->id]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                ActivityLogger::error('ساخت فایل PDF پیش‌فاکتور ناموفق بود', ['error' => $e->getMessage(), 'id' => $lead->id]);
+            }
+        }
+
+        $message = 'درخواست شما با موفقیت ثبت شد.';
+        if ($pdfUrl) {
+            $message = $customerEmailOk
+                ? 'درخواست شما ثبت شد؛ پیش‌فاکتور PDF هم برای شما ایمیل شد و هم می‌توانید همین‌جا دانلود کنید.'
+                : 'درخواست شما ثبت شد؛ پیش‌فاکتور PDF آماده شد — می‌توانید همین‌جا دانلود کنید.';
+        } elseif (! $emailOk) {
+            $message = 'درخواست شما ثبت شد؛ اما ارسال ایمیل با تأخیر مواجه شد. کارشناسان از پنل مدیریت آن را می‌بینند.';
+        }
+
+        return response()->json(['success' => true, 'id' => $lead->id, 'message' => $message, 'pdfUrl' => $pdfUrl]);
+    }
+
+    public function downloadPdf(QuoteRequest $quoteRequest)
+    {
+        $path = 'proformas/quote-'.$quoteRequest->id.'.pdf';
+
+        abort_unless(Storage::disk('public')->exists($path), 404);
+
+        return Storage::disk('public')->download($path, 'proforma-navracar-'.$quoteRequest->id.'.pdf');
     }
 }

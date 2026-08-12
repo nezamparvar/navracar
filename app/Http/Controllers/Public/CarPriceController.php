@@ -15,7 +15,7 @@ class CarPriceController extends Controller
 {
     private const DISPLAY_SPEC_FIELDS = [
         'model_year', 'kilometers', 'body_type', 'fuel_type', 'transmission_type',
-        'regional_specs', 'steering_side', 'seller_type', 'warranty', 'exterior_color',
+        'regional_specs', 'steering_side', 'warranty', 'exterior_color',
         'interior_color', 'horsepower', 'engine_capacity_cc', 'no_of_cylinders',
         'doors', 'seating_capacity', 'location_text',
     ];
@@ -105,14 +105,21 @@ class CarPriceController extends Controller
             }
         }
 
+        $freeRate = (float) Setting::get(Setting::FREE_RATE);
+        $brandLabel = $carListing->make ? (string) Str::of($carListing->make)->replace('-', ' ')->title() : null;
+        $priceBracketId = $carListing->priceBracketId($freeRate);
+
         return view('public.car-prices.show', [
             'title' => $carListing->meta_title ?: ($carListing->title_fa.' | ناوراکار'),
             'listing' => $carListing->load('images'),
             'specs' => $specs,
-            'freeRate' => (float) Setting::get(Setting::FREE_RATE),
+            'freeRate' => $freeRate,
             'customsRate' => (float) Setting::get(Setting::CUSTOMS_RATE),
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
+            'brandLabel' => $brandLabel,
+            'priceBracketId' => $priceBracketId,
+            'priceBracketLabel' => $priceBracketId ? CarListing::PRICE_BRACKETS[$priceBracketId]['label'] : null,
         ]);
     }
 

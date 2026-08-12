@@ -160,7 +160,7 @@
     </p>
 
     <div>
-        <button type="button" @click="showProforma = true; pfStatus = ''"
+        <button type="button" @click="showProforma = true; pfStatus = ''; pfPdfUrl = ''"
                 class="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
             <x-icon name="invoice" class="w-4 h-4" /> درخواست پیش‌فاکتور
         </button>
@@ -172,8 +172,8 @@
                 <h3 class="text-sm font-extrabold text-ink-900 dark:text-white">درخواست پیش‌فاکتور</h3>
                 <button type="button" @click="showProforma = false" class="text-ink-400 hover:text-ink-700">✕</button>
             </div>
-            <p class="mb-3 text-xs text-ink-500 dark:text-ink-400">نام و شماره تماس را وارد کنید تا کارشناسان ناوراکار پیش‌فاکتور رسمی این خودرو را برایتان آماده و ارسال کنند.</p>
-            <div class="space-y-3">
+            <p class="mb-3 text-xs text-ink-500 dark:text-ink-400">نام و شماره تماس را وارد کنید — فایل PDF پیش‌فاکتور اولیهٔ این خودرو بلافاصله ساخته می‌شود و در صورت وارد کردن ایمیل، برایتان ارسال هم می‌شود.</p>
+            <div class="space-y-3" x-show="!pfPdfUrl">
                 <div>
                     <label class="mb-1 block text-xs font-bold text-ink-500">نام و نام خانوادگی</label>
                     <input type="text" x-model="pfName" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
@@ -192,6 +192,14 @@
                     <span x-show="!pfSubmitting">ثبت درخواست</span>
                     <span x-show="pfSubmitting">در حال ارسال...</span>
                 </button>
+            </div>
+            <div x-show="pfPdfUrl" class="space-y-3">
+                <p class="text-xs font-bold text-emerald-600" x-text="pfStatus"></p>
+                <a :href="pfPdfUrl" target="_blank"
+                   class="flex w-full items-center justify-center gap-2 rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white hover:brightness-105">
+                    <x-icon name="invoice" class="w-4 h-4" /> دانلود PDF پیش‌فاکتور
+                </a>
+                <button type="button" @click="showProforma = false" class="w-full rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-bold text-ink-600 dark:border-white/10 dark:text-ink-300">بستن</button>
             </div>
         </div>
     </div>
@@ -230,7 +238,7 @@ window.carCalculatorApp = function (config) {
         },
 
         showProforma: false,
-        pfName: '', pfPhone: '', pfEmail: '', pfStatus: '', pfOk: false, pfSubmitting: false,
+        pfName: '', pfPhone: '', pfEmail: '', pfStatus: '', pfOk: false, pfSubmitting: false, pfPdfUrl: '',
 
         fmt(n) {
             return Math.round(n || 0).toLocaleString('en-US');
@@ -269,6 +277,7 @@ window.carCalculatorApp = function (config) {
                 });
                 const data = await res.json();
                 this.pfOk = !!data.success;
+                this.pfPdfUrl = data.pdfUrl || '';
                 this.pfStatus = data.message || (data.success
                     ? 'درخواست شما ثبت شد؛ پیش‌فاکتور رسمی به‌زودی برایتان ارسال می‌شود.'
                     : 'ثبت درخواست ناموفق بود. لطفاً دوباره تلاش کنید.');

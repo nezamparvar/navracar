@@ -14,6 +14,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [HomeController::class, 'index'])->name('public.home');
 Route::get('/calculator', [CalculatorController::class, 'index'])->name('public.calculator');
 Route::post('/quote-requests', [QuoteController::class, 'store'])->name('public.quote-requests.store');
+Route::get('/quote-requests/{quoteRequest}/pdf', [QuoteController::class, 'downloadPdf'])
+    ->middleware('signed')->name('public.quote-requests.pdf');
 Route::post('/calculation-logs', [CalculationLogController::class, 'store'])->name('public.calculation-logs.store');
 Route::post('/vin-checks', [VinLogController::class, 'store'])->name('public.vin-checks.store');
 
