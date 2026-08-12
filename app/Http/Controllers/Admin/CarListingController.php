@@ -62,6 +62,69 @@ class CarListingController extends Controller
             ->with('success', 'آگهی با موفقیت دریافت شد. لطفاً قبل از انتشار، فیلدها و دسته‌بندی را بررسی کنید.');
     }
 
+    public function create()
+    {
+        return view('admin.car-listings.create', [
+            'pageTitle' => 'افزودن آگهی دستی',
+            'listing' => new CarListing([
+                'category_id' => 'c2000',
+                'delivery_days' => (int) Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
+            ]),
+            'categories' => CarListing::categoriesWithLiveRates(),
+        ]);
+    }
+
+    public function storeManual(Request $request)
+    {
+        $data = $request->validate([
+            'title_fa' => ['required', 'string', 'max:500'],
+            'slug' => ['nullable', 'string', 'max:255', 'alpha_dash', 'unique:car_listings,slug'],
+            'make' => ['nullable', 'string', 'max:100'],
+            'model' => ['nullable', 'string', 'max:100'],
+            'trim_level' => ['nullable', 'string', 'max:255'],
+            'model_year' => ['nullable', 'string', 'max:10'],
+            'price_aed' => ['required', 'numeric', 'min:0'],
+            'kilometers' => ['nullable', 'string', 'max:50'],
+            'category_id' => ['required', Rule::in(array_keys(CarListing::CATEGORIES))],
+            'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'body_type' => ['nullable', 'string', 'max:100'],
+            'fuel_type' => ['nullable', 'string', 'max:100'],
+            'transmission_type' => ['nullable', 'string', 'max:100'],
+            'regional_specs' => ['nullable', 'string', 'max:100'],
+            'steering_side' => ['nullable', 'string', 'max:100'],
+            'seller_type' => ['nullable', 'string', 'max:100'],
+            'warranty' => ['nullable', 'string', 'max:50'],
+            'exterior_color' => ['nullable', 'string', 'max:100'],
+            'interior_color' => ['nullable', 'string', 'max:100'],
+            'horsepower' => ['nullable', 'string', 'max:100'],
+            'engine_capacity_cc' => ['nullable', 'string', 'max:100'],
+            'no_of_cylinders' => ['nullable', 'string', 'max:20'],
+            'doors' => ['nullable', 'string', 'max:50'],
+            'seating_capacity' => ['nullable', 'string', 'max:50'],
+            'location_text' => ['nullable', 'string', 'max:255'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $slug = $data['slug'] ?? null;
+        unset($data['slug']);
+        if (empty($slug)) {
+            $slug = $this->mapper->slugify($data);
+        }
+
+        $listing = CarListing::create([
+            ...$data,
+            'slug' => $slug,
+            'source_url' => '',
+            'source_site' => 'manual',
+            'status' => 'draft',
+            'created_by' => $request->user()->id,
+        ]);
+
+        return redirect()->route('admin.car-listings.edit', $listing)
+            ->with('success', 'آگهی دستی ایجاد شد. حالا می‌توانید عکس اضافه کنید.');
+    }
+
     public function edit(CarListing $carListing)
     {
         return view('admin.car-listings.edit', [

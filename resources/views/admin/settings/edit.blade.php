@@ -97,8 +97,8 @@
             </div>
         </x-card>
 
-        <x-card title="شماره‌های تماس واتساپ" icon="target" class="max-w-lg"
-                subtitle="در بالای صفحه هر آگهی خودرو برای «مشاوره واتساپ» نمایش داده می‌شود.">
+        <x-card title="شماره‌های تماس سایت" icon="target" class="max-w-lg"
+                subtitle="در صفحه هر آگهی خودرو، صفحه اصلی محاسبه‌گر و فاکتورهای چاپی استفاده می‌شود.">
             <div class="space-y-4">
                 <div>
                     <label class="mb-1 block text-xs font-bold text-ink-500">شماره واتساپ امارات</label>
@@ -106,8 +106,13 @@
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left num-font dark:border-white/10 dark:bg-white/5">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">شماره واتساپ ایران</label>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">شماره واتساپ / موبایل ایران</label>
                     <input type="text" dir="ltr" name="whatsapp_iran_number" value="{{ old('whatsapp_iran_number', $whatsappIran) }}" required
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left num-font dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">تلفن دفتر تهران</label>
+                    <input type="text" dir="ltr" name="tehran_office_phone" value="{{ old('tehran_office_phone', $tehranOfficePhone) }}" required
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left num-font dark:border-white/10 dark:bg-white/5">
                 </div>
             </div>

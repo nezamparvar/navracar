@@ -27,6 +27,8 @@ class Setting extends Model
 
     public const WHATSAPP_IRAN = 'whatsapp_iran_number';
 
+    public const TEHRAN_OFFICE_PHONE = 'tehran_office_phone';
+
     public const DEFAULT_DELIVERY_DAYS = 'default_delivery_days';
 
     public const DEFAULTS = [
@@ -39,6 +41,7 @@ class Setting extends Model
         self::SCRAP_THRESHOLD_AED => '60000',
         self::WHATSAPP_UAE => '+971 50 515 8484',
         self::WHATSAPP_IRAN => '+98 912 051 2149',
+        self::TEHRAN_OFFICE_PHONE => '+98 21 8887 0878',
         self::DEFAULT_DELIVERY_DAYS => '40',
     ];
 

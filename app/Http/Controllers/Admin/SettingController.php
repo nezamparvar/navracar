@@ -24,6 +24,7 @@ class SettingController extends Controller
             'scrapThresholdAed' => Setting::get(Setting::SCRAP_THRESHOLD_AED),
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
+            'tehranOfficePhone' => Setting::get(Setting::TEHRAN_OFFICE_PHONE),
             'defaultDeliveryDays' => Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
             'categories' => CarListing::categoriesWithLiveRates(),
         ]);
@@ -41,6 +42,7 @@ class SettingController extends Controller
             'scrap_threshold_aed' => ['required', 'numeric', 'min:0'],
             'whatsapp_uae_number' => ['required', 'string', 'max:32'],
             'whatsapp_iran_number' => ['required', 'string', 'max:32'],
+            'tehran_office_phone' => ['required', 'string', 'max:32'],
             'default_delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
             'tariff_percent' => ['required', 'array'],
             'tariff_percent.*' => ['required', 'numeric', 'min:0', 'max:500'],
@@ -57,6 +59,7 @@ class SettingController extends Controller
         Setting::set(Setting::SCRAP_THRESHOLD_AED, (string) $data['scrap_threshold_aed']);
         Setting::set(Setting::WHATSAPP_UAE, (string) $data['whatsapp_uae_number']);
         Setting::set(Setting::WHATSAPP_IRAN, (string) $data['whatsapp_iran_number']);
+        Setting::set(Setting::TEHRAN_OFFICE_PHONE, (string) $data['tehran_office_phone']);
         Setting::set(Setting::DEFAULT_DELIVERY_DAYS, (string) $data['default_delivery_days']);
 
         foreach ($data['tariff_percent'] as $categoryId => $percent) {

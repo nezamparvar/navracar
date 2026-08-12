@@ -23,7 +23,7 @@
             <meta name="robots" content="noindex, nofollow">
         @endif
         <script type="application/ld+json">
-            {!! json_encode([
+            {!! json_encode(array_filter([
                 '@context' => 'https://schema.org',
                 '@type' => 'Vehicle',
                 'name' => $l->title_fa,
@@ -32,6 +32,15 @@
                 'vehicleModelDate' => $l->model_year,
                 'mileageFromOdometer' => $l->kilometers,
                 'fuelType' => $l->fuel_type,
+                'bodyType' => $l->body_type,
+                'vehicleTransmission' => $l->transmission_type,
+                'color' => $l->exterior_color,
+                'vehicleInteriorColor' => $l->interior_color,
+                'numberOfDoors' => $l->doors,
+                'vehicleSeatingCapacity' => $l->seating_capacity,
+                'vehicleEngine' => $l->engine_capacity_cc ? ['@type' => 'EngineSpecification', 'engineDisplacement' => $l->engine_capacity_cc] : null,
+                'itemCondition' => 'https://schema.org/UsedCondition',
+                'sku' => $l->slug,
                 'image' => $l->images->map(fn($img) => $img->url())->all(),
                 'offers' => [
                     '@type' => 'Offer',
@@ -40,13 +49,18 @@
                     'availability' => 'https://schema.org/InStock',
                     'url' => route('public.car-prices.show', $l),
                 ],
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+            ]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
         </script>
+        <x-schema-breadcrumbs :items="[
+            ['label' => 'ناوراکار', 'url' => route('public.home')],
+            ['label' => 'قیمت خودروها', 'url' => route('public.car-prices.index')],
+            ['label' => $l->title_fa, 'url' => route('public.car-prices.show', $l)],
+        ]" />
     @endpush
 
     <div class="mx-auto max-w-6xl px-4 py-8">
         <nav class="mb-4 text-xs text-ink-500">
-            <a href="{{ route('public.calculator') }}" class="hover:text-brand-700">ناوراکار</a>
+            <a href="{{ route('public.home') }}" class="hover:text-brand-700">ناوراکار</a>
             <span class="mx-1">/</span>
             <a href="{{ route('public.car-prices.index') }}" class="hover:text-brand-700">قیمت خودروها</a>
             <span class="mx-1">/</span>

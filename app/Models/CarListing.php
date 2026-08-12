@@ -60,6 +60,19 @@ class CarListing extends Model
         'efg' => ['upto' => 6, 'above' => 9],
     ];
 
+    /**
+     * بازه‌های قیمتی ثابت (تومان، بر پایهٔ نرخ روز) برای صفحات دسته‌بندی سئو —
+     * فقط برای مرور/فیلتر است، نه یک مقدار مالی حساس؛ بنابراین هاردکد است نه
+     * در تنظیمات پنل.
+     */
+    public const PRICE_BRACKETS = [
+        'under-5b' => ['label' => 'زیر ۵ میلیارد تومان', 'min' => 0, 'max' => 5_000_000_000],
+        '5b-10b' => ['label' => '۵ تا ۱۰ میلیارد تومان', 'min' => 5_000_000_000, 'max' => 10_000_000_000],
+        '10b-20b' => ['label' => '۱۰ تا ۲۰ میلیارد تومان', 'min' => 10_000_000_000, 'max' => 20_000_000_000],
+        '20b-40b' => ['label' => '۲۰ تا ۴۰ میلیارد تومان', 'min' => 20_000_000_000, 'max' => 40_000_000_000],
+        'above-40b' => ['label' => 'بالای ۴۰ میلیارد تومان', 'min' => 40_000_000_000, 'max' => null],
+    ];
+
     public function images()
     {
         return $this->hasMany(CarListingImage::class)->orderBy('sort_order');
@@ -73,6 +86,26 @@ class CarListing extends Model
     public function scopePublished(Builder $query): Builder
     {
         return $query->where('status', 'published');
+    }
+
+    /**
+     * فیلتر بر اساس بازهٔ قیمت تومانی (PRICE_BRACKETS) — چون قیمت واقعی به
+     * درهم ذخیره می‌شود، بازه با نرخ روز به درهم تبدیل و در دیتابیس فیلتر
+     * می‌شود (نه در PHP، برای صفحه‌بندی درست).
+     */
+    public function scopePriceBracket(Builder $query, string $bracketId, float $freeRate): Builder
+    {
+        $bracket = self::PRICE_BRACKETS[$bracketId] ?? null;
+        if (! $bracket || $freeRate <= 0) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        $query->where('price_aed', '>=', $bracket['min'] / $freeRate);
+        if ($bracket['max'] !== null) {
+            $query->where('price_aed', '<', $bracket['max'] / $freeRate);
+        }
+
+        return $query;
     }
 
     public function coverImage(): ?CarListingImage

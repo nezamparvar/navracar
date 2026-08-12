@@ -20,6 +20,9 @@
     ];
     $adminNavItems = [
         ['route' => 'admin.car-listings.index', 'label' => 'آگهی‌های دابیزل', 'icon' => 'car'],
+        ['route' => 'admin.posts.index', 'label' => 'وبلاگ', 'icon' => 'message'],
+        ['route' => 'admin.home-slides.index', 'label' => 'اسلایدر صفحه اصلی', 'icon' => 'image'],
+        ['route' => 'admin.menu-items.index', 'label' => 'منوی سایت', 'icon' => 'menu'],
         ['route' => 'admin.settings.edit', 'label' => 'تنظیمات نرخ ارز', 'icon' => 'target'],
         ['route' => 'admin.templates.index', 'label' => 'قالب‌های پیام', 'icon' => 'message'],
         ['route' => 'admin.users.index', 'label' => 'کاربران', 'icon' => 'users'],

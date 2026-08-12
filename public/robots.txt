@@ -1,4 +1,4 @@
 User-agent: *
 Disallow:
 
-Sitemap: https://navaracar.com/car-prices/sitemap.xml
+Sitemap: https://navaracar.com/sitemap.xml

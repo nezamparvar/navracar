@@ -1,3 +1,8 @@
+@php
+    $contactIranTel = str_replace(' ', '', $contactIran);
+    $contactUaeTel = str_replace(' ', '', $contactUae);
+    $contactTehranTel = str_replace(' ', '', $contactTehran);
+@endphp
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
 <head>
@@ -636,27 +641,27 @@
       <div class="contact-rows">
         <div class="contact-row">
           <span class="cr-flag">🇮🇷</span>
-          <div class="cr-info"><div class="cr-num">+98 912 051 2149</div><div class="cr-label">واتساپ · بله · تلگرام</div></div>
+          <div class="cr-info"><div class="cr-num">{{ $contactIran }}</div><div class="cr-label">واتساپ · بله · تلگرام</div></div>
           <div class="cr-actions">
-            <a href="tel:+989120512149" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="tel:{{ $contactIranTel }}" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
             <a href="#" target="_blank" id="waIranFinal" class="cr-btn whatsapp" title="واتساپ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.27-1.38a9.9 9.9 0 0 0 4.72 1.2h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.19-1.58-1.19-3.02 0-1.43.75-2.14 1.02-2.43.27-.29.58-.36.78-.36h.55c.18 0 .42-.07.65.5.24.58.82 2.02.9 2.16.07.15.12.32.02.51-.1.19-.15.31-.29.47-.15.17-.31.37-.44.5-.15.15-.3.31-.13.61.17.29.76 1.25 1.63 2.02 1.12.99 2.06 1.3 2.36 1.44.29.15.46.13.63-.08.17-.2.71-.83.9-1.11.19-.29.38-.24.63-.15.26.1 1.65.78 1.93.92.29.15.48.22.55.34.07.13.07.72-.17 1.39z"/></svg></a>
-            <a href="https://t.me/+989120512149" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
+            <a href="https://t.me/{{ $contactIranTel }}" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
           </div>
         </div>
         <div class="contact-row">
           <span class="cr-flag">🇦🇪</span>
-          <div class="cr-info"><div class="cr-num">+971 50 515 8484</div><div class="cr-label">واتساپ · تلگرام</div></div>
+          <div class="cr-info"><div class="cr-num">{{ $contactUae }}</div><div class="cr-label">واتساپ · تلگرام</div></div>
           <div class="cr-actions">
-            <a href="tel:+971505158484" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="tel:{{ $contactUaeTel }}" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
             <a href="#" target="_blank" id="whatsappBtnFinal" class="cr-btn whatsapp" title="واتساپ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.27-1.38a9.9 9.9 0 0 0 4.72 1.2h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.19-1.58-1.19-3.02 0-1.43.75-2.14 1.02-2.43.27-.29.58-.36.78-.36h.55c.18 0 .42-.07.65.5.24.58.82 2.02.9 2.16.07.15.12.32.02.51-.1.19-.15.31-.29.47-.15.17-.31.37-.44.5-.15.15-.3.31-.13.61.17.29.76 1.25 1.63 2.02 1.12.99 2.06 1.3 2.36 1.44.29.15.46.13.63-.08.17-.2.71-.83.9-1.11.19-.29.38-.24.63-.15.26.1 1.65.78 1.93.92.29.15.48.22.55.34.07.13.07.72-.17 1.39z"/></svg></a>
-            <a href="https://t.me/+971505158484" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
+            <a href="https://t.me/{{ $contactUaeTel }}" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
           </div>
         </div>
         <div class="contact-row">
           <span class="cr-flag">☎️</span>
-          <div class="cr-info"><div class="cr-num">+98 21 8887 0878</div><div class="cr-label">دفتر تهران</div></div>
+          <div class="cr-info"><div class="cr-num">{{ $contactTehran }}</div><div class="cr-label">دفتر تهران</div></div>
           <div class="cr-actions">
-            <a href="tel:+982188870878" class="cr-btn call" title="تماس با دفتر"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="tel:{{ $contactTehranTel }}" class="cr-btn call" title="تماس با دفتر"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
           </div>
         </div>
       </div>
@@ -679,27 +684,27 @@
       <div class="contact-rows">
         <div class="contact-row">
           <span class="cr-flag">🇮🇷</span>
-          <div class="cr-info"><div class="cr-num">+98 912 051 2149</div><div class="cr-label">واتساپ · بله · تلگرام</div></div>
+          <div class="cr-info"><div class="cr-num">{{ $contactIran }}</div><div class="cr-label">واتساپ · بله · تلگرام</div></div>
           <div class="cr-actions">
-            <a href="tel:+989120512149" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="tel:{{ $contactIranTel }}" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
             <a href="#" target="_blank" id="waIranContact" class="cr-btn whatsapp" title="واتساپ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.27-1.38a9.9 9.9 0 0 0 4.72 1.2h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.19-1.58-1.19-3.02 0-1.43.75-2.14 1.02-2.43.27-.29.58-.36.78-.36h.55c.18 0 .42-.07.65.5.24.58.82 2.02.9 2.16.07.15.12.32.02.51-.1.19-.15.31-.29.47-.15.17-.31.37-.44.5-.15.15-.3.31-.13.61.17.29.76 1.25 1.63 2.02 1.12.99 2.06 1.3 2.36 1.44.29.15.46.13.63-.08.17-.2.71-.83.9-1.11.19-.29.38-.24.63-.15.26.1 1.65.78 1.93.92.29.15.48.22.55.34.07.13.07.72-.17 1.39z"/></svg></a>
-            <a href="https://t.me/+989120512149" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
+            <a href="https://t.me/{{ $contactIranTel }}" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
           </div>
         </div>
         <div class="contact-row">
           <span class="cr-flag">🇦🇪</span>
-          <div class="cr-info"><div class="cr-num">+971 50 515 8484</div><div class="cr-label">واتساپ · تلگرام</div></div>
+          <div class="cr-info"><div class="cr-num">{{ $contactUae }}</div><div class="cr-label">واتساپ · تلگرام</div></div>
           <div class="cr-actions">
-            <a href="tel:+971505158484" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="tel:{{ $contactUaeTel }}" class="cr-btn call" title="تماس"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
             <a href="#" target="_blank" id="whatsappBtnContact" class="cr-btn whatsapp" title="واتساپ"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2.05 22l5.27-1.38a9.9 9.9 0 0 0 4.72 1.2h.01c5.46 0 9.9-4.45 9.9-9.91C21.96 6.45 17.5 2 12.04 2zm5.8 14.06c-.24.68-1.4 1.3-1.93 1.38-.5.08-1.12.11-1.8-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.19-1.58-1.19-3.02 0-1.43.75-2.14 1.02-2.43.27-.29.58-.36.78-.36h.55c.18 0 .42-.07.65.5.24.58.82 2.02.9 2.16.07.15.12.32.02.51-.1.19-.15.31-.29.47-.15.17-.31.37-.44.5-.15.15-.3.31-.13.61.17.29.76 1.25 1.63 2.02 1.12.99 2.06 1.3 2.36 1.44.29.15.46.13.63-.08.17-.2.71-.83.9-1.11.19-.29.38-.24.63-.15.26.1 1.65.78 1.93.92.29.15.48.22.55.34.07.13.07.72-.17 1.39z"/></svg></a>
-            <a href="https://t.me/+971505158484" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
+            <a href="https://t.me/{{ $contactUaeTel }}" target="_blank" class="cr-btn telegram" title="تلگرام"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M21.5 2.5 2.7 10.1c-1 .4-1 1.8.1 2.1l4.8 1.5 1.8 5.6c.3 1 1.6 1.2 2.2.3l2.5-3.6 4.7 3.5c.9.6 2.1.1 2.3-1L23 3.6c.2-1-.7-1.8-1.5-1.1z"/></svg></a>
           </div>
         </div>
         <div class="contact-row">
           <span class="cr-flag">☎️</span>
-          <div class="cr-info"><div class="cr-num">+98 21 8887 0878</div><div class="cr-label">دفتر تهران</div></div>
+          <div class="cr-info"><div class="cr-num">{{ $contactTehran }}</div><div class="cr-label">دفتر تهران</div></div>
           <div class="cr-actions">
-            <a href="tel:+982188870878" class="cr-btn call" title="تماس با دفتر"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
+            <a href="tel:{{ $contactTehranTel }}" class="cr-btn call" title="تماس با دفتر"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.127.96.362 1.903.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg></a>
           </div>
         </div>
       </div>
@@ -742,9 +747,9 @@
     </div>
     <div class="ps-contact">
       <div class="ps-contact-title">📞 ارتباط با ما</div>
-      🇮🇷 +98 912 051 2149 (واتس‌اپ | بله | تلگرام)<br>
-      🇦🇪 +971 50 515 8484 (واتس‌اپ | تلگرام)<br>
-      ☎️ +98 21 8887 0878 (دفتر تهران)<br>
+      🇮🇷 {{ $contactIran }} (واتس‌اپ | بله | تلگرام)<br>
+      🇦🇪 {{ $contactUae }} (واتس‌اپ | تلگرام)<br>
+      ☎️ {{ $contactTehran }} (دفتر تهران)<br>
       🌐 navaracar.com
     </div>
     <div class="ps-sign"><div>مهر و امضای ناوراکار</div><div>navaracar.com</div></div>
@@ -761,6 +766,10 @@ const CSRF_TOKEN = '{{ csrf_token() }}';
 const CALC_LOG_URL = '{{ route('public.calculation-logs.store') }}';
 const VIN_LOG_URL = '{{ route('public.vin-checks.store') }}';
 const QUOTE_URL = '{{ route('public.quote-requests.store') }}';
+const CONTACT_IRAN = @js($contactIran);
+const CONTACT_UAE = @js($contactUae);
+const CONTACT_TEHRAN = @js($contactTehran);
+const waDigits = n => n.replace(/[\s+]/g, '');
 window.__pageLoadedAt = Date.now();
 const gaugeIcon = tip => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15L${tip}"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/><path d="M4 15h1.4M18.6 15H20" stroke-width="1.4" opacity=".6"/></svg>`;
 const leafIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c8 0 14-6 14-14-8 0-14 6-14 14Z"/><path d="M5 19c2-4 5-7 9-9"/><path d="M15 4.2v3M20.2 9h-3"/></svg>`;
@@ -1629,8 +1638,8 @@ function buildWhatsAppMessage(){
 }
 function updateWhatsAppLinks(){
   const msg = encodeURIComponent(buildWhatsAppMessage());
-  const uaeHref = 'https://wa.me/971505158484?text=' + msg;
-  const iranHref = 'https://wa.me/989120512149?text=' + msg;
+  const uaeHref = 'https://wa.me/' + waDigits(CONTACT_UAE) + '?text=' + msg;
+  const iranHref = 'https://wa.me/' + waDigits(CONTACT_IRAN) + '?text=' + msg;
   const a1 = document.getElementById('whatsappBtnFinal');
   const a2 = document.getElementById('whatsappBtnContact');
   const a3 = document.getElementById('waIranFinal');
@@ -1650,7 +1659,7 @@ function buildPrintSheet(){
 
   const now = new Date();
   const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
-  document.getElementById('psMeta').innerHTML = `تاریخ گزارش: <b>${dateStr}</b><br>دسته خودرو: <b>${activeCat.label}</b><br>🇮🇷 +98 912 051 2149<br>🇦🇪 +971 50 515 8484<br>☎️ +98 21 8887 0878<br>navaracar.com`;
+  document.getElementById('psMeta').innerHTML = `تاریخ گزارش: <b>${dateStr}</b><br>دسته خودرو: <b>${activeCat.label}</b><br>🇮🇷 ${CONTACT_IRAN}<br>🇦🇪 ${CONTACT_UAE}<br>☎️ ${CONTACT_TEHRAN}<br>navaracar.com`;
 
   const carLabel = getSelectedCarLabel();
   const realPriceAED = num('realPriceAED');
