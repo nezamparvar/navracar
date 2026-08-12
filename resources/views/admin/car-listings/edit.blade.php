@@ -100,10 +100,16 @@
                             <select name="category_id" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
                                 @foreach ($categories as $key => $cat)
                                     <option value="{{ $key }}" @selected(old('category_id', $l->category_id) === $key)>
-                                        {{ $cat['label'] }} (سود {{ $cat['coef'] * 100 }}٪)
+                                        {{ $cat['label'] }} (تعرفه {{ rtrim(rtrim(number_format($cat['coef'] * 100, 2), '0'), '.') }}٪)
                                     </option>
                                 @endforeach
                             </select>
+                            <p class="mt-1 text-[11px] text-ink-400">درصدها از <a href="{{ route('admin.settings.edit') }}" class="text-brand-600 hover:underline">تنظیمات نرخ‌ها</a> خوانده می‌شوند.</p>
+                        </div>
+                        <div>
+                            <label class="mb-1 block text-xs font-bold text-ink-500">مدت زمان تحویل (روز کاری)</label>
+                            <input type="number" step="1" min="1" name="delivery_days" value="{{ old('delivery_days', $l->delivery_days) }}" required
+                                   class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
                         </div>
                     </div>
                 </x-card>

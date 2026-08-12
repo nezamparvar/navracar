@@ -2,8 +2,8 @@
     $l = $listing;
     $priceToman = (float) $l->price_aed * $freeRate;
     $waMessage = rawurlencode("سلام، درباره خودروی «{$l->title_fa}» (قیمت ".number_format((float) $l->price_aed)." درهم) توضیحات بیشتری می‌خوام: ".route('public.car-prices.show', $l));
-    $waUae = 'https://wa.me/'.str_replace([' ', '+'], '', config('navaracar.contact.uae_phone')).'?text='.$waMessage;
-    $waIran = 'https://wa.me/'.str_replace([' ', '+'], '', config('navaracar.contact.iran_phone')).'?text='.$waMessage;
+    $waUae = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappUae).'?text='.$waMessage;
+    $waIran = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappIran).'?text='.$waMessage;
 @endphp
 
 <x-layouts.public :title="$title">
@@ -91,6 +91,12 @@
                         <a href="{{ $l->source_url }}" target="_blank" rel="nofollow noopener" class="text-brand-600 hover:underline">دابیزل امارات</a>
                         @if($l->posted_on_dubizzle) · تاریخ ثبت آگهی: {{ $l->posted_on_dubizzle }} @endif
                     </p>
+                    @if($l->delivery_days)
+                        <div class="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                            <x-icon name="check-circle" class="w-4 h-4" />
+                            مدت زمان تحویل تخمینی: <span class="num-font">{{ $l->delivery_days }}</span> روز کاری
+                        </div>
+                    @endif
                 </div>
 
                 <div class="flex flex-wrap gap-3">

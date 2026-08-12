@@ -53,7 +53,9 @@ class DubizzleParserTest extends TestCase
 
         $this->assertSame('c2000', $mapper->detectCategory('2000 - 2499 cc', 'Petrol'));
         $this->assertSame('c1500', $mapper->detectCategory('1200 - 1499 cc', 'Petrol'));
-        $this->assertSame('ev', $mapper->detectCategory('2000 - 2499 cc', 'Hybrid'));
+        $this->assertSame('hybrid', $mapper->detectCategory('2000 - 2499 cc', 'Hybrid'));
+        $this->assertSame('ev', $mapper->detectCategory('2000 - 2499 cc', 'Electric'));
+        $this->assertSame('phev', $mapper->detectCategory('2000 - 2499 cc', 'Plug-in Hybrid'));
         $this->assertSame('c3001', $mapper->detectCategory('4000 - 4499 cc', 'Petrol'));
     }
 }

@@ -47,6 +47,8 @@ class CarPriceController extends Controller
             'specs' => $specs,
             'freeRate' => (float) Setting::get(Setting::FREE_RATE),
             'customsRate' => (float) Setting::get(Setting::CUSTOMS_RATE),
+            'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
+            'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
         ]);
     }
 

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CarListing;
 use App\Models\CarListingImage;
+use App\Models\Setting;
 use App\Services\CarImageDownloader;
 use App\Services\CarListingMapper;
 use App\Services\DubizzleParser;
@@ -66,7 +67,7 @@ class CarListingController extends Controller
         return view('admin.car-listings.edit', [
             'pageTitle' => 'ویرایش آگهی: '.($carListing->title_fa ?: $carListing->title_en),
             'listing' => $carListing->load('images'),
-            'categories' => CarListing::CATEGORIES,
+            'categories' => CarListing::categoriesWithLiveRates(),
         ]);
     }
 
@@ -82,6 +83,7 @@ class CarListingController extends Controller
             'price_aed' => ['required', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
             'category_id' => ['required', Rule::in(array_keys(CarListing::CATEGORIES))],
+            'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
             'body_type' => ['nullable', 'string', 'max:100'],
             'fuel_type' => ['nullable', 'string', 'max:100'],
             'transmission_type' => ['nullable', 'string', 'max:100'],
@@ -231,6 +233,7 @@ class CarListingController extends Controller
             'description_en' => $raw['description_en'] ?? null,
             'specs_json' => json_encode($raw, JSON_UNESCAPED_UNICODE),
             'posted_on_dubizzle' => $raw['posted_on_dubizzle'] ?? null,
+            'delivery_days' => (int) Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
             'created_by' => $adminId,
         ]);
 
