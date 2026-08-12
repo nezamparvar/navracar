@@ -33,7 +33,8 @@ class DubizzleTranslator
     private const VALUE_MAPS = [
         'fuel_type' => [
             'Petrol' => 'بنزینی', 'Gasoline' => 'بنزینی', 'Diesel' => 'دیزلی',
-            'Electric' => 'برقی', 'Hybrid' => 'هیبریدی',
+            'Electric' => 'برقی', 'Hybrid' => 'هیبریدی', 'Hybrid Electric' => 'هیبریدی',
+            'Plug-in Hybrid' => 'پلاگین هیبریدی', 'Plug-In Hybrid' => 'پلاگین هیبریدی',
         ],
         'transmission_type' => [
             'Automatic Transmission' => 'اتوماتیک', 'Manual Transmission' => 'دستی',

@@ -42,6 +42,20 @@ class AdminUser extends Authenticatable
         return $this->role === 'admin';
     }
 
+    public function isContentManager(): bool
+    {
+        return $this->role === 'content_manager';
+    }
+
+    /**
+     * دسترسی به بخش‌های محتوایی (آگهی خودرو، وبلاگ، اسلایدر، منو) — هم مدیر
+     * کامل و هم مدیر محتوا مجازند؛ تنظیمات/کاربران/قالب‌ها فقط مدیر کامل.
+     */
+    public function canManageContent(): bool
+    {
+        return $this->isAdmin() || $this->isContentManager();
+    }
+
     public function displayName(): string
     {
         return $this->full_name ?: $this->username;

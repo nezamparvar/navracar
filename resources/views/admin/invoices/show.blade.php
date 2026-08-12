@@ -90,9 +90,9 @@
 
             <div class="mt-6 rounded-xl bg-ink-50 p-4 text-sm leading-8">
                 <div class="mb-1 font-extrabold text-brand-900">📞 ارتباط با ما</div>
-                🇮🇷 +98 912 051 2149 (واتس‌اپ | بله | تلگرام)<br>
-                🇦🇪 +971 50 515 8484 (واتس‌اپ | تلگرام)<br>
-                ☎️ +98 21 8887 0878 (دفتر تهران)<br>
+                🇮🇷 {{ $whatsappIran }} (واتس‌اپ | بله | تلگرام)<br>
+                🇦🇪 {{ $whatsappUae }} (واتس‌اپ | تلگرام)<br>
+                ☎️ {{ $tehranOfficePhone }} (دفتر تهران)<br>
                 🌐 navaracar.com
             </div>
 

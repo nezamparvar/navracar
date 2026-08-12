@@ -15,6 +15,11 @@ class RequestController extends Controller
 {
     public const STATUSES = ['باز', 'در حال پیگیری', 'فروخته شد', 'بسته - ناموفق'];
 
+    public const COUNTRIES = [
+        'ایران', 'امارات متحده عربی', 'ترکیه', 'عراق', 'افغانستان', 'آلمان', 'کانادا',
+        'آمریکا', 'انگلستان', 'استرالیا', 'سوئد', 'هلند', 'فرانسه', 'سایر',
+    ];
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -61,12 +66,12 @@ class RequestController extends Controller
     {
         $user = $request->user();
         $staffList = $user->isAdmin() ? AdminUser::orderBy('username')->get() : collect();
-        $cities = self::CITIES;
 
         return view('admin.requests.create', [
             'pageTitle' => 'ثبت دستی مشتری تماس‌گرفته',
             'staffList' => $staffList,
-            'cities' => $cities,
+            'cities' => self::CITIES,
+            'countries' => self::COUNTRIES,
         ]);
     }
 
@@ -81,6 +86,7 @@ class RequestController extends Controller
             'car_label' => ['nullable', 'string', 'max:255'],
             'category' => ['nullable', 'string', 'max:100'],
             'budget_range' => ['nullable', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
             'city' => ['nullable', 'string', 'max:100'],
             'total_with_profit' => ['nullable', 'string'],
             'next_call_date' => ['nullable', 'date'],
@@ -104,6 +110,7 @@ class RequestController extends Controller
             'email_sent' => false,
             'source' => $data['source'] ?? 'تماس تلفنی',
             'budget_range' => $data['budget_range'] ?? null,
+            'country' => $data['country'] ?? null,
             'city' => $data['city'] ?? null,
             'assigned_to' => $assignedTo,
             'created_by' => $user->id,

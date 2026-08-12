@@ -13,10 +13,57 @@ class Setting extends Model
 
     public const CUSTOMS_RATE = 'customs_rate';
 
+    public const LICENSE_FEE_AED = 'license_fee_aed';
+
+    public const SEA_FREIGHT_AED = 'sea_freight_aed';
+
+    public const STORAGE_TOMAN = 'storage_toman';
+
+    public const SCRAP_CERT_PRICE_TOMAN = 'scrap_cert_price_toman';
+
+    public const SCRAP_THRESHOLD_AED = 'scrap_threshold_aed';
+
+    public const WHATSAPP_UAE = 'whatsapp_uae_number';
+
+    public const WHATSAPP_IRAN = 'whatsapp_iran_number';
+
+    public const TEHRAN_OFFICE_PHONE = 'tehran_office_phone';
+
+    public const DEFAULT_DELIVERY_DAYS = 'default_delivery_days';
+
+    public const TELEGRAM_BOT_TOKEN = 'telegram_bot_token';
+
+    public const TELEGRAM_CHAT_ID = 'telegram_chat_id';
+
+    public const BALE_BOT_TOKEN = 'bale_bot_token';
+
+    public const BALE_CHAT_ID = 'bale_chat_id';
+
     public const DEFAULTS = [
         self::FREE_RATE => '51000',
         self::CUSTOMS_RATE => '35688',
+        self::LICENSE_FEE_AED => '60000',
+        self::SEA_FREIGHT_AED => '1500',
+        self::STORAGE_TOMAN => '0',
+        self::SCRAP_CERT_PRICE_TOMAN => '0',
+        self::SCRAP_THRESHOLD_AED => '60000',
+        self::WHATSAPP_UAE => '+971 50 515 8484',
+        self::WHATSAPP_IRAN => '+98 912 051 2149',
+        self::TEHRAN_OFFICE_PHONE => '+98 21 8887 0878',
+        self::DEFAULT_DELIVERY_DAYS => '40',
     ];
+
+    /**
+     * پیشوند کلید تعرفهٔ گمرکی (سود بازرگانی) هر دستهٔ خودرو، به‌صورت درصد.
+     * مقدار کامل کلید: tariff_percent_{categoryId}
+     */
+    public const TARIFF_PREFIX = 'tariff_percent_';
+
+    /**
+     * پیشوند کلید رتبهٔ انرژی هر دسته برای محاسبهٔ تعداد گواهی اسقاط
+     * (ab | cd | efg — طبق جدول آیین‌نامهٔ پیوست).
+     */
+    public const SCRAP_TIER_PREFIX = 'scrap_tier_';
 
     public static function get(string $key, ?string $default = null): string
     {

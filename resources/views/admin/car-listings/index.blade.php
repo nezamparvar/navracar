@@ -13,9 +13,17 @@
                           class="mt-3 w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 font-mono text-[11px] ltr text-left dark:border-white/10 dark:bg-white/5">{{ old('html_source') }}</textarea>
             </details>
 
-            <x-button type="submit" variant="amber">
-                <x-icon name="download" class="w-4 h-4" /> دریافت اطلاعات و ساخت پیش‌نویس
-            </x-button>
+            <div class="flex flex-wrap items-center gap-3">
+                <x-button type="submit" variant="amber">
+                    <x-icon name="download" class="w-4 h-4" /> دریافت اطلاعات و ساخت پیش‌نویس
+                </x-button>
+                <x-button :href="route('admin.car-listings.create')" variant="secondary">
+                    <x-icon name="plus" class="w-4 h-4" /> افزودن آگهی دستی (بدون دابیزل)
+                </x-button>
+                <x-button :href="route('admin.car-listings.import')" variant="secondary">
+                    <x-icon name="upload" class="w-4 h-4" /> ایمپورت گروهی از فایل کرالر
+                </x-button>
+            </div>
         </form>
     </x-card>
 
@@ -39,6 +47,9 @@
                                 <x-badge :color="$listing->status === 'published' ? 'green' : 'slate'">
                                     {{ $listing->status === 'published' ? 'منتشرشده' : 'پیش‌نویس' }}
                                 </x-badge>
+                                @if($listing->source_site === 'manual')
+                                    <x-badge color="blue">دستی</x-badge>
+                                @endif
                             </div>
                             <div class="mt-1 text-xs text-ink-500 dark:text-ink-400 num-font">
                                 {{ number_format((float) $listing->price_aed) }} درهم

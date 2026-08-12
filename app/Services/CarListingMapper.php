@@ -20,8 +20,14 @@ class CarListingMapper
     public function detectCategory(?string $engineCapacityCcText, ?string $fuelTypeText): string
     {
         $fuel = mb_strtolower($fuelTypeText ?? '');
-        if (str_contains($fuel, 'hybrid') || str_contains($fuel, 'electric')) {
+        if (str_contains($fuel, 'electric') && ! str_contains($fuel, 'hybrid')) {
             return 'ev';
+        }
+        if (str_contains($fuel, 'plug')) {
+            return 'phev';
+        }
+        if (str_contains($fuel, 'hybrid')) {
+            return 'hybrid';
         }
 
         $cc = null;

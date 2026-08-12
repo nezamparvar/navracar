@@ -1,0 +1,20 @@
+{
+  "categories": [
+    {
+      "name": "بنز C-Class",
+      "url": "https://dubai.dubizzle.com/motors/used-cars/mercedes-benz/c-class/"
+    },
+    {
+      "name": "تویوتا لندکروزر",
+      "url": "https://dubai.dubizzle.com/motors/used-cars/toyota/land-cruiser/"
+    }
+  ],
+  "max_listings_per_category": 40,
+  "max_pages_per_category": 5,
+  "pacing": {
+    "min_delay": 3.0,
+    "max_delay": 8.0,
+    "long_pause_every": 15,
+    "long_pause_seconds": 45.0
+  }
+}

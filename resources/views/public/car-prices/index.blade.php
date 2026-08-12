@@ -1,28 +1,65 @@
 <x-layouts.public :title="$title">
 
     @push('head')
-        <meta name="description" content="لیست خودروهای موجود در دابیزل امارات به همراه قیمت درهم و جدول کامل هزینه ترخیص، عوارض گمرکی و پلاک برای واردات به ایران — ناوراکار.">
-        <link rel="canonical" href="{{ route('public.car-prices.index') }}">
+        <meta name="description" content="{{ $description }}">
+        <link rel="canonical" href="{{ $canonicalUrl }}">
         <meta property="og:title" content="{{ $title }}">
         <meta property="og:type" content="website">
-        <meta property="og:url" content="{{ route('public.car-prices.index') }}">
+        <meta property="og:url" content="{{ $canonicalUrl }}">
+        <x-schema-breadcrumbs :items="$breadcrumbs" />
+        <script type="application/ld+json">
+            {!! json_encode([
+                '@context' => 'https://schema.org',
+                '@type' => 'ItemList',
+                'itemListElement' => $listings->values()->map(fn ($l, $i) => [
+                    '@type' => 'ListItem',
+                    'position' => $i + 1,
+                    'url' => route('public.car-prices.show', $l),
+                    'name' => $l->title_fa,
+                ])->all(),
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+        </script>
     @endpush
 
     <div class="mx-auto max-w-6xl px-4 py-8">
         <nav class="mb-4 text-xs text-ink-500">
-            <a href="{{ route('public.calculator') }}" class="hover:text-brand-700">ناوراکار</a>
-            <span class="mx-1">/</span>
-            <span class="font-bold text-ink-800">قیمت خودروها</span>
+            @foreach ($breadcrumbs as $i => $crumb)
+                @if(!$loop->last)
+                    <a href="{{ $crumb['url'] }}" class="hover:text-brand-700">{{ $crumb['label'] }}</a>
+                    <span class="mx-1">/</span>
+                @else
+                    <span class="font-bold text-ink-800">{{ $crumb['label'] }}</span>
+                @endif
+            @endforeach
         </nav>
 
-        <h1 class="text-2xl font-black text-ink-900 sm:text-3xl">قیمت خودروها</h1>
-        <p class="mt-2 max-w-2xl text-sm text-ink-500">
-            خودروهای موجود در بازار امارات با قیمت روز درهم — همراه با جدول کامل محاسبه هزینهٔ ترخیص گمرکی، عوارض و پلاک انتظامی برای واردات به ایران.
-        </p>
+        <h1 class="text-2xl font-black text-ink-900 sm:text-3xl">{{ $heading }}</h1>
+        <p class="mt-2 max-w-2xl text-sm text-ink-500">{{ $description }}</p>
+
+        <div class="mt-5 space-y-2.5">
+            <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-[11px] font-bold text-ink-400">برند:</span>
+                @foreach ($quickFilters['brands'] as $chip)
+                    <a href="{{ $chip['url'] }}" class="rounded-full border border-ink-200 bg-white px-3 py-1 text-[11px] font-bold text-ink-600 hover:border-brand-400 hover:text-brand-700 dark:border-white/10">{{ $chip['label'] }}</a>
+                @endforeach
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-[11px] font-bold text-ink-400">دسته موتور:</span>
+                @foreach ($quickFilters['categories'] as $chip)
+                    <a href="{{ $chip['url'] }}" class="rounded-full border border-ink-200 bg-white px-3 py-1 text-[11px] font-bold text-ink-600 hover:border-brand-400 hover:text-brand-700 dark:border-white/10">{{ $chip['label'] }}</a>
+                @endforeach
+            </div>
+            <div class="flex flex-wrap items-center gap-1.5">
+                <span class="text-[11px] font-bold text-ink-400">بازه قیمت:</span>
+                @foreach ($quickFilters['priceBrackets'] as $chip)
+                    <a href="{{ $chip['url'] }}" class="rounded-full border border-ink-200 bg-white px-3 py-1 text-[11px] font-bold text-ink-600 hover:border-brand-400 hover:text-brand-700 dark:border-white/10">{{ $chip['label'] }}</a>
+                @endforeach
+            </div>
+        </div>
 
         @if ($listings->isEmpty())
             <div class="mt-10 rounded-2xl border border-ink-200/70 bg-white p-10 text-center text-ink-400">
-                در حال حاضر آگهی‌ای منتشر نشده است.
+                در حال حاضر آگهی‌ای در این بخش منتشر نشده است.
             </div>
         @else
             <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

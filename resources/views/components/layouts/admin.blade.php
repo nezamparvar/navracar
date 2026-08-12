@@ -18,8 +18,13 @@
         ['route' => 'admin.vin-checks.index', 'label' => 'شماره‌شاسی‌ها', 'icon' => 'vin'],
         ['route' => 'admin.invoices.index', 'label' => 'پیش‌فاکتورها', 'icon' => 'invoice'],
     ];
-    $adminNavItems = [
+    $contentNavItems = [
         ['route' => 'admin.car-listings.index', 'label' => 'آگهی‌های دابیزل', 'icon' => 'car'],
+        ['route' => 'admin.posts.index', 'label' => 'وبلاگ', 'icon' => 'message'],
+        ['route' => 'admin.home-slides.index', 'label' => 'اسلایدر صفحه اصلی', 'icon' => 'image'],
+        ['route' => 'admin.menu-items.index', 'label' => 'منوی سایت', 'icon' => 'menu'],
+    ];
+    $adminNavItems = [
         ['route' => 'admin.settings.edit', 'label' => 'تنظیمات نرخ ارز', 'icon' => 'target'],
         ['route' => 'admin.templates.index', 'label' => 'قالب‌های پیام', 'icon' => 'message'],
         ['route' => 'admin.users.index', 'label' => 'کاربران', 'icon' => 'users'],
@@ -58,6 +63,19 @@
                     {{ $item['label'] }}
                 </a>
             @endforeach
+
+            @if (auth()->user()?->canManageContent())
+                <div class="mt-4 mb-1 px-3.5 text-[11px] font-bold uppercase tracking-wider text-brand-300/70">مدیریت محتوا</div>
+                @foreach ($contentNavItems as $item)
+                    @php $active = request()->routeIs($item['route'].'*'); @endphp
+                    <a href="{{ route($item['route']) }}"
+                       class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                       {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
+                        <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            @endif
 
             @if (auth()->user()?->isAdmin())
                 <div class="mt-4 mb-1 px-3.5 text-[11px] font-bold uppercase tracking-wider text-brand-300/70">فقط مدیر</div>
@@ -112,7 +130,9 @@
                 <div class="mx-1 hidden h-8 w-px bg-ink-200 dark:bg-white/10 sm:block"></div>
                 <div class="hidden text-left sm:block">
                     <div class="text-sm font-bold text-ink-900 dark:text-white">{{ auth()->user()?->displayName() }}</div>
-                    <div class="text-[11px] font-semibold text-ink-500 dark:text-ink-400">{{ auth()->user()?->isAdmin() ? 'مدیر سیستم' : 'کارشناس فروش' }}</div>
+                    <div class="text-[11px] font-semibold text-ink-500 dark:text-ink-400">
+                        {{ match(auth()->user()?->role) { 'admin' => 'مدیر سیستم', 'content_manager' => 'مدیر محتوا', default => 'کارشناس فروش' } }}
+                    </div>
                 </div>
                 <div class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-sm font-black text-brand-700 dark:bg-brand-500/20 dark:text-brand-300">
                     {{ mb_substr(auth()->user()?->displayName() ?? '?', 0, 1) }}

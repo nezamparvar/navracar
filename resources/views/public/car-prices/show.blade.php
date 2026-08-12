@@ -2,8 +2,8 @@
     $l = $listing;
     $priceToman = (float) $l->price_aed * $freeRate;
     $waMessage = rawurlencode("سلام، درباره خودروی «{$l->title_fa}» (قیمت ".number_format((float) $l->price_aed)." درهم) توضیحات بیشتری می‌خوام: ".route('public.car-prices.show', $l));
-    $waUae = 'https://wa.me/'.str_replace([' ', '+'], '', config('navaracar.contact.uae_phone')).'?text='.$waMessage;
-    $waIran = 'https://wa.me/'.str_replace([' ', '+'], '', config('navaracar.contact.iran_phone')).'?text='.$waMessage;
+    $waUae = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappUae).'?text='.$waMessage;
+    $waIran = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappIran).'?text='.$waMessage;
 @endphp
 
 <x-layouts.public :title="$title">
@@ -23,7 +23,7 @@
             <meta name="robots" content="noindex, nofollow">
         @endif
         <script type="application/ld+json">
-            {!! json_encode([
+            {!! json_encode(array_filter([
                 '@context' => 'https://schema.org',
                 '@type' => 'Vehicle',
                 'name' => $l->title_fa,
@@ -32,6 +32,15 @@
                 'vehicleModelDate' => $l->model_year,
                 'mileageFromOdometer' => $l->kilometers,
                 'fuelType' => $l->fuel_type,
+                'bodyType' => $l->body_type,
+                'vehicleTransmission' => $l->transmission_type,
+                'color' => $l->exterior_color,
+                'vehicleInteriorColor' => $l->interior_color,
+                'numberOfDoors' => $l->doors,
+                'vehicleSeatingCapacity' => $l->seating_capacity,
+                'vehicleEngine' => $l->engine_capacity_cc ? ['@type' => 'EngineSpecification', 'engineDisplacement' => $l->engine_capacity_cc] : null,
+                'itemCondition' => 'https://schema.org/UsedCondition',
+                'sku' => $l->slug,
                 'image' => $l->images->map(fn($img) => $img->url())->all(),
                 'offers' => [
                     '@type' => 'Offer',
@@ -40,13 +49,18 @@
                     'availability' => 'https://schema.org/InStock',
                     'url' => route('public.car-prices.show', $l),
                 ],
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
+            ]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
         </script>
+        <x-schema-breadcrumbs :items="[
+            ['label' => 'ناوراکار', 'url' => route('public.home')],
+            ['label' => 'قیمت خودروها', 'url' => route('public.car-prices.index')],
+            ['label' => $l->title_fa, 'url' => route('public.car-prices.show', $l)],
+        ]" />
     @endpush
 
     <div class="mx-auto max-w-6xl px-4 py-8">
         <nav class="mb-4 text-xs text-ink-500">
-            <a href="{{ route('public.calculator') }}" class="hover:text-brand-700">ناوراکار</a>
+            <a href="{{ route('public.home') }}" class="hover:text-brand-700">ناوراکار</a>
             <span class="mx-1">/</span>
             <a href="{{ route('public.car-prices.index') }}" class="hover:text-brand-700">قیمت خودروها</a>
             <span class="mx-1">/</span>
@@ -91,6 +105,12 @@
                         <a href="{{ $l->source_url }}" target="_blank" rel="nofollow noopener" class="text-brand-600 hover:underline">دابیزل امارات</a>
                         @if($l->posted_on_dubizzle) · تاریخ ثبت آگهی: {{ $l->posted_on_dubizzle }} @endif
                     </p>
+                    @if($l->delivery_days)
+                        <div class="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
+                            <x-icon name="check-circle" class="w-4 h-4" />
+                            مدت زمان تحویل تخمینی: <span class="num-font">{{ $l->delivery_days }}</span> روز کاری
+                        </div>
+                    @endif
                 </div>
 
                 <div class="flex flex-wrap gap-3">

@@ -5,10 +5,12 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CarListing;
 use App\Models\CarListingImage;
+use App\Models\Setting;
 use App\Services\CarImageDownloader;
 use App\Services\CarListingMapper;
 use App\Services\DubizzleParser;
 use App\Services\DubizzleTranslator;
+use App\Services\SocialPublisher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -20,6 +22,7 @@ class CarListingController extends Controller
         private readonly DubizzleTranslator $translator,
         private readonly CarListingMapper $mapper,
         private readonly CarImageDownloader $imageDownloader,
+        private readonly SocialPublisher $socialPublisher,
     ) {}
 
     public function index()
@@ -61,12 +64,89 @@ class CarListingController extends Controller
             ->with('success', 'آگهی با موفقیت دریافت شد. لطفاً قبل از انتشار، فیلدها و دسته‌بندی را بررسی کنید.');
     }
 
+    public function create()
+    {
+        return view('admin.car-listings.create', [
+            'pageTitle' => 'افزودن آگهی دستی',
+            'listing' => new CarListing([
+                'category_id' => 'c2000',
+                'delivery_days' => (int) Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
+            ]),
+            'categories' => CarListing::categoriesWithLiveRates(),
+        ]);
+    }
+
+    public function storeManual(Request $request)
+    {
+        $data = $request->validate([
+            'title_fa' => ['required', 'string', 'max:500'],
+            'slug' => ['nullable', 'string', 'max:255', 'alpha_dash', 'unique:car_listings,slug'],
+            'make' => ['nullable', 'string', 'max:100'],
+            'model' => ['nullable', 'string', 'max:100'],
+            'trim_level' => ['nullable', 'string', 'max:255'],
+            'model_year' => ['nullable', 'string', 'max:10'],
+            'price_aed' => ['required', 'numeric', 'min:0'],
+            'kilometers' => ['nullable', 'string', 'max:50'],
+            'category_id' => ['required', Rule::in(array_keys(CarListing::CATEGORIES))],
+            'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'body_type' => ['nullable', 'string', 'max:100'],
+            'fuel_type' => ['nullable', 'string', 'max:100'],
+            'transmission_type' => ['nullable', 'string', 'max:100'],
+            'regional_specs' => ['nullable', 'string', 'max:100'],
+            'steering_side' => ['nullable', 'string', 'max:100'],
+            'seller_type' => ['nullable', 'string', 'max:100'],
+            'warranty' => ['nullable', 'string', 'max:50'],
+            'exterior_color' => ['nullable', 'string', 'max:100'],
+            'interior_color' => ['nullable', 'string', 'max:100'],
+            'horsepower' => ['nullable', 'string', 'max:100'],
+            'engine_capacity_cc' => ['nullable', 'string', 'max:100'],
+            'no_of_cylinders' => ['nullable', 'string', 'max:20'],
+            'doors' => ['nullable', 'string', 'max:50'],
+            'seating_capacity' => ['nullable', 'string', 'max:50'],
+            'location_text' => ['nullable', 'string', 'max:255'],
+            'meta_title' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $slug = $data['slug'] ?? null;
+        unset($data['slug']);
+        if (empty($slug)) {
+            $slug = $this->mapper->slugify($data);
+        }
+
+        $listing = CarListing::create([
+            ...$data,
+            'slug' => $slug,
+            'source_url' => '',
+            'source_site' => 'manual',
+            'status' => 'draft',
+            'created_by' => $request->user()->id,
+        ]);
+
+        return redirect()->route('admin.car-listings.edit', $listing)
+            ->with('success', 'آگهی دستی ایجاد شد. حالا می‌توانید عکس اضافه کنید.');
+    }
+
     public function edit(CarListing $carListing)
     {
+        $carListing->load('images');
+        $cover = $carListing->coverImage();
+
+        $priceLine = number_format((float) $carListing->price_aed).' درهم';
+        $caption = $this->socialPublisher->buildCaption(
+            title: $carListing->title_fa,
+            description: $carListing->meta_description,
+            priceLine: $priceLine,
+            url: route('public.car-prices.show', $carListing),
+            hashtags: array_filter(['ناوراکار', 'واردات_خودرو', 'قیمت_خودرو', $carListing->make, $carListing->model]),
+        );
+
         return view('admin.car-listings.edit', [
             'pageTitle' => 'ویرایش آگهی: '.($carListing->title_fa ?: $carListing->title_en),
-            'listing' => $carListing->load('images'),
-            'categories' => CarListing::CATEGORIES,
+            'listing' => $carListing,
+            'categories' => CarListing::categoriesWithLiveRates(),
+            'socialHasImage' => (bool) $cover,
+            'socialWhatsappUrl' => $this->socialPublisher->whatsAppShareUrl($caption),
         ]);
     }
 
@@ -82,6 +162,7 @@ class CarListingController extends Controller
             'price_aed' => ['required', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
             'category_id' => ['required', Rule::in(array_keys(CarListing::CATEGORIES))],
+            'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
             'body_type' => ['nullable', 'string', 'max:100'],
             'fuel_type' => ['nullable', 'string', 'max:100'],
             'transmission_type' => ['nullable', 'string', 'max:100'],
@@ -200,6 +281,65 @@ class CarListingController extends Controller
         return back()->with('success', 'عکس اضافه شد.');
     }
 
+    public function showImport()
+    {
+        return view('admin.car-listings.import', [
+            'pageTitle' => 'ایمپورت گروهی از فایل کرالر',
+        ]);
+    }
+
+    /**
+     * ایمپورت گروهی — فایل JSON خروجی ابزار کرالر دسکتاپ را می‌خواند. هر ردیف
+     * باید دقیقاً همان شکل خروجی DubizzleParser::parse() را داشته باشد (همان
+     * منطقی که مسیر تک‌لینکی از قبل استفاده می‌کند، اینجا هم دوباره استفاده
+     * می‌شود تا رفتار دو مسیر یکسان بماند).
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'json_file' => ['required', 'file', 'max:20480'],
+        ]);
+
+        $rows = json_decode($request->file('json_file')->get(), true);
+        if (! is_array($rows)) {
+            return back()->with('error', 'فایل JSON معتبر نیست — باید یک آرایه از آگهی‌ها باشد.');
+        }
+
+        $created = 0;
+        $skipped = 0;
+        $failed = 0;
+
+        foreach ($rows as $raw) {
+            if (! is_array($raw) || empty($raw['source_url'])) {
+                $failed++;
+
+                continue;
+            }
+
+            if (CarListing::where('source_url', $raw['source_url'])->exists()) {
+                $skipped++;
+
+                continue;
+            }
+
+            if (empty($raw['title_en']) && empty($raw['price_aed'])) {
+                $failed++;
+
+                continue;
+            }
+
+            try {
+                $this->createFromRaw($raw['source_url'], $raw, $request->user()->id);
+                $created++;
+            } catch (\Throwable) {
+                $failed++;
+            }
+        }
+
+        return redirect()->route('admin.car-listings.index')
+            ->with('success', "ایمپورت انجام شد — {$created} آگهی جدید، {$skipped} تکراری (رد شد)، {$failed} ناموفق.");
+    }
+
     public function destroyImage(CarListing $carListing, CarListingImage $image)
     {
         abort_if($image->car_listing_id !== $carListing->id, 404);
@@ -208,6 +348,38 @@ class CarListingController extends Controller
         $image->delete();
 
         return back()->with('success', 'عکس حذف شد.');
+    }
+
+    public function publishSocial(Request $request, CarListing $carListing)
+    {
+        $data = $request->validate([
+            'platform' => ['required', Rule::in(['telegram', 'bale'])],
+        ]);
+
+        $image = $carListing->coverImage();
+        if (! $image) {
+            return response()->json(['ok' => false, 'error' => 'این آگهی عکسی ندارد — ابتدا یک عکس اضافه کنید.'], 422);
+        }
+
+        $priceLine = number_format((float) $carListing->price_aed).' درهم';
+        $freeRate = (float) Setting::get(Setting::FREE_RATE);
+        if ($freeRate > 0) {
+            $priceLine .= ' (≈ '.number_format((float) $carListing->price_aed * $freeRate).' تومان)';
+        }
+
+        $caption = $this->socialPublisher->buildCaption(
+            title: $carListing->title_fa,
+            description: $carListing->meta_description,
+            priceLine: $priceLine,
+            url: route('public.car-prices.show', $carListing),
+            hashtags: array_filter(['ناوراکار', 'واردات_خودرو', 'قیمت_خودرو', $carListing->make, $carListing->model]),
+        );
+
+        $result = $data['platform'] === 'telegram'
+            ? $this->socialPublisher->publishToTelegram($image->url(), $caption)
+            : $this->socialPublisher->publishToBale($image->url(), $caption);
+
+        return response()->json($result, $result['ok'] ? 200 : 422);
     }
 
     private function createFromRaw(string $sourceUrl, array $raw, int $adminId): CarListing
@@ -231,6 +403,7 @@ class CarListingController extends Controller
             'description_en' => $raw['description_en'] ?? null,
             'specs_json' => json_encode($raw, JSON_UNESCAPED_UNICODE),
             'posted_on_dubizzle' => $raw['posted_on_dubizzle'] ?? null,
+            'delivery_days' => (int) Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
             'created_by' => $adminId,
         ]);
 

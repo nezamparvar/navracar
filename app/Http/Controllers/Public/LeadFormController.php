@@ -19,6 +19,11 @@ class LeadFormController extends Controller
         'رشت', 'زاهدان', 'کرمان', 'اراک', 'یزد', 'اردبیل', 'بندرعباس', 'قزوین', 'ساری', 'همدان', 'سایر',
     ];
 
+    public const COUNTRIES = [
+        'ایران', 'امارات متحده عربی', 'ترکیه', 'عراق', 'افغانستان', 'آلمان', 'کانادا',
+        'آمریکا', 'انگلستان', 'استرالیا', 'سوئد', 'هلند', 'فرانسه', 'سایر',
+    ];
+
     public const CAR_BRANDS = [
         'Mercedes-Benz', 'BMW', 'Acura', 'Volkswagen', 'Audi', 'Toyota', 'Lexus', 'Hyundai', 'Kia', 'Genesis',
         'Honda', 'Peugeot', 'Nissan', 'Infiniti', 'Mazda', 'Mitsubishi', 'Suzuki', 'Land Rover', 'Jaguar', 'Volvo',
@@ -36,6 +41,7 @@ class LeadFormController extends Controller
             'staff' => $staff,
             'carBrands' => self::CAR_BRANDS,
             'cities' => self::CITIES,
+            'countries' => self::COUNTRIES,
         ]);
     }
 
@@ -60,6 +66,7 @@ class LeadFormController extends Controller
             'carInterest' => ['required', 'string', 'max:255'],
             'source' => ['required', 'string', 'max:50'],
             'status' => ['required', 'string', 'max:50'],
+            'country' => ['nullable', 'string', 'max:100'],
             'city' => ['required', 'string', 'max:100'],
             'notes' => ['nullable', 'string'],
             'nextCall' => ['nullable', 'date'],
@@ -85,7 +92,7 @@ class LeadFormController extends Controller
             'email_sent' => false,
             'source' => $data['source'],
             'budget_range' => $data['budget'],
-            'country' => $geoData['country'],
+            'country' => $data['country'] ?: $geoData['country'],
             'city' => $data['city'] ?: $geoData['city'],
             'assigned_to' => $staffUser->id,
             'created_by' => $staffUser->id,

@@ -1,13 +1,22 @@
 @props(['listing', 'freeRate', 'customsRate'])
 
 @php
-    $categories = \App\Models\CarListing::CATEGORIES;
+    $categories = \App\Models\CarListing::categoriesWithLiveRates();
     $config = [
         'priceAed' => (float) $listing->price_aed,
         'categoryId' => $listing->category_id,
         'categories' => $categories,
         'freeRate' => $freeRate,
         'customsRate' => $customsRate,
+        'licenseFeeAed' => (float) \App\Models\Setting::get(\App\Models\Setting::LICENSE_FEE_AED),
+        'seaFreightAed' => (float) \App\Models\Setting::get(\App\Models\Setting::SEA_FREIGHT_AED),
+        'storageToman' => (float) \App\Models\Setting::get(\App\Models\Setting::STORAGE_TOMAN),
+        'scrapCertPriceToman' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_CERT_PRICE_TOMAN),
+        'scrapThresholdAed' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_THRESHOLD_AED),
+        'scrapCertCounts' => \App\Models\CarListing::SCRAP_CERT_COUNTS,
+        'carLabel' => $listing->title_fa,
+        'quoteUrl' => route('public.quote-requests.store'),
+        'csrfToken' => csrf_token(),
     ];
 @endphp
 
@@ -54,6 +63,10 @@
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">انبارداری و دموراژ (تومان)</label>
             <input type="number" x-model.number="storage" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+        </div>
+        <div>
+            <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">نرخ هر گواهی اسقاط (تومان)</label>
+            <input type="number" x-model.number="scrapCertPriceToman" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
         </div>
     </div>
 
@@ -145,6 +158,43 @@
     <p class="text-[11px] leading-6 text-ink-400 dark:text-ink-500">
         این گزارش صرفاً یک برآورد اولیه بر اساس نرخ‌های ثبت‌شده در سیستم ناوراکار است و ممکن است با تغییر مقررات گمرکی یا نرخ ارز به‌روزرسانی شود. برای قیمت قطعی با کارشناسان ناوراکار تماس بگیرید.
     </p>
+
+    <div>
+        <button type="button" @click="showProforma = true; pfStatus = ''"
+                class="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
+            <x-icon name="invoice" class="w-4 h-4" /> درخواست پیش‌فاکتور
+        </button>
+    </div>
+
+    <div x-show="showProforma" x-cloak style="display:none" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @keydown.escape.window="showProforma = false">
+        <div @click.outside="showProforma = false" class="w-full max-w-sm rounded-2xl bg-white p-5 shadow-soft-lg dark:bg-ink-900">
+            <div class="mb-3 flex items-center justify-between">
+                <h3 class="text-sm font-extrabold text-ink-900 dark:text-white">درخواست پیش‌فاکتور</h3>
+                <button type="button" @click="showProforma = false" class="text-ink-400 hover:text-ink-700">✕</button>
+            </div>
+            <p class="mb-3 text-xs text-ink-500 dark:text-ink-400">نام و شماره تماس را وارد کنید تا کارشناسان ناوراکار پیش‌فاکتور رسمی این خودرو را برایتان آماده و ارسال کنند.</p>
+            <div class="space-y-3">
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">نام و نام خانوادگی</label>
+                    <input type="text" x-model="pfName" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">شماره تماس</label>
+                    <input type="text" x-model="pfPhone" dir="ltr" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">ایمیل (اختیاری)</label>
+                    <input type="email" x-model="pfEmail" dir="ltr" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+                <p x-show="pfStatus" x-text="pfStatus" :class="pfOk ? 'text-emerald-600' : 'text-rose-600'" class="text-xs font-bold"></p>
+                <button type="button" @click="submitProforma()" :disabled="pfSubmitting"
+                        class="w-full rounded-xl bg-amber-500 px-4 py-2.5 text-sm font-bold text-ink-900 disabled:opacity-60">
+                    <span x-show="!pfSubmitting">ثبت درخواست</span>
+                    <span x-show="pfSubmitting">در حال ارسال...</span>
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 @once
@@ -154,9 +204,10 @@ window.carCalculatorApp = function (config) {
         customsFixed: 'حقوق گمرکی ثابت', gasoline: 'عوارض بنزین‌سوز', fob: 'عوارض ۵٪ فوب',
         vat: 'مالیات ارزش افزوده', advanceTax: 'مالیات علی‌الحساب', redCrescent: 'عوارض هلال احمر',
         supervision: 'حق نظارت کارشناسان', waste: 'عوارض پسماند کالا', standard: 'هزینه استاندارد',
-        scrapCert: 'گواهی اسقاط', plateReg: 'عوارض شماره‌گذاری', transferTax: 'مالیات نقل و انتقال',
+        plateReg: 'عوارض شماره‌گذاری', transferTax: 'مالیات نقل و انتقال',
         municipal: 'عوارض سالانه شهرداری', individual: 'عوارض شخص حقیقی', serviceProfit: 'سود خدمات ناوراکار',
     };
+    const tierLabels = { ab: '(ای) و (بی)', cd: '(سی) و (دی)', efg: '(ای)، (اف) و (جی)' };
 
     return {
         realPriceAED: config.priceAed,
@@ -165,18 +216,68 @@ window.carCalculatorApp = function (config) {
         categories: config.categories,
         freeRate: config.freeRate,
         customsRate: config.customsRate,
-        seaFreightAED: 1500,
-        permitsAED: 60000,
-        storage: 0,
+        seaFreightAED: config.seaFreightAed,
+        permitsAED: config.licenseFeeAed,
+        storage: config.storageToman,
+        scrapCertPriceToman: config.scrapCertPriceToman,
+        scrapThresholdAED: config.scrapThresholdAed,
+        scrapCertCounts: config.scrapCertCounts,
         rateLabels,
         rates: {
             customsFixed: 4, gasoline: 10, fob: 5, vat: 10, advanceTax: 2, redCrescent: 1,
-            supervision: 0.5, waste: 0.05, standard: 0.8, scrapCert: 1.5, plateReg: 10,
+            supervision: 0.5, waste: 0.05, standard: 0.8, plateReg: 10,
             transferTax: 3, municipal: 1, individual: 5, serviceProfit: 10,
         },
 
+        showProforma: false,
+        pfName: '', pfPhone: '', pfEmail: '', pfStatus: '', pfOk: false, pfSubmitting: false,
+
         fmt(n) {
             return Math.round(n || 0).toLocaleString('en-US');
+        },
+
+        async submitProforma() {
+            if (!this.pfName.trim() || !this.pfPhone.trim()) {
+                this.pfOk = false;
+                this.pfStatus = 'لطفاً نام و شماره تماس را وارد کنید.';
+                return;
+            }
+            this.pfSubmitting = true;
+            this.pfStatus = '';
+            const r = this.results;
+            const cat = (this.categories[this.categoryId] || {}).label || this.categoryId;
+            try {
+                const res = await fetch(config.quoteUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken },
+                    body: JSON.stringify({
+                        name: this.pfName.trim(),
+                        phone: this.pfPhone.trim(),
+                        email: this.pfEmail.trim() || null,
+                        notes: 'درخواست پیش‌فاکتور از صفحه خودرو',
+                        car: config.carLabel,
+                        category: cat,
+                        breakdown: [...r.customsRows, ...r.plateRows],
+                        totals: {
+                            'جمع کل بدون سود خدمات': this.fmt(r.totalNoProfit) + ' تومان',
+                            'سود خدمات ناوراکار': this.fmt(r.serviceProfitAmt) + ' تومان',
+                            'قیمت تمام‌شده نهایی': this.fmt(r.totalWithProfit) + ' تومان',
+                        },
+                        website: '',
+                        pageLoadedAt: 0,
+                    }),
+                });
+                const data = await res.json();
+                this.pfOk = !!data.success;
+                this.pfStatus = data.message || (data.success
+                    ? 'درخواست شما ثبت شد؛ پیش‌فاکتور رسمی به‌زودی برایتان ارسال می‌شود.'
+                    : 'ثبت درخواست ناموفق بود. لطفاً دوباره تلاش کنید.');
+            } catch (e) {
+                this.pfOk = false;
+                this.pfStatus = 'خطا در ارتباط با سرور. لطفاً بعداً دوباره تلاش کنید.';
+            } finally {
+                this.pfSubmitting = false;
+            }
         },
 
         get results() {
@@ -198,7 +299,7 @@ window.carCalculatorApp = function (config) {
             const base9 = dutyProfit + CIF;
 
             const customsRows = [
-                { label: 'سود بازرگانی', rate: `${(coef * 100).toFixed(0)}٪ از ارزش گمرکی (دسته خودرو)`, value: dutyProfit },
+                { label: 'عوارض گمرکی بر اساس تعرفه', rate: `${(coef * 100).toFixed(0)}٪ از ارزش گمرکی (دسته خودرو)`, value: dutyProfit },
                 { label: 'حقوق گمرکی ثابت', rate: `${this.rates.customsFixed}٪ از ارزش گمرکی`, value: pct('customsFixed') * CIF },
                 { label: 'عوارض بنزین‌سوز', rate: `${this.rates.gasoline}٪ از ارزش گمرکی`, value: pct('gasoline') * CIF },
                 { label: 'عوارض ۵٪ فوب', rate: `${this.rates.fob}٪ از ارزش فوب`, value: pct('fob') * CIF },
@@ -210,11 +311,21 @@ window.carCalculatorApp = function (config) {
                 { label: 'هزینه استاندارد', rate: `${this.rates.standard}٪ از ارزش گمرکی`, value: pct('standard') * CIF },
             ];
             const sumCustoms10 = customsRows.reduce((s, r) => s + r.value, 0);
+
+            const seaFreight = seaFreightAED * freeRate;
+            const permits = permitsAED * freeRate;
+            customsRows.push({ label: 'حمل دریایی', rate: 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', value: seaFreight });
+            customsRows.push({ label: 'هزینه صدور مجوزهای واردات', rate: 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', value: permits });
             customsRows.push({ label: 'انبارداری، دموراژ و THC', rate: 'مبلغ دستی وارد شده', value: storage });
-            const sumCustomsAll = sumCustoms10 + storage;
+            const sumCustomsAll = sumCustoms10 + seaFreight + permits + storage;
+
+            const tier = (this.categories[this.categoryId] || {}).tier || 'cd';
+            const bracket = customsPriceAED > num(this.scrapThresholdAED) ? 'above' : 'upto';
+            const certCount = (this.scrapCertCounts[tier] || this.scrapCertCounts.cd)[bracket];
+            const scrapFee = certCount * num(this.scrapCertPriceToman);
 
             const plateRows = [
-                { label: 'خرید گواهی اسقاط', rate: `${this.rates.scrapCert}٪ از ارزش گمرکی`, value: pct('scrapCert') * CIF },
+                { label: 'گواهی اسقاط خودرو فرسوده', rate: `${certCount} فقره گواهی (رتبه انرژی ${tierLabels[tier] || tier}) × نرخ روز`, value: scrapFee },
                 { label: 'عوارض شماره‌گذاری راهور', rate: `${this.rates.plateReg}٪ از ارزش گمرکی`, value: pct('plateReg') * CIF },
                 { label: 'مالیات نقل و انتقال', rate: `${this.rates.transferTax}٪ از ارزش گمرکی`, value: pct('transferTax') * CIF },
                 { label: 'عوارض سالانه شهرداری', rate: `${this.rates.municipal}٪ از ارزش گمرکی`, value: pct('municipal') * CIF },
@@ -222,10 +333,7 @@ window.carCalculatorApp = function (config) {
             ];
             const sumPlate = plateRows.reduce((s, r) => s + r.value, 0);
 
-            const seaFreight = seaFreightAED * freeRate;
-            const permits = permitsAED * freeRate;
-
-            const totalNoProfit = sumCustomsAll + sumPlate + realPriceToman + seaFreight + permits;
+            const totalNoProfit = sumCustomsAll + sumPlate + realPriceToman;
             const serviceProfitAmt = pct('serviceProfit') * (sumCustoms10 + sumPlate + seaFreight + permits);
             const totalWithProfit = totalNoProfit + serviceProfitAmt;
 

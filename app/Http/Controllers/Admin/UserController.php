@@ -29,7 +29,7 @@ class UserController extends Controller
             'username' => ['required', 'string', 'max:64', 'unique:admin_users,username'],
             'password' => ['required', 'string', 'min:6'],
             'full_name' => ['nullable', 'string', 'max:255'],
-            'role' => [Rule::in(['admin', 'sales'])],
+            'role' => [Rule::in(['admin', 'sales', 'content_manager'])],
         ]);
 
         AdminUser::create([
@@ -46,7 +46,7 @@ class UserController extends Controller
     {
         abort_if($user->id === $request->user()->id, 422, 'نمی‌توانید نقش خودتان را تغییر دهید.');
 
-        $data = $request->validate(['role' => [Rule::in(['admin', 'sales'])]]);
+        $data = $request->validate(['role' => [Rule::in(['admin', 'sales', 'content_manager'])]]);
         $user->update(['role' => $data['role']]);
 
         return back()->with('success', 'نقش کاربر به‌روزرسانی شد.');

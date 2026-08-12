@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\QuoteRequest;
+use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -169,6 +170,9 @@ class InvoiceController extends Controller
             'pageTitle' => 'پیش‌فاکتور '.$invoice->invoice_number,
             'invoice' => $invoice,
             'breakdown' => $invoice->breakdown(),
+            'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
+            'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
+            'tehranOfficePhone' => Setting::get(Setting::TEHRAN_OFFICE_PHONE),
         ]);
     }
 

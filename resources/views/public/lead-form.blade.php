@@ -74,11 +74,20 @@
             </div>
 
             <div class="animate-fade-up rounded-2xl border border-ink-200/70 bg-white p-5 shadow-soft">
+                <label class="mb-2.5 text-sm font-extrabold">کشور</label>
+                <select x-model="form.country" @change="form.city = ''" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-3 text-base">
+                    @foreach ($countries as $c)<option>{{ $c }}</option>@endforeach
+                </select>
+                <p class="mt-1.5 text-xs text-ink-500">ممکن است مشتری از خارج از ایران تماس گرفته باشد.</p>
+            </div>
+
+            <div class="animate-fade-up rounded-2xl border border-ink-200/70 bg-white p-5 shadow-soft">
                 <label class="mb-2.5 text-sm font-extrabold">شهر <span class="text-rose-500">*</span></label>
-                <select x-model="form.city" required class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-3 text-base">
+                <select x-show="form.country === 'ایران'" x-model="form.city" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-3 text-base">
                     <option value="">— انتخاب کنید —</option>
                     @foreach ($cities as $c)<option>{{ $c }}</option>@endforeach
                 </select>
+                <input x-show="form.country !== 'ایران'" x-model="form.city" placeholder="نام شهر" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-3 text-base">
             </div>
 
             <div class="animate-fade-up rounded-2xl border border-ink-200/70 bg-white p-5 shadow-soft">
@@ -113,7 +122,7 @@
         function leadForm() {
             return {
                 loading: false, error: '', success: false,
-                form: { website: '', userId: '', name: '', phone: '', email: '', budget: '', carInterest: '', source: '', status: '', city: '', nextCall: '', notes: '' },
+                form: { website: '', userId: '', name: '', phone: '', email: '', budget: '', carInterest: '', source: '', status: '', country: 'ایران', city: '', nextCall: '', notes: '' },
                 async submit() {
                     if (!this.form.userId || !this.form.name || !this.form.phone || !this.form.budget || !this.form.carInterest || !this.form.source || !this.form.status || !this.form.city) {
                         this.error = 'لطفاً همه فیلدهای الزامی (*) را پر کنید.'; return;
