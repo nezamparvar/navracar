@@ -29,8 +29,8 @@ class ProformaPdfGenerator
     private function fonts(): array
     {
         return [
-            'fontRegular' => 'file://'.resource_path('fonts/NotoNaskhArabic-Regular.ttf'),
-            'fontBold' => 'file://'.resource_path('fonts/NotoNaskhArabic-Bold.ttf'),
+            'fontRegular' => 'file://'.resource_path('fonts/NotoSansArabic-Regular.ttf'),
+            'fontBold' => 'file://'.resource_path('fonts/NotoSansArabic-Bold.ttf'),
         ];
     }
 

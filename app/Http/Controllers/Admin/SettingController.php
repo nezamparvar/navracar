@@ -30,6 +30,10 @@ class SettingController extends Controller
             'telegramChatId' => Setting::get(Setting::TELEGRAM_CHAT_ID),
             'baleBotToken' => Setting::get(Setting::BALE_BOT_TOKEN),
             'baleChatId' => Setting::get(Setting::BALE_CHAT_ID),
+            'usdToAedRate' => Setting::get(Setting::USD_TO_AED_RATE),
+            'loanMaxAmountToman' => Setting::get(Setting::LOAN_MAX_AMOUNT_TOMAN),
+            'loanTermYears' => Setting::get(Setting::LOAN_TERM_YEARS),
+            'loanInterestRatePercent' => Setting::get(Setting::LOAN_INTEREST_RATE_PERCENT),
             'categories' => CarListing::categoriesWithLiveRates(),
         ]);
     }
@@ -52,6 +56,10 @@ class SettingController extends Controller
             'telegram_chat_id' => ['nullable', 'string', 'max:255'],
             'bale_bot_token' => ['nullable', 'string', 'max:255'],
             'bale_chat_id' => ['nullable', 'string', 'max:255'],
+            'usd_to_aed_rate' => ['required', 'numeric', 'min:0.01'],
+            'loan_max_amount_toman' => ['required', 'numeric', 'min:0'],
+            'loan_term_years' => ['required', 'integer', 'min:1', 'max:30'],
+            'loan_interest_rate_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'tariff_percent' => ['required', 'array'],
             'tariff_percent.*' => ['required', 'numeric', 'min:0', 'max:500'],
             'scrap_tier' => ['required', 'array'],
@@ -73,6 +81,10 @@ class SettingController extends Controller
         Setting::set(Setting::TELEGRAM_CHAT_ID, (string) ($data['telegram_chat_id'] ?? ''));
         Setting::set(Setting::BALE_BOT_TOKEN, (string) ($data['bale_bot_token'] ?? ''));
         Setting::set(Setting::BALE_CHAT_ID, (string) ($data['bale_chat_id'] ?? ''));
+        Setting::set(Setting::USD_TO_AED_RATE, (string) $data['usd_to_aed_rate']);
+        Setting::set(Setting::LOAN_MAX_AMOUNT_TOMAN, (string) $data['loan_max_amount_toman']);
+        Setting::set(Setting::LOAN_TERM_YEARS, (string) $data['loan_term_years']);
+        Setting::set(Setting::LOAN_INTEREST_RATE_PERCENT, (string) $data['loan_interest_rate_percent']);
 
         foreach ($data['tariff_percent'] as $categoryId => $percent) {
             if (array_key_exists($categoryId, CarListing::CATEGORIES)) {

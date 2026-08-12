@@ -95,8 +95,10 @@ class SiteExpansionTest extends TestCase
     public function test_car_prices_can_be_filtered_by_brand_category_and_price_bracket(): void
     {
         Setting::set(Setting::FREE_RATE, '50000');
-        $cheap = $this->publishedListing(['slug' => 'cheap-car', 'title_fa' => 'تویوتا کمری ارزان', 'make' => 'toyota', 'category_id' => 'c1500', 'price_aed' => 50000]); // 2.5b toman
-        $expensive = $this->publishedListing(['slug' => 'expensive-car', 'title_fa' => 'بی‌ام‌و گران', 'make' => 'bmw', 'category_id' => 'c3000', 'price_aed' => 500000]); // 25b toman
+        // بازهٔ قیمتی بر مبنای «قیمت تمام‌شده» (بعد از عوارض/ترخیص) تعیین می‌شود، نه
+        // فقط قیمت خام درهم — بنابراین این اعداد باید کل هزینهٔ واردات را هم لحاظ کنند.
+        $cheap = $this->publishedListing(['slug' => 'cheap-car', 'title_fa' => 'تویوتا کمری ارزان', 'make' => 'toyota', 'category_id' => 'c1500', 'price_aed' => 10000]); // ~4.6b toman تمام‌شده
+        $expensive = $this->publishedListing(['slug' => 'expensive-car', 'title_fa' => 'بی‌ام‌و گران', 'make' => 'bmw', 'category_id' => 'c3000', 'price_aed' => 300000]); // ~43.8b toman تمام‌شده
 
         $byBrand = $this->get(route('public.car-prices.brand', 'toyota'));
         $byBrand->assertOk()->assertSee($cheap->title_fa)->assertDontSee($expensive->title_fa);

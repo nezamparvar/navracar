@@ -170,7 +170,7 @@
                     car_model: @json($lead->car_label ?: 'خودروی مدنظر'),
                     total_price: @json($lead->total_with_profit ? number_format($lead->total_with_profit) : 'برآورد اولیه'),
                     salesperson_name: @json(auth()->user()->displayName()),
-                    official_channels: 'navaracar.com — واتساپ +971505158484',
+                    official_channels: 'navracar.com — واتساپ +971505158484',
                     company_name: 'ناوراکار',
                 },
                 render() {

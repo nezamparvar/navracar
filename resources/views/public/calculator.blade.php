@@ -141,6 +141,8 @@
   .field input{width:100%;padding:13px 54px 13px 14px;border-radius:12px;border:1.5px solid var(--border);font-family:var(--font);font-size:1.05rem;font-weight:600;background:var(--surface-alt);color:var(--ink);transition:.15s border-color,.15s background;}
   .field input:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px var(--primary-light);}
   .field .unit{position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.74rem;color:var(--ink-soft);font-weight:800;background:var(--surface-alt);pointer-events:none;}
+  .field .unit-toggle{pointer-events:auto;cursor:pointer;border:1px solid var(--border);border-radius:999px;padding:2px 10px;font-family:var(--font);transition:.15s background,.15s color;}
+  .field .unit-toggle:hover{background:var(--primary-light);color:var(--primary);}
   .field select{width:100%;padding:13px 14px;border-radius:12px;border:1.5px solid var(--border);font-family:var(--font);font-size:1rem;font-weight:600;background:var(--surface-alt);color:var(--ink);transition:.15s border-color,.15s background;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235B6478' stroke-width='2'><path d='M6 9l6 6 6-6'/></svg>");background-repeat:no-repeat;background-position:left 12px center;background-size:16px;}
   .field select:focus{outline:none;border-color:var(--primary);background-color:#fff;box-shadow:0 0 0 4px var(--primary-light);}
   .field select:disabled{opacity:.55;cursor:not-allowed;}
@@ -558,8 +560,8 @@
     <div class="card">
       <h2><span class="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9v.01M18 15v.01"/></svg></span> اطلاعات قیمت و ارز</h2>
       <div class="field-grid">
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/></svg>قیمت واقعی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="realPriceAED" value="400,000"><span class="unit">درهم</span></div></div>
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M4 10h16"/></svg>قیمت گمرکی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsPriceAED" value="400,000"><span class="unit">درهم</span></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/></svg>قیمت واقعی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="realPriceAED" value="400,000"><button type="button" class="unit unit-toggle" id="realPriceAEDUnit" onclick="togglePriceCurrency('realPriceAED')">درهم</button></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M4 10h16"/></svg>قیمت گمرکی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsPriceAED" value="400,000"><button type="button" class="unit unit-toggle" id="customsPriceAEDUnit" onclick="togglePriceCurrency('customsPriceAED')">درهم</button></div></div>
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز آزاد</label><div class="input-wrap"><input type="text" inputmode="decimal" id="freeRate" value="51,000"><span class="unit">تومان</span></div></div>
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز گمرک</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsRate" value="35,688"><span class="unit">تومان</span></div></div>
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20c2 1 4 1 6 0s4-1 6 0 4 1 6 0M5 20l1-9 4-6h4l4 6 1 9"/></svg>حمل دریایی</label><div class="input-wrap"><input type="text" inputmode="decimal" id="seaFreightAED" value="1,500"><span class="unit">درهم</span></div></div>
@@ -583,7 +585,7 @@
           <div class="rate-row"><span>مالیات نقل و انتقال</span><input type="number" step="0.1" id="r_transferTax" value="3"></div>
           <div class="rate-row"><span>عوارض سالانه شهرداری</span><input type="number" step="0.1" id="r_municipal" value="1"></div>
           <div class="rate-row"><span>عوارض شخص حقیقی</span><input type="number" step="0.1" id="r_individual" value="5"></div>
-          <div class="rate-row"><span>سود خدمات ناوراکار</span><input type="number" step="0.1" id="r_serviceProfit" value="10"></div>
+          <div class="rate-row"><span>کارمزد ترخیص‌کار و کارگزار (ناوراکار)</span><input type="number" step="0.1" id="r_serviceProfit" value="10"></div>
         </div>
       </details>
     </div>
@@ -606,8 +608,8 @@
       </div>
       <div class="dash-mini-grid" id="miniGaugeGrid"></div>
       <div class="dash-lines">
-        <div class="dash-line"><span class="dl-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>جمع کل بدون سود</span><span class="amt num-font" id="s_noProfit">۰</span></div>
-        <div class="dash-line"><span class="dl-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>سود خدمات ناوراکار</span><span class="amt num-font" id="s_profit">۰</span></div>
+        <div class="dash-line"><span class="dl-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>جمع کل بدون کارمزد</span><span class="amt num-font" id="s_noProfit">۰</span></div>
+        <div class="dash-line"><span class="dl-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"/><path d="M15 7h6v6"/></svg>کارمزد ترخیص‌کار و کارگزار (ناوراکار)</span><span class="amt num-font" id="s_profit">۰</span></div>
         <div class="dash-line total"><span class="dl-lbl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 12.5l2 2 5-5"/><circle cx="12" cy="12" r="9"/></svg>جمع کل نهایی</span><span class="amt num-font" id="s_total">۰</span></div>
       </div>
     </div>
@@ -770,9 +772,9 @@
       🇮🇷 {{ $contactIran }} (واتس‌اپ | بله | تلگرام)<br>
       🇦🇪 {{ $contactUae }} (واتس‌اپ | تلگرام)<br>
       ☎️ {{ $contactTehran }} (دفتر تهران)<br>
-      🌐 navaracar.com
+      🌐 navracar.com
     </div>
-    <div class="ps-sign"><div>مهر و امضای ناوراکار</div><div>navaracar.com</div></div>
+    <div class="ps-sign"><div>مهر و امضای ناوراکار</div><div>navracar.com</div></div>
   </div>
 </div>
 
@@ -790,6 +792,27 @@ const CAR_LISTINGS = @js($carListings);
 const CONTACT_IRAN = @js($contactIran);
 const CONTACT_UAE = @js($contactUae);
 const CONTACT_TEHRAN = @js($contactTehran);
+const USD_TO_AED_RATE = @js($usdToAedRate);
+const priceCurrencyState = { realPriceAED: 'aed', customsPriceAED: 'aed' };
+function getPriceAED(id){
+  const raw = num(id);
+  return priceCurrencyState[id] === 'usd' ? raw * USD_TO_AED_RATE : raw;
+}
+function togglePriceCurrency(id){
+  const input = document.getElementById(id);
+  const btn = document.getElementById(id + 'Unit');
+  const current = num(id);
+  if(priceCurrencyState[id] === 'aed'){
+    priceCurrencyState[id] = 'usd';
+    input.value = (Math.round((current / USD_TO_AED_RATE) * 100) / 100).toLocaleString('en-US');
+    btn.textContent = 'دلار';
+  } else {
+    priceCurrencyState[id] = 'aed';
+    input.value = Math.round(current * USD_TO_AED_RATE).toLocaleString('en-US');
+    btn.textContent = 'درهم';
+  }
+  calc();
+}
 const waDigits = n => n.replace(/[\s+]/g, '');
 window.__pageLoadedAt = Date.now();
 const gaugeIcon = tip => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15L${tip}"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/><path d="M4 15h1.4M18.6 15H20" stroke-width="1.4" opacity=".6"/></svg>`;
@@ -1383,8 +1406,8 @@ function logCalcNow(){
 }
 
 function calc(){
-  const realPriceAED = num('realPriceAED');
-  const customsPriceAED = num('customsPriceAED');
+  const realPriceAED = getPriceAED('realPriceAED');
+  const customsPriceAED = getPriceAED('customsPriceAED');
   const freeRate = num('freeRate');
   const customsRate = num('customsRate');
   const seaFreightAED = num('seaFreightAED');
@@ -1460,20 +1483,20 @@ function calc(){
     {label:'سایر حقوق و عوارض گمرکی (شامل حمل و مجوز)', value:sumCustomsAll-dutyProfit, color:palette[1]},
     {label:'پلاک انتظامی', value:sumPlate, color:palette[2]},
     {label:'قیمت خودرو', value:realPriceToman, color:palette[3]},
-    {label:'سود خدمات ناوراکار', value:serviceProfitAmt, color:palette[5]},
+    {label:'کارمزد ترخیص‌کار و کارگزار (ناوراکار)', value:serviceProfitAmt, color:palette[5]},
   ]);
   renderBars(document.getElementById('barRows'), [
     {label:'ترخیص گمرکی (شامل حمل و مجوز)', value:sumCustomsAll, color:palette[0]},
     {label:'پلاک انتظامی', value:sumPlate, color:palette[1]},
     {label:'قیمت خودرو', value:realPriceToman, color:palette[3]},
-    {label:'سود خدمات', value:serviceProfitAmt, color:palette[4]},
+    {label:'کارمزد ترخیص‌کار', value:serviceProfitAmt, color:palette[4]},
   ]);
 
   renderMiniGauges(document.getElementById('miniGaugeGrid'), [
     {label:'قیمت خودرو', icon:miniIcons.car, color:'#3E6BFF', pct:(realPriceToman/totalWithProfit)*100},
     {label:'ترخیص گمرکی', icon:miniIcons.customs, color:'#FF8A1E', pct:(sumCustomsAll/totalWithProfit)*100},
     {label:'پلاک انتظامی', icon:miniIcons.plate, color:'#8B5CF6', pct:(sumPlate/totalWithProfit)*100},
-    {label:'سود خدمات', icon:miniIcons.profit, color:'#16A34A', pct:(serviceProfitAmt/totalWithProfit)*100},
+    {label:'کارمزد ترخیص‌کار', icon:miniIcons.profit, color:'#16A34A', pct:(serviceProfitAmt/totalWithProfit)*100},
   ]);
 
   lastBreakdownRows = [
@@ -1482,8 +1505,8 @@ function calc(){
     {label:'قیمت خودرو (اصل کالا)', rate:'-', amount:fmt(realPriceToman)+' تومان'},
   ];
   lastTotals = {
-    'جمع کل بدون سود': fmt(totalNoProfit)+' تومان',
-    'سود خدمات ناوراکار': fmt(serviceProfitAmt)+' تومان',
+    'جمع کل بدون کارمزد': fmt(totalNoProfit)+' تومان',
+    'کارمزد ترخیص‌کار و کارگزار (ناوراکار)': fmt(serviceProfitAmt)+' تومان',
     'جمع کل نهایی': fmt(totalWithProfit)+' تومان',
   };
   lastRawValues = {
@@ -1698,10 +1721,10 @@ function buildPrintSheet(){
 
   const now = new Date();
   const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
-  document.getElementById('psMeta').innerHTML = `تاریخ گزارش: <b>${dateStr}</b><br>دسته خودرو: <b>${activeCat.label}</b><br>🇮🇷 ${CONTACT_IRAN}<br>🇦🇪 ${CONTACT_UAE}<br>☎️ ${CONTACT_TEHRAN}<br>navaracar.com`;
+  document.getElementById('psMeta').innerHTML = `تاریخ گزارش: <b>${dateStr}</b><br>دسته خودرو: <b>${activeCat.label}</b><br>🇮🇷 ${CONTACT_IRAN}<br>🇦🇪 ${CONTACT_UAE}<br>☎️ ${CONTACT_TEHRAN}<br>navracar.com`;
 
   const carLabel = getSelectedCarLabel();
-  const realPriceAED = num('realPriceAED');
+  const realPriceAED = getPriceAED('realPriceAED');
   const realPriceToman = realPriceAED * num('freeRate');
   const realPriceRial = realPriceToman * 10;
 

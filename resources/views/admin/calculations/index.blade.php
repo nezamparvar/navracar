@@ -32,8 +32,8 @@
                     <thead>
                         <tr class="border-b-2 border-ink-100 text-xs font-extrabold text-ink-400 dark:border-white/10 dark:text-ink-500">
                             <th class="px-2.5 py-2 text-start">تاریخ</th><th class="px-2.5 py-2 text-start">خودرو</th><th class="px-2.5 py-2 text-start">دسته</th>
-                            <th class="px-2.5 py-2 text-start">موقعیت</th><th class="px-2.5 py-2 text-start">جمع بدون سود</th>
-                            <th class="px-2.5 py-2 text-start">سود خدمات</th><th class="px-2.5 py-2 text-start">جمع کل نهایی</th><th class="px-2.5 py-2 text-start">IP</th>
+                            <th class="px-2.5 py-2 text-start">موقعیت</th><th class="px-2.5 py-2 text-start">جمع بدون کارمزد</th>
+                            <th class="px-2.5 py-2 text-start">کارمزد ترخیص‌کار</th><th class="px-2.5 py-2 text-start">جمع کل نهایی</th><th class="px-2.5 py-2 text-start">IP</th>
                         </tr>
                     </thead>
                     <tbody>

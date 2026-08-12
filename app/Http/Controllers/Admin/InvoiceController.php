@@ -24,7 +24,7 @@ class InvoiceController extends Controller
             ['هزینه پلاک انتظامی', ''],
             ['صدور مجوزها', ''],
             ['حمل دریایی', ''],
-            ['سود خدمات ناوراکار', ''],
+            ['کارمزد ترخیص‌کار و کارگزار (ناوراکار)', ''],
         ],
         'single_item' => [
             ['صدور مجوز', 'خدمت مجزا'],
@@ -74,8 +74,8 @@ class InvoiceController extends Controller
             if ($lead) {
                 $breakdown = $lead->breakdown();
                 foreach ($lead->totals() as $label => $val) {
-                    if (mb_strpos((string) $label, 'سود خدمات') !== false) {
-                        $breakdown[] = ['label' => $label, 'rate' => 'طبق نرخ سود خدمات ناوراکار', 'amount' => $val];
+                    if (mb_strpos((string) $label, 'کارمزد ترخیص') !== false || mb_strpos((string) $label, 'سود خدمات') !== false) {
+                        $breakdown[] = ['label' => $label, 'rate' => 'طبق نرخ کارمزد ترخیص‌کار و کارگزار (ناوراکار)', 'amount' => $val];
                     }
                 }
                 $prefill = array_merge($prefill, [

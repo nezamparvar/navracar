@@ -39,6 +39,14 @@ class Setting extends Model
 
     public const BALE_CHAT_ID = 'bale_chat_id';
 
+    public const USD_TO_AED_RATE = 'usd_to_aed_rate';
+
+    public const LOAN_MAX_AMOUNT_TOMAN = 'loan_max_amount_toman';
+
+    public const LOAN_TERM_YEARS = 'loan_term_years';
+
+    public const LOAN_INTEREST_RATE_PERCENT = 'loan_interest_rate_percent';
+
     public const DEFAULTS = [
         self::FREE_RATE => '51000',
         self::CUSTOMS_RATE => '35688',
@@ -51,6 +59,10 @@ class Setting extends Model
         self::WHATSAPP_IRAN => '+98 912 051 2149',
         self::TEHRAN_OFFICE_PHONE => '+98 21 8887 0878',
         self::DEFAULT_DELIVERY_DAYS => '40',
+        self::USD_TO_AED_RATE => '3.6725',
+        self::LOAN_MAX_AMOUNT_TOMAN => '10000000000',
+        self::LOAN_TERM_YEARS => '5',
+        self::LOAN_INTEREST_RATE_PERCENT => '28',
     ];
 
     /**
