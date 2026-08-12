@@ -33,8 +33,8 @@
                         <label class="mb-1.5 block text-sm font-bold">دسته خودرو</label>
                         <select x-model="form.category" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
                             <option value="">— نامشخص —</option>
-                            <option>هیبرید / برقی</option><option>زیر ۱۵۰۰ سی‌سی</option><option>۱۵۰۱ تا ۲۰۰۰</option>
-                            <option>۲۰۰۱ تا ۲۵۰۰</option><option>۲۵۰۱ تا ۳۰۰۰</option><option>بالای ۳۰۰۱</option>
+                            <option>هیبرید / برقی</option><option>زیر ۱۵۰۰ سی‌سی</option><option>۱۵۰۰ تا ۲۰۰۰ سی‌سی</option>
+                            <option>۲۰۰۰ تا ۲۵۰۰ سی‌سی</option><option>۲۵۰۰ تا ۳۰۰۰ سی‌سی</option><option>بالای ۳۰۰۰ سی‌سی</option>
                         </select>
                     </div>
                     <div>

@@ -55,7 +55,14 @@ class CarListingController extends Controller
         $raw = $this->parser->parse($html, $data['source_url']);
 
         if (empty($raw['title_en']) && empty($raw['price_aed'])) {
-            return back()->withInput()->with('error', 'استخراج اطلاعات از این HTML ناموفق بود — ساختار صفحه ممکن است تغییر کرده باشد.');
+            $diagnostics = $this->parser->diagnostics($html);
+            $lines = collect($diagnostics)->map(fn ($found, $label) => ($found ? '✅' : '❌').' '.$label)->implode('، ');
+
+            return back()->withInput()->with('error',
+                'استخراج اطلاعات از این HTML ناموفق بود — ساختار صفحهٔ دابیزل ممکن است تغییر کرده باشد. '
+                .'نتیجهٔ بررسی فیلدهای کلیدی: '.$lines.'. '
+                .'اگر این HTML را دستی پیست نکرده بودید، احتمال زیاد صفحه‌ای که دریافت شده یک صفحهٔ مسدودسازی/چالش ضدربات بوده، نه خود آگهی — '
+                .'لطفاً HTML واقعی را از View Page Source مرورگر خودتان کپی و پیست کنید.');
         }
 
         $listing = $this->createFromRaw($data['source_url'], $raw, $request->user()->id);

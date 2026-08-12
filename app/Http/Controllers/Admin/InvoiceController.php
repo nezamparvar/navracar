@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Invoice;
 use App\Models\QuoteRequest;
 use App\Models\Setting;
+use App\Services\ProformaPdfGenerator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
 class InvoiceController extends Controller
 {
-    public const CATEGORIES = ['هیبرید / برقی', 'زیر ۱۵۰۰ سی‌سی', '۱۵۰۱ تا ۲۰۰۰', '۲۰۰۱ تا ۲۵۰۰', '۲۵۰۱ تا ۳۰۰۰', 'بالای ۳۰۰۱'];
+    public const CATEGORIES = ['هیبرید / برقی', 'زیر ۱۵۰۰ سی‌سی', '۱۵۰۰ تا ۲۰۰۰ سی‌سی', '۲۰۰۰ تا ۲۵۰۰ سی‌سی', '۲۵۰۰ تا ۳۰۰۰ سی‌سی', 'بالای ۳۰۰۰ سی‌سی'];
 
     public const QUICK_ROWS = [
         'full' => [
@@ -182,5 +184,12 @@ class InvoiceController extends Controller
         $invoice->update(['status' => $data['status']]);
 
         return back();
+    }
+
+    public function downloadPdf(Invoice $invoice, ProformaPdfGenerator $pdfGenerator)
+    {
+        $path = $pdfGenerator->fromInvoice($invoice);
+
+        return Storage::disk('public')->download($path, $invoice->invoice_number.'.pdf');
     }
 }

@@ -28,6 +28,7 @@
                 <option value="تایید شده" @selected($invoice->status === 'تایید شده')>تایید شده (فروخته شد)</option>
             </select>
         </form>
+        <a href="{{ route('admin.invoices.pdf', $invoice) }}" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">دانلود فایل PDF</a>
         <button onclick="window.print()" class="rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white">چاپ / ذخیره PDF</button>
     </div>
 

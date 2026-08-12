@@ -118,6 +118,22 @@ class CarListing extends Model
         return self::CATEGORIES[$this->category_id]['label'] ?? $this->category_id;
     }
 
+    public function priceBracketId(float $freeRate): ?string
+    {
+        if ($freeRate <= 0) {
+            return null;
+        }
+
+        $priceToman = (float) $this->price_aed * $freeRate;
+        foreach (self::PRICE_BRACKETS as $id => $bracket) {
+            if ($priceToman >= $bracket['min'] && ($bracket['max'] === null || $priceToman < $bracket['max'])) {
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
     public static function categoryCoef(string $categoryId): float
     {
         $default = self::CATEGORIES[$categoryId]['default_coef'] ?? 1.20;

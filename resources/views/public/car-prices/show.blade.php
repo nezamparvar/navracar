@@ -1,6 +1,14 @@
 @php
     $l = $listing;
     $priceToman = (float) $l->price_aed * $freeRate;
+    $breadcrumbItems = [
+        ['label' => 'ناوراکار', 'url' => route('public.home')],
+        ['label' => 'قیمت خودروها', 'url' => route('public.car-prices.index')],
+    ];
+    if ($brandLabel) {
+        $breadcrumbItems[] = ['label' => $brandLabel, 'url' => route('public.car-prices.brand', $l->make)];
+    }
+    $breadcrumbItems[] = ['label' => $l->title_fa, 'url' => route('public.car-prices.show', $l)];
     $waMessage = rawurlencode("سلام، درباره خودروی «{$l->title_fa}» (قیمت ".number_format((float) $l->price_aed)." درهم) توضیحات بیشتری می‌خوام: ".route('public.car-prices.show', $l));
     $waUae = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappUae).'?text='.$waMessage;
     $waIran = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappIran).'?text='.$waMessage;
@@ -51,20 +59,19 @@
                 ],
             ]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) !!}
         </script>
-        <x-schema-breadcrumbs :items="[
-            ['label' => 'ناوراکار', 'url' => route('public.home')],
-            ['label' => 'قیمت خودروها', 'url' => route('public.car-prices.index')],
-            ['label' => $l->title_fa, 'url' => route('public.car-prices.show', $l)],
-        ]" />
+        <x-schema-breadcrumbs :items="$breadcrumbItems" />
     @endpush
 
     <div class="mx-auto max-w-6xl px-4 py-8">
         <nav class="mb-4 text-xs text-ink-500">
-            <a href="{{ route('public.home') }}" class="hover:text-brand-700">ناوراکار</a>
-            <span class="mx-1">/</span>
-            <a href="{{ route('public.car-prices.index') }}" class="hover:text-brand-700">قیمت خودروها</a>
-            <span class="mx-1">/</span>
-            <span class="font-bold text-ink-800">{{ $l->title_fa }}</span>
+            @foreach ($breadcrumbItems as $i => $crumb)
+                @if ($i > 0)<span class="mx-1">/</span>@endif
+                @if ($i === count($breadcrumbItems) - 1)
+                    <span class="font-bold text-ink-800">{{ $crumb['label'] }}</span>
+                @else
+                    <a href="{{ $crumb['url'] }}" class="hover:text-brand-700">{{ $crumb['label'] }}</a>
+                @endif
+            @endforeach
         </nav>
 
         @if($l->status !== 'published')
@@ -99,6 +106,23 @@
                     <div class="mt-3 flex flex-wrap items-baseline gap-3">
                         <span class="text-2xl font-black text-brand-700 num-font">{{ number_format((float) $l->price_aed) }} <span class="text-sm font-bold">درهم</span></span>
                         <span class="text-sm text-ink-500 num-font">≈ {{ number_format($priceToman) }} تومان (نرخ روز)</span>
+                    </div>
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @if ($brandLabel)
+                            <a href="{{ route('public.car-prices.brand', $l->make) }}" class="rounded-full bg-brand-50 px-3 py-1.5 text-[11px] font-bold text-brand-700 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-300">
+                                {{ $brandLabel }}
+                            </a>
+                        @endif
+                        @if ($l->category_id)
+                            <a href="{{ route('public.car-prices.category', $l->category_id) }}" class="rounded-full bg-violet-50 px-3 py-1.5 text-[11px] font-bold text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:text-violet-300">
+                                {{ $l->categoryLabel() }}
+                            </a>
+                        @endif
+                        @if ($priceBracketId)
+                            <a href="{{ route('public.car-prices.price', $priceBracketId) }}" class="rounded-full bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300">
+                                {{ $priceBracketLabel }}
+                            </a>
+                        @endif
                     </div>
                     <p class="mt-2 text-[11px] text-ink-400">
                         منبع:
