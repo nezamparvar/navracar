@@ -94,7 +94,7 @@
                 🇮🇷 {{ $whatsappIran }} (واتس‌اپ | بله | تلگرام)<br>
                 🇦🇪 {{ $whatsappUae }} (واتس‌اپ | تلگرام)<br>
                 ☎️ {{ $tehranOfficePhone }} (دفتر تهران)<br>
-                🌐 navaracar.com
+                🌐 navracar.com
             </div>
 
             <div class="mt-9 flex justify-between border-t border-dashed border-ink-200 pt-4.5 text-sm text-ink-500">

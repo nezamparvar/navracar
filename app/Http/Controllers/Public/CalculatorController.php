@@ -26,6 +26,7 @@ class CalculatorController extends Controller
             'contactTehran' => Setting::get(Setting::TEHRAN_OFFICE_PHONE),
             'carListings' => $listings,
             'menuItems' => MenuItem::active()->get(),
+            'usdToAedRate' => (float) Setting::get(Setting::USD_TO_AED_RATE),
         ]);
     }
 }

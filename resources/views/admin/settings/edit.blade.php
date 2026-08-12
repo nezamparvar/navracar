@@ -15,6 +15,33 @@
                     <input type="number" step="1" name="customs_rate" value="{{ old('customs_rate', $customsRate) }}" required
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
                 </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">نرخ تبدیل دلار به درهم</label>
+                    <input type="number" step="0.0001" name="usd_to_aed_rate" value="{{ old('usd_to_aed_rate', $usdToAedRate) }}" required
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                    <p class="mt-1 text-[11px] text-ink-400">برای کاربرانی که قیمت خودرو را به دلار می‌دانند نه درهم — در محاسبه‌گر و صفحهٔ آگهی قابل انتخاب است.</p>
+                </div>
+            </div>
+        </x-card>
+
+        <x-card title="تنظیمات وام و اقساط" icon="target"
+                subtitle="برای نمایش جدول اقساط در صفحهٔ محاسبهٔ هزینهٔ هر آگهی خودرو.">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">حداکثر مبلغ وام (تومان)</label>
+                    <input type="number" step="1" name="loan_max_amount_toman" value="{{ old('loan_max_amount_toman', $loanMaxAmountToman) }}" required
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">مدت بازپرداخت (سال)</label>
+                    <input type="number" step="1" name="loan_term_years" value="{{ old('loan_term_years', $loanTermYears) }}" required
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">نرخ بهره سالانه (٪)</label>
+                    <input type="number" step="0.1" name="loan_interest_rate_percent" value="{{ old('loan_interest_rate_percent', $loanInterestRatePercent) }}" required
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                </div>
             </div>
         </x-card>
 

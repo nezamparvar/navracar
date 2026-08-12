@@ -77,9 +77,18 @@ class CarPriceController extends Controller
         abort_unless(array_key_exists($bracket, CarListing::PRICE_BRACKETS), 404);
         $label = CarListing::PRICE_BRACKETS[$bracket]['label'];
         $freeRate = (float) Setting::get(Setting::FREE_RATE);
+        $customsRate = (float) Setting::get(Setting::CUSTOMS_RATE);
+
+        // بازهٔ قیمتی بر مبنای «قیمت تمام‌شده» (هزینهٔ کامل واردات) تعیین می‌شود،
+        // نه فقط قیمت خام درهم — چون این فرمول برای هر آگهی به‌ازای دستهٔ خودرو
+        // فرق می‌کند، ابتدا شناسهٔ آگهی‌های منطبق در PHP مشخص و بعد کوئری اصلی
+        // (با صفحه‌بندی درست) روی همان شناسه‌ها فیلتر می‌شود.
+        $matchingIds = CarListing::published()->get(['id', 'price_aed', 'category_id'])
+            ->filter(fn (CarListing $l) => $l->priceBracketId($freeRate, $customsRate) === $bracket)
+            ->pluck('id');
 
         return $this->renderIndex(
-            CarListing::published()->priceBracket($bracket, $freeRate),
+            CarListing::whereIn('id', $matchingIds),
             title: "خودروهای {$label} | ناوراکار",
             heading: "خودروهای {$label}",
             description: "لیست آگهی‌های منتشرشدهٔ خودرو در بازهٔ قیمتی «{$label}» (بر پایهٔ نرخ روز) به همراه جدول کامل هزینه واردات به ایران.",
@@ -106,15 +115,16 @@ class CarPriceController extends Controller
         }
 
         $freeRate = (float) Setting::get(Setting::FREE_RATE);
+        $customsRate = (float) Setting::get(Setting::CUSTOMS_RATE);
         $brandLabel = $carListing->make ? (string) Str::of($carListing->make)->replace('-', ' ')->title() : null;
-        $priceBracketId = $carListing->priceBracketId($freeRate);
+        $priceBracketId = $carListing->priceBracketId($freeRate, $customsRate);
 
         return view('public.car-prices.show', [
             'title' => $carListing->meta_title ?: ($carListing->title_fa.' | ناوراکار'),
             'listing' => $carListing->load('images'),
             'specs' => $specs,
             'freeRate' => $freeRate,
-            'customsRate' => (float) Setting::get(Setting::CUSTOMS_RATE),
+            'customsRate' => $customsRate,
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
             'brandLabel' => $brandLabel,

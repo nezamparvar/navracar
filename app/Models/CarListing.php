@@ -88,26 +88,6 @@ class CarListing extends Model
         return $query->where('status', 'published');
     }
 
-    /**
-     * فیلتر بر اساس بازهٔ قیمت تومانی (PRICE_BRACKETS) — چون قیمت واقعی به
-     * درهم ذخیره می‌شود، بازه با نرخ روز به درهم تبدیل و در دیتابیس فیلتر
-     * می‌شود (نه در PHP، برای صفحه‌بندی درست).
-     */
-    public function scopePriceBracket(Builder $query, string $bracketId, float $freeRate): Builder
-    {
-        $bracket = self::PRICE_BRACKETS[$bracketId] ?? null;
-        if (! $bracket || $freeRate <= 0) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        $query->where('price_aed', '>=', $bracket['min'] / $freeRate);
-        if ($bracket['max'] !== null) {
-            $query->where('price_aed', '<', $bracket['max'] / $freeRate);
-        }
-
-        return $query;
-    }
-
     public function coverImage(): ?CarListingImage
     {
         return $this->images->firstWhere('is_cover', true) ?? $this->images->first();
@@ -118,13 +98,16 @@ class CarListing extends Model
         return self::CATEGORIES[$this->category_id]['label'] ?? $this->category_id;
     }
 
-    public function priceBracketId(float $freeRate): ?string
+    public function priceBracketId(float $freeRate, ?float $customsRate = null): ?string
     {
         if ($freeRate <= 0) {
             return null;
         }
 
-        $priceToman = (float) $this->price_aed * $freeRate;
+        $priceToman = $customsRate !== null && $customsRate > 0
+            ? $this->estimatedLandedCostToman($freeRate, $customsRate)
+            : (float) $this->price_aed * $freeRate;
+
         foreach (self::PRICE_BRACKETS as $id => $bracket) {
             if ($priceToman >= $bracket['min'] && ($bracket['max'] === null || $priceToman < $bracket['max'])) {
                 return $id;
@@ -132,6 +115,58 @@ class CarListing extends Model
         }
 
         return null;
+    }
+
+    /**
+     * برآورد «قیمت تمام‌شده» (هزینهٔ کامل واردات پس از ترخیص و پلاک، به تومان) —
+     * همان فرمولی که در جدول محاسبهٔ صفحهٔ هر آگهی (car-calculator.blade.php)
+     * به کاربر نشان داده می‌شود، اینجا برای تعیین برچسب بازهٔ قیمتی هر آگهی
+     * سمت سرور تکرار شده. نرخ‌های درصدی ثابت (غیر از سود بازرگانی/گواهی
+     * اسقاط که در پنل قابل ویرایش‌اند) با همان اعداد هاردکد در جاوااسکریپت
+     * محاسبه‌گر هماهنگ نگه داشته شوند.
+     */
+    public function estimatedLandedCostToman(float $freeRate, float $customsRate): float
+    {
+        $priceAed = (float) $this->price_aed;
+        $coef = $this->categoryCoefLive();
+        $tier = self::categoryTier($this->category_id);
+
+        $CIF = $priceAed * $customsRate;
+        $dutyProfit = $coef * $CIF;
+        $base9 = $dutyProfit + $CIF;
+
+        $sumCustoms10 = $dutyProfit
+            + 0.04 * $CIF   // حقوق گمرکی ثابت
+            + 0.10 * $CIF   // عوارض بنزین‌سوز
+            + 0.05 * $CIF   // عوارض ۵٪ فوب
+            + 0.10 * $base9 // مالیات ارزش افزوده
+            + 0.02 * $base9 // مالیات علی‌الحساب واردات
+            + 0.01 * $dutyProfit  // عوارض هلال احمر
+            + 0.005 * $dutyProfit // حق نظارت کارشناسان گمرک
+            + 0.0005 * $CIF // عوارض پسماند کالا
+            + 0.008 * $CIF; // هزینه استاندارد
+
+        $seaFreight = (float) Setting::get(Setting::SEA_FREIGHT_AED) * $freeRate;
+        $permits = (float) Setting::get(Setting::LICENSE_FEE_AED) * $freeRate;
+        $storage = (float) Setting::get(Setting::STORAGE_TOMAN);
+        $sumCustomsAll = $sumCustoms10 + $seaFreight + $permits + $storage;
+
+        $scrapThresholdAed = (float) Setting::get(Setting::SCRAP_THRESHOLD_AED);
+        $bracket = $priceAed > $scrapThresholdAed ? 'above' : 'upto';
+        $certCount = self::SCRAP_CERT_COUNTS[$tier][$bracket] ?? self::SCRAP_CERT_COUNTS['cd'][$bracket];
+        $scrapFee = $certCount * (float) Setting::get(Setting::SCRAP_CERT_PRICE_TOMAN);
+
+        $sumPlate = $scrapFee
+            + 0.10 * $CIF  // عوارض شماره‌گذاری راهور
+            + 0.03 * $CIF  // مالیات نقل و انتقال
+            + 0.01 * $CIF  // عوارض سالانه شهرداری
+            + 0.05 * $CIF; // عوارض شخص حقیقی
+
+        $realPriceToman = $priceAed * $freeRate;
+        $totalNoProfit = $sumCustomsAll + $sumPlate + $realPriceToman;
+        $serviceProfit = 0.10 * ($sumCustoms10 + $sumPlate + $seaFreight + $permits);
+
+        return $totalNoProfit + $serviceProfit;
     }
 
     public static function categoryCoef(string $categoryId): float

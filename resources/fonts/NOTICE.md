@@ -1,9 +1,11 @@
-# Noto Naskh Arabic
+# Noto Sans Arabic
 
-`NotoNaskhArabic-Regular.ttf` and `NotoNaskhArabic-Bold.ttf` are bundled here so
+`NotoSansArabic-Regular.ttf` and `NotoSansArabic-Bold.ttf` are bundled here so
 that server-side PDF generation (dompdf, via `barryvdh/laravel-dompdf`) can
 render Persian/Arabic text correctly — dompdf's default fonts have no
-Perso-Arabic glyph coverage.
+Perso-Arabic glyph coverage. A clean sans-serif was chosen (over a calligraphic
+Naskh-style face) to match the site's own Vazirmatn typography and stay legible
+in a business document.
 
 - Source: Google Noto Fonts — https://github.com/notofonts/arabic
 - Copyright 2010-2020 Google LLC / Google Inc.

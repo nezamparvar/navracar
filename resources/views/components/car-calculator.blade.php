@@ -14,6 +14,10 @@
         'scrapCertPriceToman' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_CERT_PRICE_TOMAN),
         'scrapThresholdAed' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_THRESHOLD_AED),
         'scrapCertCounts' => \App\Models\CarListing::SCRAP_CERT_COUNTS,
+        'usdToAedRate' => (float) \App\Models\Setting::get(\App\Models\Setting::USD_TO_AED_RATE),
+        'loanMaxAmountToman' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_MAX_AMOUNT_TOMAN),
+        'loanTermYears' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_TERM_YEARS),
+        'loanInterestRatePercent' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_INTEREST_RATE_PERCENT),
         'carLabel' => $listing->title_fa,
         'quoteUrl' => route('public.quote-requests.store'),
         'csrfToken' => csrf_token(),
@@ -29,12 +33,24 @@
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
-            <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">قیمت واقعی خودرو (درهم)</label>
-            <input type="number" x-model.number="realPriceAED" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <div class="mb-1 flex items-center justify-between">
+                <label class="text-xs font-bold text-ink-500 dark:text-ink-400">قیمت واقعی خودرو</label>
+                <div class="flex overflow-hidden rounded-lg border border-ink-200 text-[10px] font-bold dark:border-white/10">
+                    <button type="button" @click="priceCurrency = 'aed'" :class="priceCurrency === 'aed' ? 'bg-brand-700 text-white' : 'bg-white text-ink-500 dark:bg-ink-900'" class="px-2 py-1">درهم</button>
+                    <button type="button" @click="priceCurrency = 'usd'" :class="priceCurrency === 'usd' ? 'bg-brand-700 text-white' : 'bg-white text-ink-500 dark:bg-ink-900'" class="px-2 py-1">دلار</button>
+                </div>
+            </div>
+            <input type="number" x-model.number="realPriceDisplay" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
         </div>
         <div>
-            <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">قیمت گمرکی خودرو (درهم)</label>
-            <input type="number" x-model.number="customsPriceAED" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <div class="mb-1 flex items-center justify-between">
+                <label class="text-xs font-bold text-ink-500 dark:text-ink-400">قیمت گمرکی خودرو</label>
+                <div class="flex overflow-hidden rounded-lg border border-ink-200 text-[10px] font-bold dark:border-white/10">
+                    <button type="button" @click="customsPriceCurrency = 'aed'" :class="customsPriceCurrency === 'aed' ? 'bg-brand-700 text-white' : 'bg-white text-ink-500 dark:bg-ink-900'" class="px-2 py-1">درهم</button>
+                    <button type="button" @click="customsPriceCurrency = 'usd'" :class="customsPriceCurrency === 'usd' ? 'bg-brand-700 text-white' : 'bg-white text-ink-500 dark:bg-ink-900'" class="px-2 py-1">دلار</button>
+                </div>
+            </div>
+            <input type="number" x-model.number="customsPriceDisplay" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">دسته‌بندی خودرو</label>
@@ -68,6 +84,14 @@
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">نرخ هر گواهی اسقاط (تومان)</label>
             <input type="number" x-model.number="scrapCertPriceToman" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
         </div>
+    </div>
+
+    <div>
+        <button type="button" @click="recalc()"
+                class="inline-flex items-center gap-2 rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-bold text-white shadow-soft hover:brightness-105">
+            <x-icon name="refresh" class="w-4 h-4" /> محاسبه مجدد
+        </button>
+        <span x-show="recalced" x-transition.opacity.duration.600ms x-text="'محاسبه به‌روزرسانی شد.'" class="ms-2 text-xs font-bold text-emerald-600"></span>
     </div>
 
     <details class="rounded-xl border border-ink-200/70 p-3.5 text-xs dark:border-white/10">
@@ -142,11 +166,11 @@
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <div class="rounded-2xl border border-ink-200/70 p-4 text-center dark:border-white/10">
-            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">جمع کل بدون سود خدمات</div>
+            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">جمع کل بدون کارمزد ترخیص‌کار و کارگزار</div>
             <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(results.totalNoProfit) + ' تومان'"></div>
         </div>
         <div class="rounded-2xl border border-ink-200/70 p-4 text-center dark:border-white/10">
-            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">سود خدمات ناوراکار</div>
+            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">کارمزد ترخیص‌کار و کارگزار (ناوراکار)</div>
             <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(results.serviceProfitAmt) + ' تومان'"></div>
         </div>
         <div class="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-center dark:border-amber-500/40 dark:bg-amber-500/10">
@@ -158,6 +182,80 @@
     <p class="text-[11px] leading-6 text-ink-400 dark:text-ink-500">
         این گزارش صرفاً یک برآورد اولیه بر اساس نرخ‌های ثبت‌شده در سیستم ناوراکار است و ممکن است با تغییر مقررات گمرکی یا نرخ ارز به‌روزرسانی شود. برای قیمت قطعی با کارشناسان ناوراکار تماس بگیرید.
     </p>
+
+    <div class="rounded-2xl border border-ink-200/70 p-4 dark:border-white/10">
+        <h3 class="mb-3 text-sm font-extrabold text-ink-900 dark:text-white">جدول اقساط وام خرید خارجی خودرو</h3>
+        <p class="mb-3 text-xs leading-6 text-ink-500 dark:text-ink-400">
+            این تسهیلات صرفاً بابت بخشی از <strong>هزینه‌های ترخیص گمرکی</strong> این خودرو محاسبه می‌شود. سقف وام برابر است با کمترین مقدار از: حداکثر وام مصوب (<span class="num-font" x-text="fmt(loanMaxAmountToman)"></span> تومان)، حداکثر ۵۰٪ قیمت خودرو برای خودروهای ارزان‌تر، و جمع هزینه‌های ترخیص همین خودرو.
+        </p>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
+                <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">مبلغ وام قابل دریافت</div>
+                <div class="mt-1 text-sm font-extrabold num-font" x-text="fmt(results.loan.amount) + ' تومان'"></div>
+            </div>
+            <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
+                <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">پیش‌پرداخت لازم (نقدی)</div>
+                <div class="mt-1 text-sm font-extrabold num-font" x-text="fmt(results.loan.downPayment) + ' تومان'"></div>
+            </div>
+            <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
+                <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">تعداد اقساط</div>
+                <div class="mt-1 text-sm font-extrabold num-font" x-text="results.loan.months + ' قسط ماهانه'"></div>
+            </div>
+            <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
+                <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">نرخ بهره سالانه</div>
+                <div class="mt-1 text-sm font-extrabold num-font" x-text="loanInterestRatePercent + '٪'"></div>
+            </div>
+        </div>
+        <div class="mt-3 overflow-x-auto rounded-xl border border-ink-200/70 dark:border-white/10">
+            <table class="w-full text-xs sm:text-sm">
+                <thead class="bg-ink-50 text-ink-500 dark:bg-white/5 dark:text-ink-400">
+                    <tr>
+                        <th class="p-2.5 text-right">مبلغ وام</th>
+                        <th class="p-2.5 text-right">تعداد اقساط</th>
+                        <th class="p-2.5 text-right">مبلغ هر قسط ماهانه</th>
+                        <th class="p-2.5 text-left">جمع کل بازپرداخت (اصل + سود)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="border-t border-ink-100 dark:border-white/5">
+                        <td class="p-2.5 num-font font-bold" x-text="fmt(results.loan.amount)"></td>
+                        <td class="p-2.5 num-font" x-text="results.loan.months + ' ماه'"></td>
+                        <td class="p-2.5 num-font font-bold" x-text="fmt(results.loan.monthlyInstallment) + ' تومان'"></td>
+                        <td class="p-2.5 text-left num-font" x-text="fmt(results.loan.totalRepayment) + ' تومان'"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <p class="mt-3 text-[11px] leading-6 text-ink-400 dark:text-ink-500" x-show="results.loan.amount > 0">
+            برای استفاده از تسهیلات اقساطی باید «فرم درخواست خرید خودروی خارجی با وام» تکمیل شود؛ کارشناسان ناوراکار پس از بررسی، شرایط نهایی وام را با شما هماهنگ می‌کنند.
+        </p>
+    </div>
+
+    <div class="rounded-2xl border border-ink-200/70 p-4 dark:border-white/10">
+        <h3 class="mb-3 text-sm font-extrabold text-ink-900 dark:text-white">شرایط و مراحل پرداخت</h3>
+        <div class="overflow-x-auto rounded-xl border border-ink-200/70 dark:border-white/10">
+            <table class="w-full text-xs sm:text-sm">
+                <thead class="bg-ink-50 text-ink-500 dark:bg-white/5 dark:text-ink-400">
+                    <tr>
+                        <th class="p-2.5 text-right">مرحله</th>
+                        <th class="p-2.5 text-right">شرح</th>
+                        <th class="p-2.5 text-right">زمان‌بندی</th>
+                        <th class="p-2.5 text-left">مبلغ (تومان)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="step in results.paymentSteps" :key="step.no">
+                        <tr class="border-t border-ink-100 dark:border-white/5">
+                            <td class="p-2.5 text-ink-400" x-text="step.no"></td>
+                            <td class="p-2.5 font-semibold" x-text="step.label"></td>
+                            <td class="p-2.5 text-ink-500 dark:text-ink-400" x-text="step.duration"></td>
+                            <td class="p-2.5 text-left num-font font-bold" x-text="fmt(step.value)"></td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
 
     <div>
         <button type="button" @click="showProforma = true; pfStatus = ''; pfPdfUrl = ''"
@@ -213,13 +311,32 @@ window.carCalculatorApp = function (config) {
         vat: 'مالیات ارزش افزوده', advanceTax: 'مالیات علی‌الحساب', redCrescent: 'عوارض هلال احمر',
         supervision: 'حق نظارت کارشناسان', waste: 'عوارض پسماند کالا', standard: 'هزینه استاندارد',
         plateReg: 'عوارض شماره‌گذاری', transferTax: 'مالیات نقل و انتقال',
-        municipal: 'عوارض سالانه شهرداری', individual: 'عوارض شخص حقیقی', serviceProfit: 'سود خدمات ناوراکار',
+        municipal: 'عوارض سالانه شهرداری', individual: 'عوارض شخص حقیقی', serviceProfit: 'کارمزد ترخیص‌کار و کارگزار (ناوراکار)',
     };
     const tierLabels = { ab: '(ای) و (بی)', cd: '(سی) و (دی)', efg: '(ای)، (اف) و (جی)' };
 
     return {
         realPriceAED: config.priceAed,
         customsPriceAED: config.priceAed,
+        usdToAedRate: config.usdToAedRate || 3.6725,
+        priceCurrency: 'aed',
+        customsPriceCurrency: 'aed',
+
+        get realPriceDisplay() {
+            return this.priceCurrency === 'usd' ? Math.round((this.realPriceAED / this.usdToAedRate) * 100) / 100 : this.realPriceAED;
+        },
+        set realPriceDisplay(v) {
+            const n = parseFloat(v) || 0;
+            this.realPriceAED = this.priceCurrency === 'usd' ? n * this.usdToAedRate : n;
+        },
+        get customsPriceDisplay() {
+            return this.customsPriceCurrency === 'usd' ? Math.round((this.customsPriceAED / this.usdToAedRate) * 100) / 100 : this.customsPriceAED;
+        },
+        set customsPriceDisplay(v) {
+            const n = parseFloat(v) || 0;
+            this.customsPriceAED = this.customsPriceCurrency === 'usd' ? n * this.usdToAedRate : n;
+        },
+
         categoryId: config.categoryId,
         categories: config.categories,
         freeRate: config.freeRate,
@@ -230,6 +347,9 @@ window.carCalculatorApp = function (config) {
         scrapCertPriceToman: config.scrapCertPriceToman,
         scrapThresholdAED: config.scrapThresholdAed,
         scrapCertCounts: config.scrapCertCounts,
+        loanMaxAmountToman: config.loanMaxAmountToman || 0,
+        loanTermYears: config.loanTermYears || 5,
+        loanInterestRatePercent: config.loanInterestRatePercent || 0,
         rateLabels,
         rates: {
             customsFixed: 4, gasoline: 10, fob: 5, vat: 10, advanceTax: 2, redCrescent: 1,
@@ -239,6 +359,14 @@ window.carCalculatorApp = function (config) {
 
         showProforma: false,
         pfName: '', pfPhone: '', pfEmail: '', pfStatus: '', pfOk: false, pfSubmitting: false, pfPdfUrl: '',
+        recalced: false,
+
+        recalc() {
+            // نتایج از روی x-model ها به‌صورت زنده محاسبه می‌شوند؛ این دکمه فقط
+            // یک تأیید بصری به کاربر می‌دهد که با تغییر دستی اعداد، جدول به‌روز شده.
+            this.recalced = true;
+            setTimeout(() => { this.recalced = false; }, 1500);
+        },
 
         fmt(n) {
             return Math.round(n || 0).toLocaleString('en-US');
@@ -267,8 +395,8 @@ window.carCalculatorApp = function (config) {
                         category: cat,
                         breakdown: [...r.customsRows, ...r.plateRows],
                         totals: {
-                            'جمع کل بدون سود خدمات': this.fmt(r.totalNoProfit) + ' تومان',
-                            'سود خدمات ناوراکار': this.fmt(r.serviceProfitAmt) + ' تومان',
+                            'جمع کل بدون کارمزد ترخیص‌کار و کارگزار': this.fmt(r.totalNoProfit) + ' تومان',
+                            'کارمزد ترخیص‌کار و کارگزار (ناوراکار)': this.fmt(r.serviceProfitAmt) + ' تومان',
                             'قیمت تمام‌شده نهایی': this.fmt(r.totalWithProfit) + ' تومان',
                         },
                         website: '',
@@ -346,7 +474,39 @@ window.carCalculatorApp = function (config) {
             const serviceProfitAmt = pct('serviceProfit') * (sumCustoms10 + sumPlate + seaFreight + permits);
             const totalWithProfit = totalNoProfit + serviceProfitAmt;
 
-            return { customsRows, plateRows, sumCustomsAll, sumPlate, totalNoProfit, serviceProfitAmt, totalWithProfit };
+            // سقف وام: کمترین مقدار از سقف مصوب پنل مدیریت، حداکثر ۵۰٪ قیمت خودرو
+            // (برای خودروهای ارزان‌قیمت)، و جمع هزینه‌های ترخیص همین خودرو — چون این
+            // وام صرفاً بابت هزینه‌های ترخیص تعلق می‌گیرد، نه کل قیمت خودرو.
+            const clearanceCostsTotal = sumCustomsAll + sumPlate + serviceProfitAmt;
+            const loanAmount = Math.max(0, Math.min(num(this.loanMaxAmountToman), 0.5 * realPriceToman, clearanceCostsTotal));
+            const downPayment = totalWithProfit - loanAmount;
+
+            const annualRate = num(this.loanInterestRatePercent) / 100;
+            const months = Math.max(0, Math.round(num(this.loanTermYears) * 12));
+            const monthlyRate = annualRate / 12;
+            let monthlyInstallment = 0;
+            if (loanAmount > 0 && months > 0) {
+                monthlyInstallment = monthlyRate > 0
+                    ? loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1)
+                    : loanAmount / months;
+            }
+            const totalRepayment = monthlyInstallment * months;
+            const loan = {
+                amount: loanAmount, downPayment, months, monthlyInstallment, totalRepayment,
+                totalInterest: totalRepayment - loanAmount,
+            };
+
+            const bookingAmt = 0.10 * realPriceToman;
+            const paymentSteps = [
+                { no: 1, label: 'پرداخت ۱۰٪ مبلغ خودرو برای بوک کردن خودرو', duration: '۱ روز کاری', value: bookingAmt },
+                { no: 2, label: 'پرداخت هزینه صدور مجوز', duration: 'صدور مجوز حدود ۱ هفته', value: permits },
+                { no: 3, label: 'پرداخت الباقی مبلغ خودرو در امارات', duration: 'ارسال به ایران معمولاً ۳ روز کاری', value: realPriceToman - bookingAmt },
+                { no: 4, label: 'پرداخت هزینه‌های ترخیص خودرو (جمع کل هزینه‌های گمرکی)', duration: 'معمولاً ۲۰ الی ۴۰ روز کاری', value: sumCustomsAll - permits },
+                { no: 5, label: 'پرداخت کارمزد ترخیص‌کار و کارگزار (ناوراکار)', duration: '', value: serviceProfitAmt },
+                { no: 6, label: 'پرداخت هزینه‌های پلاک انتظامی', duration: '', value: sumPlate },
+            ];
+
+            return { customsRows, plateRows, sumCustomsAll, sumPlate, totalNoProfit, serviceProfitAmt, totalWithProfit, loan, paymentSteps };
         },
     };
 };
