@@ -84,6 +84,11 @@
                 </x-button>
             </form>
 
+            <x-social-publish
+                :publish-url="route('admin.car-listings.publish-social', $l)"
+                :whatsapp-url="$socialWhatsappUrl"
+                :has-image="$socialHasImage" />
+
             <x-card title="افزودن عکس دستی" icon="upload">
                 <form method="POST" action="{{ route('admin.car-listings.images.store', $l) }}" enctype="multipart/form-data" class="flex flex-wrap items-end gap-3">
                     @csrf

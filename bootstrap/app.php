@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\EnsureAdminRole;
+use App\Http\Middleware\EnsureContentManagerRole;
+use App\Http\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -12,8 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->alias([
-            'admin.role' => \App\Http\Middleware\EnsureAdminRole::class,
-            'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class,
+            'admin.role' => EnsureAdminRole::class,
+            'content.role' => EnsureContentManagerRole::class,
+            'guest' => RedirectIfAuthenticated::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

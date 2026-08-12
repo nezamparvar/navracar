@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Models\AdminUser;
 use App\Models\CarListing;
+use App\Models\CarListingImage;
 use App\Models\HomeSlide;
 use App\Models\MenuItem;
 use App\Models\Post;
 use App\Models\Setting;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
 
 class SiteExpansionTest extends TestCase
@@ -173,5 +175,75 @@ class SiteExpansionTest extends TestCase
         $response->assertOk();
         $response->assertSee('+98 900 000 0001');
         $response->assertSee('+98 21 0000 0000');
+    }
+
+    public function test_content_manager_can_manage_content_but_not_settings_or_users(): void
+    {
+        $contentManager = AdminUser::create([
+            'username' => 'content-mgr', 'password_hash' => bcrypt('secret'),
+            'full_name' => 'Content Manager', 'role' => 'content_manager',
+        ]);
+
+        $this->actingAs($contentManager)->get(route('admin.car-listings.index'))->assertOk();
+        $this->actingAs($contentManager)->get(route('admin.posts.index'))->assertOk();
+        $this->actingAs($contentManager)->get(route('admin.home-slides.index'))->assertOk();
+        $this->actingAs($contentManager)->get(route('admin.menu-items.index'))->assertOk();
+
+        $this->actingAs($contentManager)->get(route('admin.settings.edit'))->assertForbidden();
+        $this->actingAs($contentManager)->get(route('admin.users.index'))->assertForbidden();
+    }
+
+    public function test_sales_role_cannot_access_content_management(): void
+    {
+        $sales = AdminUser::create([
+            'username' => 'sales-test', 'password_hash' => bcrypt('secret'),
+            'full_name' => 'Sales Rep', 'role' => 'sales',
+        ]);
+
+        $this->actingAs($sales)->get(route('admin.car-listings.index'))->assertForbidden();
+        $this->actingAs($sales)->get(route('admin.posts.index'))->assertForbidden();
+    }
+
+    public function test_social_publish_returns_graceful_error_without_bot_credentials(): void
+    {
+        $admin = $this->admin();
+        $listing = $this->publishedListing();
+        CarListingImage::create([
+            'car_listing_id' => $listing->id, 'local_path' => 'car-listings/1/cover.jpg',
+            'sort_order' => 0, 'is_cover' => true,
+        ]);
+
+        $response = $this->actingAs($admin)->postJson(route('admin.car-listings.publish-social', $listing), [
+            'platform' => 'telegram',
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJson(['ok' => false]);
+    }
+
+    public function test_bulk_import_creates_listings_and_skips_duplicates(): void
+    {
+        $admin = $this->admin();
+        $this->publishedListing(['source_url' => 'https://dubai.dubizzle.com/motors/used-cars/dup/1/']);
+
+        $rows = [
+            // Duplicate of the existing listing's source_url — should be skipped.
+            ['source_url' => 'https://dubai.dubizzle.com/motors/used-cars/dup/1/', 'title_en' => 'Dup', 'price_aed' => 1000],
+            // Valid new row.
+            [
+                'source_url' => 'https://dubai.dubizzle.com/motors/used-cars/kia/sportage/2022/x/',
+                'title_en' => 'Kia Sportage 2022', 'price_aed' => 80000, 'make' => 'kia', 'model' => 'sportage', 'model_year' => '2022',
+            ],
+            // Malformed row (no source_url) — should be counted as failed.
+            ['title_en' => 'Missing URL'],
+        ];
+
+        $file = UploadedFile::fake()->createWithContent('rows.json', json_encode($rows));
+
+        $response = $this->actingAs($admin)->post(route('admin.car-listings.import.store'), ['json_file' => $file]);
+        $response->assertRedirect(route('admin.car-listings.index'));
+
+        $this->assertSame(2, CarListing::count());
+        $this->assertTrue(CarListing::where('make', 'kia')->exists());
     }
 }

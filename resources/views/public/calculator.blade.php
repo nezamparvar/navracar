@@ -169,6 +169,14 @@
   .variant-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
   .variant-chip{padding:11px 15px;border-radius:11px;border:2px solid var(--border);background:#fff;font-family:inherit;font-size:.88rem;font-weight:700;cursor:pointer;color:var(--ink);}
   .variant-chip.active{border-color:var(--primary);background:var(--primary-light);color:var(--primary-dark);}
+  .car-match-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-top:10px;}
+  .car-match-item{display:block;border:2px solid var(--border);border-radius:14px;overflow:hidden;text-decoration:none;color:var(--ink);background:#fff;transition:border-color .15s;}
+  .car-match-item:hover{border-color:var(--primary);}
+  .car-match-item .thumb{aspect-ratio:4/3;background:var(--surface-alt);overflow:hidden;}
+  .car-match-item .thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .car-match-item .info{padding:8px 10px;}
+  .car-match-item .title{font-size:.78rem;font-weight:800;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .car-match-item .price{margin-top:4px;font-size:.82rem;font-weight:900;color:var(--primary);}
   .fuel-radio-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
   .fuel-radio{flex:1;min-width:120px;position:relative;}
   .fuel-radio input{position:absolute;opacity:0;inset:0;cursor:pointer;margin:0;}
@@ -489,6 +497,12 @@
         <div class="picked-tag" id="carVariantAuto" style="display:none;"></div>
       </div>
 
+      <div id="carListingsMatch" style="display:none;margin-top:16px;">
+        <label style="font-size:.9rem;font-weight:700;">آگهی‌های آماده این برند در ناوراکار</label>
+        <p class="sub" style="margin:4px 0 0;">این خودروها همین الان در سایت ناوراکار موجودند — می‌توانید مستقیم صفحه‌شان را ببینید.</p>
+        <div class="car-match-list" id="carListingsMatchList"></div>
+      </div>
+
       <div class="field" style="margin-top:14px;">
         <label>سال ساخت</label>
         <select id="carYear"></select>
@@ -766,6 +780,7 @@ const CSRF_TOKEN = '{{ csrf_token() }}';
 const CALC_LOG_URL = '{{ route('public.calculation-logs.store') }}';
 const VIN_LOG_URL = '{{ route('public.vin-checks.store') }}';
 const QUOTE_URL = '{{ route('public.quote-requests.store') }}';
+const CAR_LISTINGS = @js($carListings);
 const CONTACT_IRAN = @js($contactIran);
 const CONTACT_UAE = @js($contactUae);
 const CONTACT_TEHRAN = @js($contactTehran);
@@ -1194,12 +1209,31 @@ const carVariantWrap = document.getElementById('carVariantWrap');
 const carVariantChips = document.getElementById('carVariantChips');
 const carVariantAuto = document.getElementById('carVariantAuto');
 
+const carListingsMatchWrap = document.getElementById('carListingsMatch');
+const carListingsMatchList = document.getElementById('carListingsMatchList');
+function renderCarListingsMatch(brand){
+  const norm = s => (s||'').toLowerCase().replace(/[\s-]+/g,'-');
+  const brandSlug = norm(brand);
+  const matches = CAR_LISTINGS.filter(l => norm(l.make) === brandSlug || norm(l.make).includes(brandSlug) || brandSlug.includes(norm(l.make)));
+  if(!matches.length){ carListingsMatchWrap.style.display = 'none'; carListingsMatchList.innerHTML = ''; return; }
+  carListingsMatchList.innerHTML = matches.slice(0,8).map(l => `
+    <a href="${l.url}" class="car-match-item" target="_blank">
+      <div class="thumb">${l.cover ? `<img src="${l.cover}" alt="">` : ''}</div>
+      <div class="info">
+        <div class="title">${l.title}</div>
+        <div class="price">${Number(l.price_aed).toLocaleString('en-US')} درهم</div>
+      </div>
+    </a>`).join('');
+  carListingsMatchWrap.style.display = 'block';
+}
+
 makeSearchable(carSearchInput, document.getElementById('carSearchList'), ()=>carSearchIndex, (picked)=>{
   selectedBrand = picked.brand;
   selectedModel = picked.model;
   selectedVariant = null;
   carPickedTag.style.display = 'inline-flex';
   carPickedTag.textContent = `✓ ${picked.display}`;
+  renderCarListingsMatch(selectedBrand);
 
   const variants = carMap[selectedBrand][selectedModel];
   carVariantWrap.style.display = 'block';
@@ -1807,6 +1841,7 @@ function resetWizard(){
   carPickedTag.style.display = 'none';
   selectedBrand = null; selectedModel = null; selectedVariant = null;
   carVariantWrap.style.display = 'none';
+  carListingsMatchWrap.style.display = 'none';
   document.getElementById('qName').value = '';
   document.getElementById('qPhone').value = '';
   document.getElementById('qEmail').value = '';

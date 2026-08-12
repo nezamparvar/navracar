@@ -36,7 +36,7 @@
         </form>
     </div>
 
-    <div class="mx-auto max-w-3xl">
+    <div class="mx-auto max-w-3xl space-y-5">
         <form method="POST" action="{{ route('admin.posts.update', $post) }}" enctype="multipart/form-data" class="space-y-5">
             @csrf @method('PUT')
             @include('admin.posts._fields')
@@ -44,5 +44,10 @@
                 <x-icon name="check" class="w-4 h-4" /> ذخیره تغییرات
             </x-button>
         </form>
+
+        <x-social-publish
+            :publish-url="route('admin.posts.publish-social', $post)"
+            :whatsapp-url="$socialWhatsappUrl"
+            :has-image="$socialHasImage" />
     </div>
 </x-layouts.admin>

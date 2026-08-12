@@ -118,6 +118,33 @@
             </div>
         </x-card>
 
+        <x-card title="ربات‌های انتشار محتوا (تلگرام و بله)" icon="message" class="max-w-lg"
+                subtitle="برای ساخت ربات: در تلگرام با @BotFather و در بله با @BaleBotFather یک ربات بسازید، آن را ادمین کانال خود کنید، و توکن + شناسه کانال (مثلاً @channel یا chat id عددی) را اینجا وارد کنید.">
+            <div class="space-y-4">
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">توکن ربات تلگرام</label>
+                    <input type="text" dir="ltr" name="telegram_bot_token" value="{{ old('telegram_bot_token', $telegramBotToken) }}"
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">شناسه کانال تلگرام</label>
+                    <input type="text" dir="ltr" name="telegram_chat_id" value="{{ old('telegram_chat_id', $telegramChatId) }}" placeholder="@my_channel"
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">توکن ربات بله</label>
+                    <input type="text" dir="ltr" name="bale_bot_token" value="{{ old('bale_bot_token', $baleBotToken) }}"
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">شناسه کانال بله</label>
+                    <input type="text" dir="ltr" name="bale_chat_id" value="{{ old('bale_chat_id', $baleChatId) }}"
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                </div>
+                <p class="text-[11px] text-ink-400">واتساپ API رایگان و رسمی برای ارسال خودکار ندارد؛ دکمه واتساپ در صفحه هر آگهی/مطلب فقط متن آماده را در واتساپ باز می‌کند تا عکس را دستی پیوست و ارسال کنید.</p>
+            </div>
+        </x-card>
+
         <x-button type="submit" variant="amber" size="lg">
             <x-icon name="check" class="w-4 h-4" /> ذخیره همه تنظیمات
         </x-button>

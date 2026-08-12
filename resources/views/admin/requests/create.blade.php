@@ -50,11 +50,19 @@
                         </select>
                     </div>
                     <div>
+                        <label class="mb-1.5 block text-sm font-bold">کشور</label>
+                        <select x-model="form.country" @change="form.city = ''" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                            <option value="">— نامشخص —</option>
+                            @foreach ($countries as $c)<option>{{ $c }}</option>@endforeach
+                        </select>
+                    </div>
+                    <div>
                         <label class="mb-1.5 block text-sm font-bold">شهر</label>
-                        <select x-model="form.city" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <select x-show="form.country === 'ایران' || !form.country" x-model="form.city" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
                             <option value="">— نامشخص —</option>
                             @foreach ($cities as $c)<option>{{ $c }}</option>@endforeach
                         </select>
+                        <input x-show="form.country && form.country !== 'ایران'" x-model="form.city" placeholder="نام شهر" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">برآورد جمع کل (تومان — اختیاری)</label>
@@ -102,7 +110,7 @@
         function leadForm() {
             return {
                 loading: false, error: '', success: false, newId: null,
-                form: { name: '', phone: '', email: '', source: 'تماس تلفنی', car_label: '', category: '', budget_range: '', city: '', total_with_profit: '', next_call_date: '', notes: '', assigned_to: '' },
+                form: { name: '', phone: '', email: '', source: 'تماس تلفنی', car_label: '', category: '', budget_range: '', country: 'ایران', city: '', total_with_profit: '', next_call_date: '', notes: '', assigned_to: '' },
                 async submit() {
                     if (!this.form.name || !this.form.phone) { this.error = 'نام و شماره تماس الزامی است.'; return; }
                     this.error = ''; this.loading = true;

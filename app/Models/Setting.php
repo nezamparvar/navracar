@@ -31,6 +31,14 @@ class Setting extends Model
 
     public const DEFAULT_DELIVERY_DAYS = 'default_delivery_days';
 
+    public const TELEGRAM_BOT_TOKEN = 'telegram_bot_token';
+
+    public const TELEGRAM_CHAT_ID = 'telegram_chat_id';
+
+    public const BALE_BOT_TOKEN = 'bale_bot_token';
+
+    public const BALE_CHAT_ID = 'bale_chat_id';
+
     public const DEFAULTS = [
         self::FREE_RATE => '51000',
         self::CUSTOMS_RATE => '35688',

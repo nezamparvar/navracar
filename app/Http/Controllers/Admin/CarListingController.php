@@ -10,6 +10,7 @@ use App\Services\CarImageDownloader;
 use App\Services\CarListingMapper;
 use App\Services\DubizzleParser;
 use App\Services\DubizzleTranslator;
+use App\Services\SocialPublisher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -21,6 +22,7 @@ class CarListingController extends Controller
         private readonly DubizzleTranslator $translator,
         private readonly CarListingMapper $mapper,
         private readonly CarImageDownloader $imageDownloader,
+        private readonly SocialPublisher $socialPublisher,
     ) {}
 
     public function index()
@@ -127,10 +129,24 @@ class CarListingController extends Controller
 
     public function edit(CarListing $carListing)
     {
+        $carListing->load('images');
+        $cover = $carListing->coverImage();
+
+        $priceLine = number_format((float) $carListing->price_aed).' درهم';
+        $caption = $this->socialPublisher->buildCaption(
+            title: $carListing->title_fa,
+            description: $carListing->meta_description,
+            priceLine: $priceLine,
+            url: route('public.car-prices.show', $carListing),
+            hashtags: array_filter(['ناوراکار', 'واردات_خودرو', 'قیمت_خودرو', $carListing->make, $carListing->model]),
+        );
+
         return view('admin.car-listings.edit', [
             'pageTitle' => 'ویرایش آگهی: '.($carListing->title_fa ?: $carListing->title_en),
-            'listing' => $carListing->load('images'),
+            'listing' => $carListing,
             'categories' => CarListing::categoriesWithLiveRates(),
+            'socialHasImage' => (bool) $cover,
+            'socialWhatsappUrl' => $this->socialPublisher->whatsAppShareUrl($caption),
         ]);
     }
 
@@ -265,6 +281,65 @@ class CarListingController extends Controller
         return back()->with('success', 'عکس اضافه شد.');
     }
 
+    public function showImport()
+    {
+        return view('admin.car-listings.import', [
+            'pageTitle' => 'ایمپورت گروهی از فایل کرالر',
+        ]);
+    }
+
+    /**
+     * ایمپورت گروهی — فایل JSON خروجی ابزار کرالر دسکتاپ را می‌خواند. هر ردیف
+     * باید دقیقاً همان شکل خروجی DubizzleParser::parse() را داشته باشد (همان
+     * منطقی که مسیر تک‌لینکی از قبل استفاده می‌کند، اینجا هم دوباره استفاده
+     * می‌شود تا رفتار دو مسیر یکسان بماند).
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'json_file' => ['required', 'file', 'max:20480'],
+        ]);
+
+        $rows = json_decode($request->file('json_file')->get(), true);
+        if (! is_array($rows)) {
+            return back()->with('error', 'فایل JSON معتبر نیست — باید یک آرایه از آگهی‌ها باشد.');
+        }
+
+        $created = 0;
+        $skipped = 0;
+        $failed = 0;
+
+        foreach ($rows as $raw) {
+            if (! is_array($raw) || empty($raw['source_url'])) {
+                $failed++;
+
+                continue;
+            }
+
+            if (CarListing::where('source_url', $raw['source_url'])->exists()) {
+                $skipped++;
+
+                continue;
+            }
+
+            if (empty($raw['title_en']) && empty($raw['price_aed'])) {
+                $failed++;
+
+                continue;
+            }
+
+            try {
+                $this->createFromRaw($raw['source_url'], $raw, $request->user()->id);
+                $created++;
+            } catch (\Throwable) {
+                $failed++;
+            }
+        }
+
+        return redirect()->route('admin.car-listings.index')
+            ->with('success', "ایمپورت انجام شد — {$created} آگهی جدید، {$skipped} تکراری (رد شد)، {$failed} ناموفق.");
+    }
+
     public function destroyImage(CarListing $carListing, CarListingImage $image)
     {
         abort_if($image->car_listing_id !== $carListing->id, 404);
@@ -273,6 +348,38 @@ class CarListingController extends Controller
         $image->delete();
 
         return back()->with('success', 'عکس حذف شد.');
+    }
+
+    public function publishSocial(Request $request, CarListing $carListing)
+    {
+        $data = $request->validate([
+            'platform' => ['required', Rule::in(['telegram', 'bale'])],
+        ]);
+
+        $image = $carListing->coverImage();
+        if (! $image) {
+            return response()->json(['ok' => false, 'error' => 'این آگهی عکسی ندارد — ابتدا یک عکس اضافه کنید.'], 422);
+        }
+
+        $priceLine = number_format((float) $carListing->price_aed).' درهم';
+        $freeRate = (float) Setting::get(Setting::FREE_RATE);
+        if ($freeRate > 0) {
+            $priceLine .= ' (≈ '.number_format((float) $carListing->price_aed * $freeRate).' تومان)';
+        }
+
+        $caption = $this->socialPublisher->buildCaption(
+            title: $carListing->title_fa,
+            description: $carListing->meta_description,
+            priceLine: $priceLine,
+            url: route('public.car-prices.show', $carListing),
+            hashtags: array_filter(['ناوراکار', 'واردات_خودرو', 'قیمت_خودرو', $carListing->make, $carListing->model]),
+        );
+
+        $result = $data['platform'] === 'telegram'
+            ? $this->socialPublisher->publishToTelegram($image->url(), $caption)
+            : $this->socialPublisher->publishToBale($image->url(), $caption);
+
+        return response()->json($result, $result['ok'] ? 200 : 422);
     }
 
     private function createFromRaw(string $sourceUrl, array $raw, int $adminId): CarListing

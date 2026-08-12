@@ -53,6 +53,9 @@
             </div>
         </a>
         <div class="flex shrink-0 items-center gap-2">
+            <a href="{{ route('public.calculator') }}" class="hidden rounded-full bg-amber-500 px-4 py-2 text-xs font-bold text-ink-950 hover:brightness-105 sm:inline-block">
+                محاسبه قیمت خودرو
+            </a>
             <a href="{{ route('public.car-prices.index') }}" class="hidden rounded-full bg-white/10 px-4 py-2 text-xs font-bold text-white hover:bg-white/20 sm:inline-block">
                 قیمت خودروها
             </a>

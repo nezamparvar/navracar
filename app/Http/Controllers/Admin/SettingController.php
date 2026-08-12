@@ -26,6 +26,10 @@ class SettingController extends Controller
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
             'tehranOfficePhone' => Setting::get(Setting::TEHRAN_OFFICE_PHONE),
             'defaultDeliveryDays' => Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
+            'telegramBotToken' => Setting::get(Setting::TELEGRAM_BOT_TOKEN),
+            'telegramChatId' => Setting::get(Setting::TELEGRAM_CHAT_ID),
+            'baleBotToken' => Setting::get(Setting::BALE_BOT_TOKEN),
+            'baleChatId' => Setting::get(Setting::BALE_CHAT_ID),
             'categories' => CarListing::categoriesWithLiveRates(),
         ]);
     }
@@ -44,6 +48,10 @@ class SettingController extends Controller
             'whatsapp_iran_number' => ['required', 'string', 'max:32'],
             'tehran_office_phone' => ['required', 'string', 'max:32'],
             'default_delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
+            'telegram_bot_token' => ['nullable', 'string', 'max:255'],
+            'telegram_chat_id' => ['nullable', 'string', 'max:255'],
+            'bale_bot_token' => ['nullable', 'string', 'max:255'],
+            'bale_chat_id' => ['nullable', 'string', 'max:255'],
             'tariff_percent' => ['required', 'array'],
             'tariff_percent.*' => ['required', 'numeric', 'min:0', 'max:500'],
             'scrap_tier' => ['required', 'array'],
@@ -61,6 +69,10 @@ class SettingController extends Controller
         Setting::set(Setting::WHATSAPP_IRAN, (string) $data['whatsapp_iran_number']);
         Setting::set(Setting::TEHRAN_OFFICE_PHONE, (string) $data['tehran_office_phone']);
         Setting::set(Setting::DEFAULT_DELIVERY_DAYS, (string) $data['default_delivery_days']);
+        Setting::set(Setting::TELEGRAM_BOT_TOKEN, (string) ($data['telegram_bot_token'] ?? ''));
+        Setting::set(Setting::TELEGRAM_CHAT_ID, (string) ($data['telegram_chat_id'] ?? ''));
+        Setting::set(Setting::BALE_BOT_TOKEN, (string) ($data['bale_bot_token'] ?? ''));
+        Setting::set(Setting::BALE_CHAT_ID, (string) ($data['bale_chat_id'] ?? ''));
 
         foreach ($data['tariff_percent'] as $categoryId => $percent) {
             if (array_key_exists($categoryId, CarListing::CATEGORIES)) {

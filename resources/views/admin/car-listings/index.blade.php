@@ -20,6 +20,9 @@
                 <x-button :href="route('admin.car-listings.create')" variant="secondary">
                     <x-icon name="plus" class="w-4 h-4" /> افزودن آگهی دستی (بدون دابیزل)
                 </x-button>
+                <x-button :href="route('admin.car-listings.import')" variant="secondary">
+                    <x-icon name="upload" class="w-4 h-4" /> ایمپورت گروهی از فایل کرالر
+                </x-button>
             </div>
         </form>
     </x-card>
