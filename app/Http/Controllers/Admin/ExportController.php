@@ -12,10 +12,10 @@ class ExportController extends Controller
 {
     public function __invoke(Request $request): StreamedResponse
     {
-        $type = $request->string('type', 'requests');
-        $range = $request->string('range', '');
-        $from = $request->string('from', '');
-        $to = $request->string('to', '');
+        $type = (string) $request->string('type', 'requests');
+        $range = (string) $request->string('range', '');
+        $from = (string) $request->string('from', '');
+        $to = (string) $request->string('to', '');
 
         if ($range === 'today') {
             $from = $to = now()->toDateString();
@@ -35,7 +35,7 @@ class ExportController extends Controller
     {
         $query = QuoteRequest::query();
 
-        if ($q = $request->string('q', '')) {
+        if ($q = (string) $request->string('q', '')) {
             $query->where(function ($w) use ($q) {
                 $w->where('name', 'like', "%{$q}%")
                     ->orWhere('phone', 'like', "%{$q}%")
@@ -74,7 +74,7 @@ class ExportController extends Controller
     {
         $query = CalculationLog::query();
 
-        if ($cat = $request->string('cat', '')) {
+        if ($cat = (string) $request->string('cat', '')) {
             $query->where('category', $cat);
         }
         if ($from) {

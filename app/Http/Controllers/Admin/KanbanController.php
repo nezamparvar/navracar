@@ -22,16 +22,16 @@ class KanbanController extends Controller
 
         if (! $user->isAdmin()) {
             $query->where('assigned_to', $user->id);
-        } elseif ($request->filled('sales') && $request->string('sales') !== 'all') {
+        } elseif ($request->filled('sales') && (string) $request->string('sales') !== 'all') {
             $query->where('assigned_to', (int) $request->input('sales'));
         }
-        if ($temp = $request->string('temp', '')) {
+        if ($temp = (string) $request->string('temp', '')) {
             $query->where('temperature', $temp);
         }
-        if ($source = $request->string('source', '')) {
+        if ($source = (string) $request->string('source', '')) {
             $query->where('source', $source);
         }
-        if ($q = $request->string('q', '')) {
+        if ($q = (string) $request->string('q', '')) {
             $query->where(function ($w) use ($q) {
                 $w->where('name', 'like', "%{$q}%")->orWhere('phone', 'like', "%{$q}%");
             });

@@ -10,8 +10,8 @@ class ActivityLogController extends Controller
 {
     public function index(Request $request)
     {
-        $filter = $request->string('level', '');
-        $search = $request->string('q', '');
+        $filter = (string) $request->string('level', '');
+        $search = (string) $request->string('q', '');
 
         $lines = collect(ActivityLogger::tail(1000));
 
