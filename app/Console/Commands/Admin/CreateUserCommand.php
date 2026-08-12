@@ -12,10 +12,10 @@ class CreateUserCommand extends Command
     protected $signature = 'admin:create-user
         {username : Login username}
         {--password= : Plain-text password (prompted if omitted)}
-        {--role=admin : admin or sales}
+        {--role=admin : admin, sales, or content_manager}
         {--name= : Full name shown in the panel}';
 
-    protected $description = 'Create or update an admin panel account (admin or sales role)';
+    protected $description = 'Create or update an admin panel account (admin, sales, or content_manager role)';
 
     public function handle(): int
     {
@@ -25,7 +25,7 @@ class CreateUserCommand extends Command
 
         $validator = Validator::make(
             ['username' => $username, 'password' => $password, 'role' => $role],
-            ['username' => ['required', 'string', 'max:64'], 'password' => ['required', 'string', 'min:6'], 'role' => ['required', 'in:admin,sales']]
+            ['username' => ['required', 'string', 'max:64'], 'password' => ['required', 'string', 'min:6'], 'role' => ['required', 'in:admin,sales,content_manager']]
         );
 
         if ($validator->fails()) {

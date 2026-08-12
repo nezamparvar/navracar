@@ -27,26 +27,26 @@ class RequestController extends Controller
 
         if (! $user->isAdmin()) {
             $query->where('assigned_to', $user->id);
-        } elseif ($request->string('assigned') === 'unassigned') {
+        } elseif ((string) $request->string('assigned') === 'unassigned') {
             $query->whereNull('assigned_to');
-        } elseif ($request->filled('assigned') && $request->string('assigned') !== 'all') {
+        } elseif ($request->filled('assigned') && (string) $request->string('assigned') !== 'all') {
             $query->where('assigned_to', (int) $request->input('assigned'));
         }
 
-        if ($q = $request->string('q', '')) {
+        if ($q = (string) $request->string('q', '')) {
             $query->where(function ($w) use ($q) {
                 $w->where('name', 'like', "%{$q}%")
                     ->orWhere('phone', 'like', "%{$q}%")
                     ->orWhere('car_label', 'like', "%{$q}%");
             });
         }
-        if ($from = $request->string('from', '')) {
+        if ($from = (string) $request->string('from', '')) {
             $query->where('created_at', '>=', $from.' 00:00:00');
         }
-        if ($to = $request->string('to', '')) {
+        if ($to = (string) $request->string('to', '')) {
             $query->where('created_at', '<=', $to.' 23:59:59');
         }
-        if ($status = $request->string('status', '')) {
+        if ($status = (string) $request->string('status', '')) {
             $query->where('follow_up_status', $status);
         }
 

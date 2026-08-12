@@ -12,10 +12,10 @@ class VinCheckController extends Controller
     {
         $query = VinCheck::query();
 
-        if ($from = $request->string('from', '')) {
+        if ($from = (string) $request->string('from', '')) {
             $query->where('created_at', '>=', $from.' 00:00:00');
         }
-        if ($to = $request->string('to', '')) {
+        if ($to = (string) $request->string('to', '')) {
             $query->where('created_at', '<=', $to.' 23:59:59');
         }
 
