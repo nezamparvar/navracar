@@ -83,6 +83,9 @@
                             <div class="mt-3 text-lg font-black text-brand-700 num-font">
                                 {{ number_format((float) $listing->price_aed) }} <span class="text-xs font-bold">درهم</span>
                             </div>
+                            <div class="mt-1 text-xs text-ink-500 num-font">
+                                قیمت تمام‌شده: {{ number_format($listing->estimatedLandedCostToman($freeRate, $customsRate) * 10) }} <span class="font-bold">ریال</span>
+                            </div>
                         </div>
                     </a>
                 @endforeach

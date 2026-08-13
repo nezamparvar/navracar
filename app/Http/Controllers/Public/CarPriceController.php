@@ -158,6 +158,8 @@ class CarPriceController extends Controller
             'canonicalUrl' => route(...$canonicalRoute),
             'breadcrumbs' => $breadcrumbs,
             'quickFilters' => $this->quickFilters(),
+            'freeRate' => (float) Setting::get(Setting::FREE_RATE),
+            'customsRate' => (float) Setting::get(Setting::CUSTOMS_RATE),
         ]);
     }
 
