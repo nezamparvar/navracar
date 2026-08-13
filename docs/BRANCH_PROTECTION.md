@@ -1,12 +1,14 @@
-# Branch protection readiness
+# Branch protection
 
-Protect `main` after the first pull request run creates these exact check contexts:
+`main` protection was enabled after the first successful pull-request run registered these exact GitHub Actions check contexts:
 
-- `CI / Dependencies`
-- `CI / Backend tests`
-- `CI / Frontend build`
-- `CI / Browser QA`
+- `Dependencies`
+- `Backend tests`
+- `Frontend build`
+- `Browser QA`
 
-Recommended settings: require a pull request, at least one approval, dismiss stale approvals, require all four checks, require conversation resolution, block force pushes and deletions, and include administrators. Do not enable required checks until one successful run has registered the contexts.
+The workflow is named `CI`; GitHub displays these jobs under that workflow, but branch protection stores the job names above as its registered contexts.
 
-Branch protection is currently not enabled and cannot be treated as a repository-controlled code change; an administrator must apply it in GitHub settings.
+Current policy requires the branch to be up to date, all four checks to pass, one approving review, dismissal of stale approvals, and resolution of review conversations. It applies to administrators and blocks force pushes and branch deletion.
+
+Branch protection is repository configuration rather than a guarantee supplied by this file. Administrators should periodically compare this document with the live GitHub settings.
