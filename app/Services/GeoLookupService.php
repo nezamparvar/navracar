@@ -15,17 +15,15 @@ class GeoLookupService
     {
         $result = ['country' => null, 'city' => null];
 
-        if (! $ip || $ip === '127.0.0.1' || $ip === '::1' || str_starts_with($ip, '192.168.') || str_starts_with($ip, '10.')) {
+        if (! $ip || filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) === false) {
             return $result;
         }
 
         try {
-            $response = Http::timeout(2)->get("http://ip-api.com/json/{$ip}", [
-                'fields' => 'status,country,city',
-            ]);
+            $response = Http::withoutRedirecting()->timeout(2)->get('https://ipapi.co/'.rawurlencode($ip).'/json/');
 
-            if ($response->ok() && $response->json('status') === 'success') {
-                $result['country'] = $response->json('country');
+            if ($response->ok() && ! $response->json('error')) {
+                $result['country'] = $response->json('country_name');
                 $result['city'] = $response->json('city');
             }
         } catch (\Throwable $e) {

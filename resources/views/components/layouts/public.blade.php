@@ -15,7 +15,7 @@
     @stack('head')
     <script type="application/ld+json">
     {!! json_encode([
-        '@context' => 'https://schema.org',
+        '@'.'context' => 'https://schema.org',
         '@graph' => [
             [
                 '@type' => 'Organization',
@@ -68,7 +68,8 @@
             {{ $headerActions ?? '' }}
             <button type="button" @click="mobileMenuOpen = !mobileMenuOpen"
                     class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:hidden"
-                    :aria-expanded="mobileMenuOpen" aria-label="باز کردن منو">
+                    :aria-expanded="mobileMenuOpen"
+                    aria-label="باز کردن منو">
                 <x-icon name="menu" class="w-5 h-5" x-show="!mobileMenuOpen" />
                 <x-icon name="x" class="w-5 h-5" x-show="mobileMenuOpen" x-cloak />
             </button>
@@ -124,7 +125,7 @@
                 </ul>
             </div>
         </div>
-        <p class="mt-8 border-t border-ink-100 pt-6 text-center text-[11px] text-ink-400">
+        <p class="mt-8 border-t border-ink-100 pt-6 text-center text-[11px] text-ink-600">
             © {{ now()->format('Y') }} ناوراکار — تمامی حقوق محفوظ است.
         </p>
     </div>

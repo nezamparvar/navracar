@@ -9,7 +9,7 @@
         <x-schema-breadcrumbs :items="$breadcrumbs" />
         <script type="application/ld+json">
             {!! json_encode([
-                '@context' => 'https://schema.org',
+                '@'.'context' => 'https://schema.org',
                 '@type' => 'ItemList',
                 'itemListElement' => $listings->values()->map(fn ($l, $i) => [
                     '@type' => 'ListItem',

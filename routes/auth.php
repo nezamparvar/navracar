@@ -7,7 +7,7 @@ Route::middleware('guest')->group(function () {
     Route::get('admin/login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    Route::post('admin/login', [AuthenticatedSessionController::class, 'store']);
+    Route::post('admin/login', [AuthenticatedSessionController::class, 'store'])->middleware('throttle:6,1');
 });
 
 Route::middleware('auth')->group(function () {

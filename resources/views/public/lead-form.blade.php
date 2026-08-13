@@ -18,7 +18,7 @@
                 <label class="mb-2.5 flex items-center gap-2 text-sm font-extrabold"><x-icon name="user" class="w-4 h-4 text-brand-600" /> نام کارشناس <span class="text-rose-500">*</span></label>
                 <select x-model="form.userId" required class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-3 text-base">
                     <option value="">— انتخاب کنید —</option>
-                    @foreach ($staff as $s)<option value="{{ $s->id }}">{{ $s->displayName() }}</option>@endforeach
+                    @foreach ($staff as $s)<option value="{{ $s->id }}">{{ $s->full_name }}</option>@endforeach
                 </select>
             </div>
 

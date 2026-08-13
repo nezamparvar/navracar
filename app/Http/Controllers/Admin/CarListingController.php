@@ -14,6 +14,7 @@ use App\Services\SocialPublisher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 class CarListingController extends Controller
 {
@@ -41,6 +42,10 @@ class CarListingController extends Controller
             'source_url' => ['required', 'url', 'max:1000'],
             'html_source' => ['nullable', 'string'],
         ]);
+
+        if (! $this->parser->isAllowedSourceUrl($data['source_url'])) {
+            throw ValidationException::withMessages(['source_url' => 'Only approved HTTPS Dubizzle listing URLs are allowed.']);
+        }
 
         $html = $data['html_source'] ?? null;
 

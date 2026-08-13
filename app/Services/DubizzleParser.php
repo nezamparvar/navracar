@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Psr\Http\Message\StreamInterface;
 
 /**
  * دریافت و استخراج اطلاعات از صفحهٔ آگهی دابیزل.
@@ -13,6 +14,12 @@ use Illuminate\Support\Facades\Http;
  */
 class DubizzleParser
 {
+    private const ALLOWED_HOSTS = ['dubai.dubizzle.com', 'uae.dubizzle.com', 'www.dubizzle.com', 'dubizzle.com'];
+
+    private const MAX_HTML_BYTES = 5 * 1024 * 1024;
+
+    public function __construct(private ?OutboundUrlGuard $urlGuard = null) {}
+
     private const OVERVIEW_FIELDS = [
         'body_type', 'doors', 'engine_capacity_cc', 'exterior_color', 'fuel_type',
         'horsepower', 'interior_color', 'motors_trim', 'no_of_cylinders',
@@ -24,8 +31,12 @@ class DubizzleParser
      */
     public function fetch(string $url): array
     {
+        if (! $this->isAllowedSourceUrl($url)) {
+            return ['html' => null, 'error' => 'Only approved HTTPS Dubizzle listing URLs are allowed.'];
+        }
+
         try {
-            $response = Http::withHeaders([
+            $response = Http::withoutRedirecting()->withOptions(['stream' => true])->withHeaders([
                 'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36',
                 'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
                 'Accept-Language' => 'en-US,en;q=0.9,ar;q=0.8',
@@ -52,7 +63,30 @@ class DubizzleParser
             ];
         }
 
-        return ['html' => $response->body(), 'error' => null];
+        $html = $this->readLimited($response->toPsrResponse()->getBody(), self::MAX_HTML_BYTES);
+        if ($html === null) {
+            return ['html' => null, 'error' => 'The remote page exceeded the 5 MB response limit.'];
+        }
+
+        return ['html' => $html, 'error' => null];
+    }
+
+    public function isAllowedSourceUrl(string $url): bool
+    {
+        return ($this->urlGuard ?? new OutboundUrlGuard)->allows($url, self::ALLOWED_HOSTS);
+    }
+
+    private function readLimited(StreamInterface $stream, int $limit): ?string
+    {
+        $body = '';
+        while (! $stream->eof()) {
+            $body .= $stream->read(8192);
+            if (strlen($body) > $limit) {
+                return null;
+            }
+        }
+
+        return $body;
     }
 
     /**
