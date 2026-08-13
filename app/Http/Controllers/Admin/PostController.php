@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\HtmlSanitizer;
 use App\Services\SocialPublisher;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -11,7 +12,10 @@ use Illuminate\Validation\Rule;
 
 class PostController extends Controller
 {
-    public function __construct(private readonly SocialPublisher $socialPublisher) {}
+    public function __construct(
+        private readonly SocialPublisher $socialPublisher,
+        private readonly HtmlSanitizer $htmlSanitizer,
+    ) {}
 
     public function index()
     {
@@ -129,13 +133,19 @@ class PostController extends Controller
 
     private function validated(Request $request): array
     {
-        return $request->validate([
+        $data = $request->validate([
             'title' => ['required', 'string', 'max:500'],
             'excerpt' => ['nullable', 'string', 'max:1000'],
             'body' => ['required', 'string'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:8192'],
             'meta_title' => ['nullable', 'string', 'max:255'],
             'meta_description' => ['nullable', 'string', 'max:500'],
         ]);
+
+        unset($data['cover_image']);
+        $data['body'] = $this->htmlSanitizer->clean($data['body']);
+
+        return $data;
     }
 
     private function storeCover(Request $request): ?string

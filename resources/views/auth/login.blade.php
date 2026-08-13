@@ -35,19 +35,19 @@
         <form method="POST" action="{{ route('login') }}" class="space-y-4">
             @csrf
             <div>
-                <label class="mb-1.5 block text-xs font-bold text-ink-700 dark:text-ink-200">نام کاربری</label>
-                <input type="text" name="username" required autofocus autocomplete="username"
+                <label for="username" class="mb-1.5 block text-xs font-bold text-ink-700 dark:text-ink-200">نام کاربری</label>
+                <input id="username" type="text" name="username" required autofocus autocomplete="username"
                        class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10">
             </div>
             <div>
-                <label class="mb-1.5 block text-xs font-bold text-ink-700 dark:text-ink-200">رمز عبور</label>
-                <input type="password" name="password" required autocomplete="current-password"
+                <label for="password" class="mb-1.5 block text-xs font-bold text-ink-700 dark:text-ink-200">رمز عبور</label>
+                <input id="password" type="password" name="password" required autocomplete="current-password"
                        class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-3 text-sm focus:border-brand-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-brand-100 dark:border-white/10 dark:bg-white/5 dark:text-white dark:focus:bg-white/10">
             </div>
             <x-button type="submit" class="w-full justify-center !py-3.5">ورود به پنل</x-button>
         </form>
 
-        <p class="mt-6 text-center text-[11px] font-semibold text-ink-400 dark:text-ink-500">
+        <p class="mt-6 text-center text-[11px] font-semibold text-ink-600 dark:text-ink-300">
             حساب کاربری از طریق دستور <code class="rounded bg-ink-100 px-1.5 py-0.5 dark:bg-white/10">admin:create-user</code> ساخته می‌شود
         </p>
     </div>

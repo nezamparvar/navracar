@@ -1,0 +1,7 @@
+# Repository guidance
+
+- Preserve the existing Persian RTL interface and product behavior; prefer focused fixes over page redesigns.
+- PHP baseline is 8.3. Use the locked Composer and npm dependencies.
+- Before proposing a merge, run Composer install/audit, npm ci/audit/build, `php artisan test --compact`, and `npm run test:e2e`.
+- Never commit credentials or production `.env` files. Treat outbound HTTP, HTML rendering, and uploads as security boundaries.
+- Add regression tests with every security-sensitive change and keep the GitHub Actions check names documented in `docs/BRANCH_PROTECTION.md` stable.

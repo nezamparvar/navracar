@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
 use App\Models\Post;
+use App\Services\HtmlSanitizer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -19,16 +20,19 @@ class BlogController extends Controller
         ]);
     }
 
-    public function show(Request $request, Post $post)
+    public function show(Request $request, Post $post, HtmlSanitizer $sanitizer)
     {
         if ($post->status !== 'published' && ! $request->user()) {
             abort(404);
         }
 
+        $safeBody = $sanitizer->clean($post->body);
+
         return view('public.blog.show', [
             'title' => $post->meta_title ?: ($post->title.' | ناوراکار'),
             'post' => $post,
-            'metaDescription' => $post->meta_description ?: Str::limit(strip_tags($post->excerpt ?: $post->body), 160),
+            'safeBody' => $safeBody,
+            'metaDescription' => $post->meta_description ?: Str::limit(strip_tags($post->excerpt ?: $safeBody), 160),
         ]);
     }
 }

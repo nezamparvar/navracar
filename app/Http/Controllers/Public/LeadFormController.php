@@ -11,6 +11,7 @@ use App\Services\GeoLookupService;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Validation\Rule;
 
 class LeadFormController extends Controller
 {
@@ -34,7 +35,12 @@ class LeadFormController extends Controller
 
     public function create()
     {
-        $staff = AdminUser::orderByRaw('full_name is null')->orderBy('full_name')->orderBy('username')->get();
+        $staff = AdminUser::query()
+            ->select(['id', 'full_name'])
+            ->where('role', 'sales')
+            ->whereNotNull('full_name')
+            ->orderBy('full_name')
+            ->get();
 
         return view('public.lead-form', [
             'title' => 'ثبت گزارش تماس فروش | ناوراکار',
@@ -58,7 +64,7 @@ class LeadFormController extends Controller
         }
 
         $data = $request->validate([
-            'userId' => ['required', 'integer'],
+            'userId' => ['required', 'integer', Rule::exists('admin_users', 'id')->where(fn ($query) => $query->where('role', 'sales')->whereNotNull('full_name'))],
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:64'],
             'email' => ['nullable', 'email'],
@@ -72,7 +78,7 @@ class LeadFormController extends Controller
             'nextCall' => ['nullable', 'date'],
         ]);
 
-        $staffUser = AdminUser::find($data['userId']);
+        $staffUser = AdminUser::query()->where('role', 'sales')->whereNotNull('full_name')->find($data['userId']);
         if (! $staffUser) {
             return response()->json(['success' => false, 'message' => 'کارشناس انتخاب‌شده معتبر نیست. لطفاً دوباره از لیست انتخاب کنید.'], 422);
         }

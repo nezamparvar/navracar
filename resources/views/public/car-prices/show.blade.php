@@ -32,7 +32,7 @@
         @endif
         <script type="application/ld+json">
             {!! json_encode(array_filter([
-                '@context' => 'https://schema.org',
+                '@'.'context' => 'https://schema.org',
                 '@type' => 'Vehicle',
                 'name' => $l->title_fa,
                 'brand' => $l->make,

@@ -16,7 +16,7 @@
         @endif
         <script type="application/ld+json">
             {!! json_encode(array_filter([
-                '@context' => 'https://schema.org',
+                '@'.'context' => 'https://schema.org',
                 '@type' => 'BlogPosting',
                 'headline' => $p->title,
                 'image' => $p->coverUrl(),
@@ -61,7 +61,7 @@
         @endif
 
         <div class="prose prose-sm mt-6 max-w-none leading-8 text-ink-700">
-            {!! $p->body !!}
+            {!! $safeBody !!}
         </div>
     </div>
 </x-layouts.public>

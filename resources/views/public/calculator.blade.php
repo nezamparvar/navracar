@@ -369,7 +369,7 @@
       </div>
     </a>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <a href="{{ route('public.car-prices.index') }}" class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
+      <a href="{{ route('public.car-prices.index') }}" aria-label="قیمت خودروها" class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/></svg>
         <span class="lbl-full">قیمت خودروها</span>
       </a>
@@ -378,11 +378,11 @@
           <span class="lbl-full">{{ $item->label }}</span>
         </a>
       @endforeach
-      <a href="{{ route('public.home') }}" class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
+      <a href="{{ route('public.home') }}" aria-label="سایت اصلی" class="print-btn" style="background:rgba(255,255,255,.14);color:#fff;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20Z"/></svg>
         <span class="lbl-full">سایت اصلی</span>
       </a>
-      <button class="print-btn" onclick="printReport()">
+      <button class="print-btn" aria-label="چاپ گزارش" onclick="printReport()">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><rect x="6" y="14" width="12" height="8"/><path d="M6 18H4a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-2"/></svg>
         <span class="lbl-full">چاپ گزارش</span>
       </button>
