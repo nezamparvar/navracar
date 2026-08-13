@@ -33,9 +33,10 @@
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">مدت بازپرداخت (سال)</label>
-                    <input type="number" step="1" name="loan_term_years" value="{{ old('loan_term_years', $loanTermYears) }}" required
+                    <label class="mb-1 block text-xs font-bold text-ink-500">مدت‌های بازپرداخت (سال)</label>
+                    <input type="text" dir="ltr" name="loan_term_years" value="{{ old('loan_term_years', $loanTermYears) }}" required
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                    <p class="mt-1 text-[11px] text-ink-400">چند مدت را با کاما جدا بنویسید، مثلاً <span class="num-font">2,3,5</span> — برای هر مدت یک ردیف قسط جداگانه به مشتری نمایش داده می‌شود.</p>
                 </div>
                 <div>
                     <label class="mb-1 block text-xs font-bold text-ink-500">نرخ بهره سالانه (٪)</label>

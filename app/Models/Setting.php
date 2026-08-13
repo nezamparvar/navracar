@@ -61,7 +61,7 @@ class Setting extends Model
         self::DEFAULT_DELIVERY_DAYS => '40',
         self::USD_TO_AED_RATE => '3.6725',
         self::LOAN_MAX_AMOUNT_TOMAN => '10000000000',
-        self::LOAN_TERM_YEARS => '5',
+        self::LOAN_TERM_YEARS => '2,3,5',
         self::LOAN_INTEREST_RATE_PERCENT => '28',
     ];
 

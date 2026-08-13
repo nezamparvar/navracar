@@ -58,7 +58,7 @@ class SettingController extends Controller
             'bale_chat_id' => ['nullable', 'string', 'max:255'],
             'usd_to_aed_rate' => ['required', 'numeric', 'min:0.01'],
             'loan_max_amount_toman' => ['required', 'numeric', 'min:0'],
-            'loan_term_years' => ['required', 'integer', 'min:1', 'max:30'],
+            'loan_term_years' => ['required', 'string', 'max:50', 'regex:/^\d+(,\d+)*$/'],
             'loan_interest_rate_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'tariff_percent' => ['required', 'array'],
             'tariff_percent.*' => ['required', 'numeric', 'min:0', 'max:500'],

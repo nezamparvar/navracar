@@ -16,7 +16,8 @@
         'scrapCertCounts' => \App\Models\CarListing::SCRAP_CERT_COUNTS,
         'usdToAedRate' => (float) \App\Models\Setting::get(\App\Models\Setting::USD_TO_AED_RATE),
         'loanMaxAmountToman' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_MAX_AMOUNT_TOMAN),
-        'loanTermYears' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_TERM_YEARS),
+        'loanTermYearsOptions' => collect(explode(',', \App\Models\Setting::get(\App\Models\Setting::LOAN_TERM_YEARS)))
+            ->map(fn ($y) => (int) trim($y))->filter()->values()->all(),
         'loanInterestRatePercent' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_INTEREST_RATE_PERCENT),
         'carLabel' => $listing->title_fa,
         'quoteUrl' => route('public.quote-requests.store'),
@@ -186,9 +187,9 @@
     <div class="rounded-2xl border border-ink-200/70 p-4 dark:border-white/10">
         <h3 class="mb-3 text-sm font-extrabold text-ink-900 dark:text-white">جدول اقساط وام خرید خارجی خودرو</h3>
         <p class="mb-3 text-xs leading-6 text-ink-500 dark:text-ink-400">
-            این تسهیلات صرفاً بابت بخشی از <strong>هزینه‌های ترخیص گمرکی</strong> این خودرو محاسبه می‌شود. سقف وام برابر است با کمترین مقدار از: حداکثر وام مصوب (<span class="num-font" x-text="fmt(loanMaxAmountToman)"></span> تومان)، حداکثر ۵۰٪ قیمت خودرو برای خودروهای ارزان‌تر، و جمع هزینه‌های ترخیص همین خودرو.
+            این تسهیلات صرفاً بابت بخشی از <strong>هزینه‌های ترخیص گمرکی</strong> این خودرو محاسبه می‌شود. سقف وام برابر است با کمترین مقدار از: حداکثر وام مصوب (<span class="num-font" x-text="fmt(loanMaxAmountToman)"></span> تومان) و حداکثر ۵۰٪ قیمت تمام‌شدهٔ نهایی همین خودرو.
         </p>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
                 <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">مبلغ وام قابل دریافت</div>
                 <div class="mt-1 text-sm font-extrabold num-font" x-text="fmt(results.loan.amount) + ' تومان'"></div>
@@ -196,10 +197,6 @@
             <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
                 <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">پیش‌پرداخت لازم (نقدی)</div>
                 <div class="mt-1 text-sm font-extrabold num-font" x-text="fmt(results.loan.downPayment) + ' تومان'"></div>
-            </div>
-            <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
-                <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">تعداد اقساط</div>
-                <div class="mt-1 text-sm font-extrabold num-font" x-text="results.loan.months + ' قسط ماهانه'"></div>
             </div>
             <div class="rounded-xl bg-ink-50 p-3 text-center dark:bg-white/5">
                 <div class="text-[11px] font-bold text-ink-500 dark:text-ink-400">نرخ بهره سالانه</div>
@@ -210,19 +207,21 @@
             <table class="w-full text-xs sm:text-sm">
                 <thead class="bg-ink-50 text-ink-500 dark:bg-white/5 dark:text-ink-400">
                     <tr>
-                        <th class="p-2.5 text-right">مبلغ وام</th>
+                        <th class="p-2.5 text-right">شرایط پرداخت</th>
                         <th class="p-2.5 text-right">تعداد اقساط</th>
                         <th class="p-2.5 text-right">مبلغ هر قسط ماهانه</th>
                         <th class="p-2.5 text-left">جمع کل بازپرداخت (اصل + سود)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr class="border-t border-ink-100 dark:border-white/5">
-                        <td class="p-2.5 num-font font-bold" x-text="fmt(results.loan.amount)"></td>
-                        <td class="p-2.5 num-font" x-text="results.loan.months + ' ماه'"></td>
-                        <td class="p-2.5 num-font font-bold" x-text="fmt(results.loan.monthlyInstallment) + ' تومان'"></td>
-                        <td class="p-2.5 text-left num-font" x-text="fmt(results.loan.totalRepayment) + ' تومان'"></td>
-                    </tr>
+                    <template x-for="plan in results.loan.plans" :key="plan.years">
+                        <tr class="border-t border-ink-100 dark:border-white/5">
+                            <td class="p-2.5 font-semibold" x-text="'وام ' + plan.years + ' ساله'"></td>
+                            <td class="p-2.5 num-font" x-text="plan.months + ' ماه'"></td>
+                            <td class="p-2.5 num-font font-bold" x-text="fmt(plan.monthlyInstallment) + ' تومان'"></td>
+                            <td class="p-2.5 text-left num-font" x-text="fmt(plan.totalRepayment) + ' تومان'"></td>
+                        </tr>
+                    </template>
                 </tbody>
             </table>
         </div>
@@ -254,6 +253,31 @@
                     </template>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="rounded-2xl border border-ink-200/70 p-4 dark:border-white/10">
+        <h3 class="mb-1 text-sm font-extrabold text-ink-900 dark:text-white">چارت زمان‌بندی پرداخت‌ها و انجام کار</h3>
+        <p class="mb-5 text-xs leading-6 text-ink-500 dark:text-ink-400">
+            طول هر بخش متناسب با مدت‌زمان تقریبی همان مرحله است — زمان‌بندی واقعی بسته به شرایط ممکن است کمی متفاوت باشد.
+        </p>
+        <div class="overflow-x-auto">
+            <div class="flex min-w-[640px] items-end gap-0.5 pb-1">
+                <template x-for="(step, i) in results.timeline" :key="step.no">
+                    <div class="flex flex-col items-stretch" :style="'flex: ' + step.weight + ' 0 0'">
+                        <div class="mb-1.5 truncate text-center text-[10px] font-black text-ink-700 num-font dark:text-ink-200" x-text="fmt(step.value)" :title="fmt(step.value) + ' تومان'"></div>
+                        <div class="flex h-10 items-center justify-center text-xs font-black text-white ring-2 ring-white dark:ring-ink-950"
+                             :class="[step.colorClass, i === 0 ? 'rounded-s-xl' : '', i === results.timeline.length - 1 ? 'rounded-e-xl' : '']"
+                             x-text="step.no"></div>
+                        <div class="mt-1.5 px-0.5 text-center text-[10px] font-bold leading-tight text-ink-600 dark:text-ink-300" x-text="step.shortLabel"></div>
+                        <div class="mt-0.5 px-0.5 text-center text-[9px] leading-tight text-ink-400 dark:text-ink-500" x-text="step.duration"></div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        <div class="mt-4 flex items-center gap-2 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
+            <x-icon name="check" class="w-4 h-4" />
+            تحویل خودرو ترخیص‌شده و دارای پلاک انتظامی
         </div>
     </div>
 
@@ -348,7 +372,7 @@ window.carCalculatorApp = function (config) {
         scrapThresholdAED: config.scrapThresholdAed,
         scrapCertCounts: config.scrapCertCounts,
         loanMaxAmountToman: config.loanMaxAmountToman || 0,
-        loanTermYears: config.loanTermYears || 5,
+        loanTermYearsOptions: (config.loanTermYearsOptions && config.loanTermYearsOptions.length) ? config.loanTermYearsOptions : [5],
         loanInterestRatePercent: config.loanInterestRatePercent || 0,
         rateLabels,
         rates: {
@@ -474,27 +498,30 @@ window.carCalculatorApp = function (config) {
             const serviceProfitAmt = pct('serviceProfit') * (sumCustoms10 + sumPlate + seaFreight + permits);
             const totalWithProfit = totalNoProfit + serviceProfitAmt;
 
-            // سقف وام: کمترین مقدار از سقف مصوب پنل مدیریت، حداکثر ۵۰٪ قیمت خودرو
-            // (برای خودروهای ارزان‌قیمت)، و جمع هزینه‌های ترخیص همین خودرو — چون این
-            // وام صرفاً بابت هزینه‌های ترخیص تعلق می‌گیرد، نه کل قیمت خودرو.
-            const clearanceCostsTotal = sumCustomsAll + sumPlate + serviceProfitAmt;
-            const loanAmount = Math.max(0, Math.min(num(this.loanMaxAmountToman), 0.5 * realPriceToman, clearanceCostsTotal));
+            // سقف وام: کمترین مقدار از سقف مصوب پنل مدیریت و ۵۰٪ قیمت تمام‌شدهٔ
+            // نهایی خودرو — مثلاً قیمت تمام‌شدهٔ ۱۵ میلیارد یعنی سقف وام ۷.۵
+            // میلیارد، ولی قیمت تمام‌شدهٔ ۳۰ میلیارد یعنی سقف وام همان ۱۰ میلیارد
+            // (سقف مصوب پنل مدیریت) خواهد بود.
+            const loanAmount = Math.max(0, Math.min(num(this.loanMaxAmountToman), 0.5 * totalWithProfit));
             const downPayment = totalWithProfit - loanAmount;
-
             const annualRate = num(this.loanInterestRatePercent) / 100;
-            const months = Math.max(0, Math.round(num(this.loanTermYears) * 12));
             const monthlyRate = annualRate / 12;
-            let monthlyInstallment = 0;
-            if (loanAmount > 0 && months > 0) {
-                monthlyInstallment = monthlyRate > 0
-                    ? loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1)
-                    : loanAmount / months;
-            }
-            const totalRepayment = monthlyInstallment * months;
-            const loan = {
-                amount: loanAmount, downPayment, months, monthlyInstallment, totalRepayment,
-                totalInterest: totalRepayment - loanAmount,
-            };
+
+            const loanPlans = this.loanTermYearsOptions.map(years => {
+                const months = Math.max(0, Math.round(num(years) * 12));
+                let monthlyInstallment = 0;
+                if (loanAmount > 0 && months > 0) {
+                    monthlyInstallment = monthlyRate > 0
+                        ? loanAmount * monthlyRate * Math.pow(1 + monthlyRate, months) / (Math.pow(1 + monthlyRate, months) - 1)
+                        : loanAmount / months;
+                }
+                const totalRepayment = monthlyInstallment * months;
+                return {
+                    years, months, monthlyInstallment, totalRepayment,
+                    totalInterest: totalRepayment - loanAmount,
+                };
+            });
+            const loan = { amount: loanAmount, downPayment, plans: loanPlans };
 
             const bookingAmt = 0.10 * realPriceToman;
             const paymentSteps = [
@@ -506,7 +533,24 @@ window.carCalculatorApp = function (config) {
                 { no: 6, label: 'پرداخت هزینه‌های پلاک انتظامی', duration: '', value: sumPlate },
             ];
 
-            return { customsRows, plateRows, sumCustomsAll, sumPlate, totalNoProfit, serviceProfitAmt, totalWithProfit, loan, paymentSteps };
+            // چارت زمان‌بندی: طول تقریبی هر مرحله (روز کاری، بر پایهٔ همان بازه‌های
+            // جدول شرایط پرداخت بالا) — از جذر روزها به‌عنوان وزن بصری استفاده می‌شود
+            // تا مرحلهٔ ۱-روزهٔ بوک کردن در برابر مرحلهٔ ۳۰-روزهٔ ترخیص کاملاً محو نشود؛
+            // عدد دقیق مدت همچنان به‌صورت متن زیر هر بخش نوشته می‌شود.
+            const stageColors = ['bg-brand-500', 'bg-brand-600', 'bg-brand-700', 'bg-brand-800', 'bg-brand-900', 'bg-brand-950'];
+            const shortLabels = ['بوک کردن خودرو', 'صدور مجوز', 'باقی‌ماندهٔ قیمت خودرو', 'ترخیص گمرکی', 'کارمزد کارگزار', 'پلاک انتظامی'];
+            const stageDays = [1, 7, 3, 30, 2, 2];
+            const timeline = paymentSteps.map((step, i) => ({
+                no: step.no,
+                shortLabel: shortLabels[i],
+                duration: step.duration || (stageDays[i] + ' روز کاری'),
+                value: step.value,
+                days: stageDays[i],
+                weight: Math.sqrt(stageDays[i]),
+                colorClass: stageColors[i],
+            }));
+
+            return { customsRows, plateRows, sumCustomsAll, sumPlate, totalNoProfit, serviceProfitAmt, totalWithProfit, loan, paymentSteps, timeline };
         },
     };
 };
