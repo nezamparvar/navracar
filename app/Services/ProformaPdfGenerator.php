@@ -79,7 +79,7 @@ class ProformaPdfGenerator
         $grandTotal = (float) $invoice->total_amount;
         $payable = $grandTotal - $discount;
         $currency = $invoice->currency ?? 'toman';
-        $unitLabel = $currency === 'aed' ? 'درهم (AED)' : 'تومان';
+        $unitLabel = Invoice::CURRENCIES[$currency] ?? 'تومان';
         $exRate = (float) ($invoice->exchange_rate ?? 0);
 
         $breakdown = array_map(fn ($row) => [
@@ -95,7 +95,7 @@ class ProformaPdfGenerator
             $totalsSummary[] = ['label' => 'تخفیف', 'amount' => '- '.number_format($discount).' '.$unitLabel];
         }
         $totalsSummary[] = ['label' => 'مبلغ قابل‌پرداخت', 'amount' => number_format($payable).' '.$unitLabel, 'emphasis' => true];
-        if ($currency === 'aed' && $exRate > 0) {
+        if ($currency !== 'toman' && $exRate > 0) {
             $totalsSummary[] = ['label' => 'معادل تقریبی به تومان (نرخ '.number_format($exRate).')', 'amount' => number_format($payable * $exRate).' تومان'];
         }
 

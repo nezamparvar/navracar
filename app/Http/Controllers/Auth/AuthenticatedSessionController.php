@@ -25,12 +25,21 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
+        $user = $request->user();
+
         ActivityLogger::info('ورود موفق به پنل مدیریت', [
-            'username' => $request->user()->username,
-            'role' => $request->user()->role,
+            'username' => $user->username,
+            'role' => $user->role,
         ]);
 
-        return redirect()->intended(route('admin.dashboard', absolute: false));
+        $homeRoute = match (true) {
+            $user->isAdmin() => 'admin.dashboard',
+            $user->isSales() => 'admin.requests.index',
+            $user->isContentManager() => 'admin.car-listings.index',
+            default => 'admin.dashboard',
+        };
+
+        return redirect()->intended(route($homeRoute, absolute: false));
     }
 
     public function destroy(Request $request): RedirectResponse

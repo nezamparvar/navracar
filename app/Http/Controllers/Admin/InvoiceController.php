@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\CarListing;
 use App\Models\Invoice;
 use App\Models\QuoteRequest;
 use App\Models\Setting;
@@ -34,9 +35,33 @@ class InvoiceController extends Controller
         ],
     ];
 
-    public function index()
+    /**
+     * کارشناس فروش فقط پیش‌فاکتورهایی را می‌بیند که خودش صادر کرده یا به
+     * درخواستی الحاق‌شده به خودش وصل است؛ مدیر کامل همه را می‌بیند.
+     */
+    private function ownsInvoice(Invoice $invoice, $user): bool
     {
-        $rows = Invoice::with('creator')->orderByDesc('created_at')->paginate(15);
+        if ($user->isAdmin()) {
+            return true;
+        }
+
+        return $invoice->created_by === $user->id
+            || ($invoice->request_id && $invoice->request?->assigned_to === $user->id);
+    }
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $query = Invoice::with('creator');
+
+        if (! $user->isAdmin()) {
+            $query->where(function ($w) use ($user) {
+                $w->where('created_by', $user->id)
+                    ->orWhereHas('request', fn ($rq) => $rq->where('assigned_to', $user->id));
+            });
+        }
+
+        $rows = $query->orderByDesc('created_at')->paginate(15);
 
         return view('admin.invoices.index', [
             'pageTitle' => 'پیش‌فاکتورها و فروش',
@@ -59,6 +84,7 @@ class InvoiceController extends Controller
         if ($editId) {
             $invoice = Invoice::find($editId);
             if ($invoice) {
+                abort_unless($this->ownsInvoice($invoice, $request->user()), 403, 'این پیش‌فاکتور به شما الحاق نشده است.');
                 $prefill = [
                     'name' => $invoice->customer_name, 'phone' => $invoice->customer_phone,
                     'email' => $invoice->customer_email ?? '', 'address' => $invoice->customer_address,
@@ -72,6 +98,7 @@ class InvoiceController extends Controller
         } elseif ($requestId) {
             $lead = QuoteRequest::find($requestId);
             if ($lead) {
+                abort_unless($request->user()->isAdmin() || $lead->assigned_to === $request->user()->id, 403, 'این درخواست به شما الحاق نشده است.');
                 $breakdown = $lead->breakdown();
                 foreach ($lead->totals() as $label => $val) {
                     if (mb_strpos((string) $label, 'کارمزد ترخیص') !== false || mb_strpos((string) $label, 'سود خدمات') !== false) {
@@ -93,6 +120,18 @@ class InvoiceController extends Controller
             'requestId' => $requestId,
             'categories' => self::CATEGORIES,
             'quickRows' => self::QUICK_ROWS,
+            'currencies' => Invoice::CURRENCIES,
+            'calcConfig' => [
+                'categories' => CarListing::categoriesWithLiveRates(),
+                'freeRate' => (float) Setting::get(Setting::FREE_RATE),
+                'customsRate' => (float) Setting::get(Setting::CUSTOMS_RATE),
+                'licenseFeeAed' => (float) Setting::get(Setting::LICENSE_FEE_AED),
+                'seaFreightAed' => (float) Setting::get(Setting::SEA_FREIGHT_AED),
+                'storageToman' => (float) Setting::get(Setting::STORAGE_TOMAN),
+                'scrapCertPriceToman' => (float) Setting::get(Setting::SCRAP_CERT_PRICE_TOMAN),
+                'scrapThresholdAed' => (float) Setting::get(Setting::SCRAP_THRESHOLD_AED),
+                'scrapCertCounts' => CarListing::SCRAP_CERT_COUNTS,
+            ],
         ]);
     }
 
@@ -108,7 +147,7 @@ class InvoiceController extends Controller
             'category' => ['nullable', 'string', 'max:100'],
             'total_amount' => ['required', 'string'],
             'discount_amount' => ['nullable', 'string'],
-            'currency' => [Rule::in(['toman', 'aed'])],
+            'currency' => [Rule::in(array_keys(Invoice::CURRENCIES))],
             'exchange_rate' => ['nullable', 'string'],
             'valid_until' => ['nullable', 'date'],
             'payment_terms' => ['nullable', 'string', 'max:500'],
@@ -150,11 +189,17 @@ class InvoiceController extends Controller
 
         if (! empty($data['invoice_id'])) {
             $invoice = Invoice::findOrFail($data['invoice_id']);
+            abort_unless($this->ownsInvoice($invoice, $request->user()), 403, 'این پیش‌فاکتور به شما الحاق نشده است.');
             $invoice->update($payload);
             $id = $invoice->id;
         } else {
+            $requestId = ! empty($data['request_id']) ? (int) $data['request_id'] : null;
+            if ($requestId && ! $request->user()->isAdmin()) {
+                $lead = QuoteRequest::find($requestId);
+                abort_unless($lead && $lead->assigned_to === $request->user()->id, 403, 'این درخواست به شما الحاق نشده است.');
+            }
             $invoice = Invoice::create($payload + [
-                'request_id' => $data['request_id'] ?? null,
+                'request_id' => $requestId,
                 'invoice_number' => '',
                 'status' => 'پیش‌نویس',
                 'created_by' => $request->user()->id,
@@ -166,8 +211,10 @@ class InvoiceController extends Controller
         return redirect()->route('admin.invoices.show', $id);
     }
 
-    public function show(Invoice $invoice)
+    public function show(Request $request, Invoice $invoice)
     {
+        abort_unless($this->ownsInvoice($invoice, $request->user()), 403, 'این پیش‌فاکتور به شما الحاق نشده است.');
+
         return view('admin.invoices.show', [
             'pageTitle' => 'پیش‌فاکتور '.$invoice->invoice_number,
             'invoice' => $invoice,
@@ -180,14 +227,18 @@ class InvoiceController extends Controller
 
     public function updateStatus(Request $request, Invoice $invoice)
     {
+        abort_unless($this->ownsInvoice($invoice, $request->user()), 403, 'این پیش‌فاکتور به شما الحاق نشده است.');
+
         $data = $request->validate(['status' => [Rule::in(['پیش‌نویس', 'ارسال‌شده', 'تایید شده'])]]);
         $invoice->update(['status' => $data['status']]);
 
         return back();
     }
 
-    public function downloadPdf(Invoice $invoice, ProformaPdfGenerator $pdfGenerator)
+    public function downloadPdf(Request $request, Invoice $invoice, ProformaPdfGenerator $pdfGenerator)
     {
+        abort_unless($this->ownsInvoice($invoice, $request->user()), 403, 'این پیش‌فاکتور به شما الحاق نشده است.');
+
         $path = $pdfGenerator->fromInvoice($invoice);
 
         return Storage::disk('public')->download($path, $invoice->invoice_number.'.pdf');

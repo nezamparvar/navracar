@@ -56,6 +56,20 @@ class AdminUser extends Authenticatable
         return $this->isAdmin() || $this->isContentManager();
     }
 
+    public function isSales(): bool
+    {
+        return $this->role === 'sales';
+    }
+
+    /**
+     * دسترسی به بخش‌های فروش (درخواست‌ها، پایپ‌لاین، پیش‌فاکتورها) — هم مدیر
+     * کامل و هم کارشناس فروش مجازند؛ مدیر محتوا به این بخش‌ها دسترسی ندارد.
+     */
+    public function canManageSales(): bool
+    {
+        return $this->isAdmin() || $this->isSales();
+    }
+
     public function displayName(): string
     {
         return $this->full_name ?: $this->username;

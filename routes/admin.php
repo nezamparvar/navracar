@@ -19,35 +19,34 @@ use App\Http\Controllers\Admin\VinCheckController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/', DashboardController::class)->name('dashboard');
-    Route::get('/export', ExportController::class)->name('export');
+    // بخش‌های فروش: هم مدیر کامل و هم «کارشناس فروش» دسترسی دارند (کارشناس
+    // فروش فقط درخواست‌ها/پیش‌فاکتورهای الحاق‌شده به خودش را می‌بیند — کنترل
+    // دقیق‌تر داخل خود کنترلرهاست).
+    Route::middleware('sales.role')->group(function () {
+        Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban');
+        Route::post('/kanban/change-stage', [KanbanController::class, 'updateStage'])->name('kanban.change-stage');
 
-    Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban');
-    Route::post('/kanban/change-stage', [KanbanController::class, 'updateStage'])->name('kanban.change-stage');
+        Route::prefix('requests')->name('requests.')->group(function () {
+            Route::get('/', [RequestController::class, 'index'])->name('index');
+            Route::get('/create', [RequestController::class, 'create'])->name('create');
+            Route::post('/', [RequestController::class, 'store'])->name('store');
+            Route::get('/{lead}', [RequestController::class, 'show'])->name('show');
+            Route::post('/{lead}/assign', [RequestController::class, 'assign'])->name('assign');
+            Route::post('/{lead}/temperature', [RequestController::class, 'temperature'])->name('temperature');
+            Route::post('/{lead}/status', [RequestController::class, 'status'])->name('status');
+        });
 
-    Route::prefix('requests')->name('requests.')->group(function () {
-        Route::get('/', [RequestController::class, 'index'])->name('index');
-        Route::get('/create', [RequestController::class, 'create'])->name('create');
-        Route::post('/', [RequestController::class, 'store'])->name('store');
-        Route::get('/{lead}', [RequestController::class, 'show'])->name('show');
-        Route::post('/{lead}/assign', [RequestController::class, 'assign'])->name('assign');
-        Route::post('/{lead}/temperature', [RequestController::class, 'temperature'])->name('temperature');
-        Route::post('/{lead}/status', [RequestController::class, 'status'])->name('status');
+        Route::post('/template-use', TemplateUseController::class)->name('template-use');
+
+        Route::prefix('invoices')->name('invoices.')->group(function () {
+            Route::get('/', [InvoiceController::class, 'index'])->name('index');
+            Route::get('/create', [InvoiceController::class, 'create'])->name('create');
+            Route::post('/', [InvoiceController::class, 'store'])->name('store');
+            Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
+            Route::get('/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('pdf');
+            Route::post('/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('status');
+        });
     });
-
-    Route::post('/template-use', TemplateUseController::class)->name('template-use');
-
-    Route::prefix('invoices')->name('invoices.')->group(function () {
-        Route::get('/', [InvoiceController::class, 'index'])->name('index');
-        Route::get('/create', [InvoiceController::class, 'create'])->name('create');
-        Route::post('/', [InvoiceController::class, 'store'])->name('store');
-        Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
-        Route::get('/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('pdf');
-        Route::post('/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('status');
-    });
-
-    Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
-    Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');
 
     // بخش‌های محتوایی: هم مدیر کامل و هم «مدیر محتوا» به این‌ها دسترسی دارند.
     Route::middleware('content.role')->group(function () {
@@ -99,6 +98,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // بخش‌های فقط برای مدیر کامل.
     Route::middleware('admin.role')->group(function () {
+        Route::get('/', DashboardController::class)->name('dashboard');
+        Route::get('/export', ExportController::class)->name('export');
+        Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
+        Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');
+
         Route::prefix('templates')->name('templates.')->group(function () {
             Route::get('/', [MessageTemplateController::class, 'index'])->name('index');
             Route::post('/', [MessageTemplateController::class, 'store'])->name('store');

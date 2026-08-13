@@ -8,6 +8,12 @@ class Invoice extends Model
 {
     public $timestamps = false;
 
+    public const CURRENCIES = [
+        'toman' => 'تومان',
+        'aed' => 'درهم (AED)',
+        'usd' => 'دلار (USD)',
+    ];
+
     protected $fillable = [
         'request_id', 'invoice_number', 'customer_name', 'customer_phone', 'customer_address',
         'customer_email', 'car_label', 'category', 'breakdown_json', 'total_amount', 'discount_amount',

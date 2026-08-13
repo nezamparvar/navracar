@@ -3,7 +3,7 @@
     $grandTotal = (float) $invoice->total_amount;
     $payable = $grandTotal - $discount;
     $currency = $invoice->currency ?? 'toman';
-    $unitLabel = $currency === 'aed' ? 'درهم (AED)' : 'تومان';
+    $unitLabel = \App\Models\Invoice::CURRENCIES[$currency] ?? 'تومان';
     $exRate = (float) ($invoice->exchange_rate ?? 0);
     $isSingleItem = ($invoice->invoice_type ?? 'full') === 'single_item';
 @endphp
@@ -79,7 +79,7 @@
                         <tr class="border-b border-ink-100 text-amber-700"><td class="p-2.5" colspan="2">تخفیف</td><td class="num-font p-2.5 font-bold">− {{ number_format($discount) }} {{ $unitLabel }}</td></tr>
                     @endif
                     <tr class="bg-brand-50 text-brand-900"><td class="p-3" colspan="2 " style="font-weight:900;">مبلغ قابل‌پرداخت</td><td class="num-font p-3 text-base font-black">{{ number_format($payable) }} {{ $unitLabel }}</td></tr>
-                    @if ($currency === 'aed' && $exRate > 0)
+                    @if ($currency !== 'toman' && $exRate > 0)
                         <tr><td class="p-2.5 text-xs text-ink-500" colspan="2">معادل تقریبی به تومان (نرخ {{ number_format($exRate) }})</td><td class="num-font p-2.5 text-sm text-ink-500">{{ number_format($payable * $exRate) }} تومان</td></tr>
                     @endif
                 </tbody>

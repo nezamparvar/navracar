@@ -12,10 +12,12 @@
 @php
     $navItems = [
         ['route' => 'admin.dashboard', 'label' => 'داشبورد', 'icon' => 'dashboard'],
-        ['route' => 'admin.kanban', 'label' => 'پایپ‌لاین (کانبان)', 'icon' => 'kanban'],
-        ['route' => 'admin.requests.index', 'label' => 'درخواست‌ها (لیست)', 'icon' => 'inbox'],
         ['route' => 'admin.calculations.index', 'label' => 'محاسبات', 'icon' => 'calculator'],
         ['route' => 'admin.vin-checks.index', 'label' => 'شماره‌شاسی‌ها', 'icon' => 'vin'],
+    ];
+    $salesNavItems = [
+        ['route' => 'admin.kanban', 'label' => 'پایپ‌لاین (کانبان)', 'icon' => 'kanban'],
+        ['route' => 'admin.requests.index', 'label' => 'درخواست‌ها (لیست)', 'icon' => 'inbox'],
         ['route' => 'admin.invoices.index', 'label' => 'پیش‌فاکتورها', 'icon' => 'invoice'],
     ];
     $contentNavItems = [
@@ -54,15 +56,32 @@
         </div>
 
         <nav class="mt-2 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
-            @foreach ($navItems as $item)
-                @php $active = request()->routeIs($item['route'].'*'); @endphp
-                <a href="{{ route($item['route']) }}"
-                   class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
-                   {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
-                    <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
-                    {{ $item['label'] }}
-                </a>
-            @endforeach
+            @if (auth()->user()?->isAdmin())
+                @foreach ($navItems as $item)
+                    @php $active = request()->routeIs($item['route'].'*'); @endphp
+                    <a href="{{ route($item['route']) }}"
+                       class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                       {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
+                        <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            @endif
+
+            @if (auth()->user()?->canManageSales())
+                @if (auth()->user()?->isAdmin())
+                    <div class="mt-4 mb-1 px-3.5 text-[11px] font-bold uppercase tracking-wider text-brand-300/70">فروش</div>
+                @endif
+                @foreach ($salesNavItems as $item)
+                    @php $active = request()->routeIs($item['route'].'*'); @endphp
+                    <a href="{{ route($item['route']) }}"
+                       class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                       {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
+                        <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
+                        {{ $item['label'] }}
+                    </a>
+                @endforeach
+            @endif
 
             @if (auth()->user()?->canManageContent())
                 <div class="mt-4 mb-1 px-3.5 text-[11px] font-bold uppercase tracking-wider text-brand-300/70">مدیریت محتوا</div>
