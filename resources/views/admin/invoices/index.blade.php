@@ -25,7 +25,7 @@
                                 <td class="px-2.5 py-2.5 text-xs text-ink-500">{{ $r->created_at->format('Y-m-d') }}</td>
                                 <td class="px-2.5 py-2.5 font-semibold">{{ $r->customer_name }}</td>
                                 <td class="px-2.5 py-2.5">{{ $r->car_label ?: '-' }}</td>
-                                <td class="num-font px-2.5 py-2.5 font-extrabold text-brand-700 dark:text-brand-300">{{ number_format($r->payableAmount()) }} {{ $r->currency === 'aed' ? 'AED' : 'تومان' }}</td>
+                                <td class="num-font px-2.5 py-2.5 font-extrabold text-brand-700 dark:text-brand-300">{{ number_format($r->payableAmount()) }} {{ \App\Models\Invoice::CURRENCIES[$r->currency] ?? 'تومان' }}</td>
                                 <td class="px-2.5 py-2.5">
                                     <x-badge :color="$r->status === 'تایید شده' ? 'green' : ($r->status === 'پیش‌نویس' ? 'slate' : 'blue')">{{ $r->status }}</x-badge>
                                 </td>

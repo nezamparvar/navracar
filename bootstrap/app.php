@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureContentManagerRole;
+use App\Http\Middleware\EnsureSalesRole;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -17,6 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin.role' => EnsureAdminRole::class,
             'content.role' => EnsureContentManagerRole::class,
+            'sales.role' => EnsureSalesRole::class,
             'guest' => RedirectIfAuthenticated::class,
         ]);
     })
