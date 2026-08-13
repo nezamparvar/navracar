@@ -41,7 +41,7 @@
 </head>
 <body class="min-h-screen bg-gradient-to-br from-brand-50 via-white to-amber-50/40 font-sans text-ink-900">
 
-<header class="sticky top-0 z-40 bg-gradient-to-l from-brand-950 via-brand-900 to-brand-800 py-3.5 text-white shadow-soft-lg">
+<header x-data="{ mobileMenuOpen: false }" class="sticky top-0 z-40 bg-gradient-to-l from-brand-950 via-brand-900 to-brand-800 py-3.5 text-white shadow-soft-lg">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4">
         <a href="{{ route('public.home') }}" class="flex min-w-0 items-center gap-3">
             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-ink-950 shadow-glow-amber">
@@ -66,7 +66,29 @@
                 </a>
             @endforeach
             {{ $headerActions ?? '' }}
+            <button type="button" @click="mobileMenuOpen = !mobileMenuOpen"
+                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/10 text-white hover:bg-white/20 sm:hidden"
+                    :aria-expanded="mobileMenuOpen" aria-label="باز کردن منو">
+                <x-icon name="menu" class="w-5 h-5" x-show="!mobileMenuOpen" />
+                <x-icon name="x" class="w-5 h-5" x-show="mobileMenuOpen" x-cloak />
+            </button>
         </div>
+    </div>
+
+    <div x-show="mobileMenuOpen" x-cloak x-transition @click.outside="mobileMenuOpen = false"
+         class="mx-4 mt-3 space-y-1.5 rounded-2xl border border-white/10 bg-brand-950/95 p-3 sm:hidden">
+        <a href="{{ route('public.calculator') }}" class="block rounded-xl bg-amber-500 px-4 py-2.5 text-center text-sm font-bold text-ink-950">
+            محاسبه قیمت خودرو
+        </a>
+        <a href="{{ route('public.car-prices.index') }}" class="block rounded-xl bg-white/10 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-white/20">
+            قیمت خودروها
+        </a>
+        @foreach ($menuItems as $item)
+            <a href="{{ $item->url }}" @if($item->opens_new_tab) target="_blank" rel="noopener" @endif
+               class="block rounded-xl bg-white/10 px-4 py-2.5 text-center text-sm font-bold text-white hover:bg-white/20">
+                {{ $item->label }}
+            </a>
+        @endforeach
     </div>
 </header>
 
