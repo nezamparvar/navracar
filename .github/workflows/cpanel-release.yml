@@ -145,8 +145,8 @@ jobs:
         env:
           CPANEL_WORKFLOW_RUN: ${{ github.run_id }}
         run: |
-          tools/build-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel" "$RELEASE_TAG" "$SOURCE_COMMIT"
-          tools/validate-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel"
+          bash tools/build-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel" "$RELEASE_TAG" "$SOURCE_COMMIT"
+          bash tools/validate-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel"
 
       - name: Upload independently inspectable artifact
         uses: actions/upload-artifact@v4
