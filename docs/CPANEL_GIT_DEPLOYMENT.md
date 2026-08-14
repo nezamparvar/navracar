@@ -106,7 +106,7 @@ The one-time branch switch does not modify production. The existing live applica
 
 ## One-time staging cPanel setup
 
-Follow `docs/STAGING_SETUP_CPANEL.md`. Staging uses a separate Git clone, Laravel application, database, storage tree, and subdomain document root. The default public path in the generated task is `/home/navrac/staging.navracar.com`; replace it only through a reviewed configuration change if the actual cPanel subdomain uses another document root. Never point it at `/home/navrac/public_html` or production storage.
+Follow `docs/STAGING_SETUP_CPANEL.md`. Staging uses a separate Git clone, Laravel application, database, and storage tree while serving from the same production domain at `https://navracar.com/staging`. Its exact public path is `/home/navrac/public_html/staging`; never point the task at `/home/navrac/public_html` or production storage. Set `APP_URL`/`ASSET_URL` to the `/staging` URL and isolate `SESSION_COOKIE`, `SESSION_PATH`, and `CACHE_PREFIX` as documented.
 
 ## Staging candidate workflow
 

@@ -15,7 +15,7 @@ feature branch -> PR -> protected CI -> merged main
 | Git deployment branch | `cpanel-release` | `cpanel-staging` |
 | cPanel Git clone | `/home/navrac/navracar-repo` | `/home/navrac/navracar-staging-repo` |
 | Laravel application | `/home/navrac/navracar-app` | `/home/navrac/navracar-staging-app` |
-| Public document root | `/home/navrac/public_html` | `/home/navrac/staging.navracar.com` (replace with the actual cPanel subdomain document root) |
+| Public document root | `/home/navrac/public_html` | `/home/navrac/public_html/staging` |
 | Database | production database | separate staging database |
 | Writable storage | production storage/uploads | separate staging storage/uploads |
 
@@ -34,3 +34,4 @@ The application displays a visible `STAGING` banner only when `APP_ENV=staging`.
 ## Security controls
 
 The staging `robots.txt`, HTML metadata, and `X-Robots-Tag` header all request no indexing. Protect the entire staging document root with cPanel Directory Privacy in addition to Laravel authentication. Do not put the directory password in GitHub, this repository, or the artifact.
+The staging URL is `https://navracar.com/staging`. It is a same-domain subdirectory, not a subdomain. Staging uses its own `.env`, database/schema, cache prefix, session cookie (`SESSION_COOKIE=navracar_staging_session`) and cookie path (`SESSION_PATH=/staging`). Set `APP_URL=https://navracar.com/staging` and `ASSET_URL=https://navracar.com/staging` in the staging-only environment so generated links, public uploads, and Vite assets remain under `/staging`.

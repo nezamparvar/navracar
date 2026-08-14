@@ -74,8 +74,13 @@ fi
 
 grep -Fq "$EXPECTED_APP_ROOT" "$ARTIFACT_DIR/.cpanel.yml"
 grep -Fq "$EXPECTED_PUBLIC_ROOT" "$ARTIFACT_DIR/.cpanel.yml"
-grep -Fq "../$(basename "$EXPECTED_APP_ROOT")/vendor/autoload.php" "$ARTIFACT_DIR/public_html/index.php"
-grep -Fq "../$(basename "$EXPECTED_APP_ROOT")/bootstrap/app.php" "$ARTIFACT_DIR/public_html/index.php"
+if [[ "$EXPECTED_ENVIRONMENT" == 'staging' ]]; then
+    grep -Fq "../../$(basename "$EXPECTED_APP_ROOT")/vendor/autoload.php" "$ARTIFACT_DIR/public_html/index.php"
+    grep -Fq "../../$(basename "$EXPECTED_APP_ROOT")/bootstrap/app.php" "$ARTIFACT_DIR/public_html/index.php"
+else
+    grep -Fq "../$(basename "$EXPECTED_APP_ROOT")/vendor/autoload.php" "$ARTIFACT_DIR/public_html/index.php"
+    grep -Fq "../$(basename "$EXPECTED_APP_ROOT")/bootstrap/app.php" "$ARTIFACT_DIR/public_html/index.php"
+fi
 
 # public_html must be a strict allowlist.
 mapfile -t public_roots < <(find "$ARTIFACT_DIR/public_html" -mindepth 1 -maxdepth 1 -printf '%f\n' | LC_ALL=C sort)

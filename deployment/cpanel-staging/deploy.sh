@@ -6,7 +6,7 @@ umask 022
 readonly PRODUCTION_APP_ROOT='/home/navrac/navracar-app'
 readonly PRODUCTION_PUBLIC_ROOT='/home/navrac/public_html'
 readonly EXPECTED_APP_ROOT='/home/navrac/navracar-staging-app'
-readonly EXPECTED_PUBLIC_ROOT='/home/navrac/staging.navracar.com'
+readonly EXPECTED_PUBLIC_ROOT='/home/navrac/public_html/staging'
 readonly APP_ROOT="${1:-}"
 readonly PUBLIC_ROOT="${2:-}"
 
@@ -74,8 +74,8 @@ mkdir -p -- "$APP_STAGE" "$PUBLIC_STAGE" "$APP_BACKUP" "$PUBLIC_BACKUP"
 for item in "${APP_ITEMS[@]}"; do cp -a -- "$APP_PAYLOAD/$item" "$APP_STAGE/$item"; done
 for item in "${PUBLIC_ITEMS[@]}"; do cp -a -- "$PUBLIC_PAYLOAD/$item" "$PUBLIC_STAGE/$item"; done
 
-grep -Fq "../navracar-staging-app/vendor/autoload.php" "$PUBLIC_STAGE/index.php"
-grep -Fq "../navracar-staging-app/bootstrap/app.php" "$PUBLIC_STAGE/index.php"
+grep -Fq "../../navracar-staging-app/vendor/autoload.php" "$PUBLIC_STAGE/index.php"
+grep -Fq "../../navracar-staging-app/bootstrap/app.php" "$PUBLIC_STAGE/index.php"
 
 app_swapped=()
 public_swapped=()

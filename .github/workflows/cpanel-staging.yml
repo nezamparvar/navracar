@@ -125,7 +125,7 @@ jobs:
           bash tools/build-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel-staging" "$RELEASE_CANDIDATE" "$SOURCE_COMMIT"
           CPANEL_VALIDATION_ENV=staging \
           CPANEL_EXPECTED_APP_ROOT=/home/navrac/navracar-staging-app \
-          CPANEL_EXPECTED_PUBLIC_ROOT=/home/navrac/staging.navracar.com \
+          CPANEL_EXPECTED_PUBLIC_ROOT=/home/navrac/public_html/staging \
           bash tools/validate-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel-staging"
       - name: Upload independently inspectable candidate
         uses: actions/upload-artifact@v4
