@@ -36,4 +36,18 @@ class StagingSafetyTest extends TestCase
         $this->assertSame('navracar_staging_', config('cache.prefix'));
         $this->assertSame('https://navracar.com/staging/storage/vehicle.jpg', Storage::disk('public')->url('vehicle.jpg'));
     }
+
+    public function test_staging_public_disk_can_write_directly_to_its_isolated_web_storage(): void
+    {
+        $root = storage_path('framework/testing/staging-public');
+        config([
+            'filesystems.disks.public.root' => $root,
+            'filesystems.disks.public.url' => 'https://navracar.com/staging/storage',
+        ]);
+        Storage::disk('public')->put('car-listings/1/image.gif', 'gif-bytes');
+
+        $this->assertFileExists($root.'/car-listings/1/image.gif');
+        $this->assertStringStartsWith('https://navracar.com/staging/storage/', Storage::disk('public')->url('car-listings/1/image.gif'));
+        $this->assertFileDoesNotExist(storage_path('../navracar-app/storage/app/public/car-listings/1/image.gif'));
+    }
 }

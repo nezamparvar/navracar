@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Services\CarListingMapper;
 use App\Services\DubizzleParser;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class DubizzleParserTest extends TestCase
@@ -76,5 +77,24 @@ class DubizzleParserTest extends TestCase
         $this->assertSame('BMW', $data['make']);
         $this->assertSame(125000.0, $data['price_aed']);
         $this->assertSame(['https://dbz-images.dubizzle.com/images/example.jpg'], $data['images']);
+    }
+
+    public function test_direct_fetch_classifies_remote_access_blocks_without_exposing_html(): void
+    {
+        $parser = new DubizzleParser;
+
+        $this->assertSame('remote_access_blocked', $parser->classifyFetchResponse(403, 'text/html'));
+        $this->assertSame('redirect', $parser->classifyFetchResponse(302, 'text/html'));
+        $this->assertSame('unexpected_content', $parser->classifyFetchResponse(200, 'application/json'));
+    }
+
+    public function test_direct_fetch_exposes_a_clear_blocked_fallback_message(): void
+    {
+        Http::fake(['dubai.dubizzle.com/*' => Http::response('<html>blocked</html>', 403)]);
+
+        $result = (new DubizzleParser)->fetch($this->sampleUrl());
+
+        $this->assertNull($result['html']);
+        $this->assertStringContainsString(DubizzleParser::DIRECT_FETCH_BLOCKED_MESSAGE, $result['error']);
     }
 }
