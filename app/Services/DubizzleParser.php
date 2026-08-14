@@ -141,7 +141,7 @@ class DubizzleParser
         $data['trim_level'] = $data['motors_trim'] ?? null;
         unset($data['motors_trim']);
 
-        $data['images'] = $data['images'] ?: $this->extractImages($html);
+        $data['images'] = ($data['images'] ?? []) ?: $this->extractImages($html);
 
         return $data;
     }
