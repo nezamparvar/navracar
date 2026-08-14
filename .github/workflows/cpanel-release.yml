@@ -189,8 +189,17 @@ jobs:
           fi
 
           git rm -r --ignore-unmatch .
+          # The source checkout may contain ignored Composer/Node/build output.
+          # Remove that ephemeral workspace before adding the explicit payload;
+          # otherwise the deleted source .gitignore could make those files
+          # appear as tracked deployment content.
+          git clean -fdx
           cp -a "$RUNNER_TEMP/navracar-cpanel/." .
           git add -A
+          if git ls-files | grep -Eq '^(node_modules|vendor|public|tools)/'; then
+            echo 'Refusing to publish development artifacts at the deployment-branch root.' >&2
+            exit 1
+          fi
           if git diff --cached --quiet; then
             echo 'The existing cpanel-release already contains this artifact.'
           else
