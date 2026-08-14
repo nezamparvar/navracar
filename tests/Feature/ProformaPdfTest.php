@@ -9,8 +9,11 @@ use App\Models\Invoice;
 use App\Models\QuoteRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Barryvdh\DomPDF\Facade\Pdf;
+use App\Services\ProformaPdfGenerator;
 use Tests\TestCase;
 
 class ProformaPdfTest extends TestCase
@@ -108,5 +111,59 @@ class ProformaPdfTest extends TestCase
             ->assertHeader('content-type', 'application/pdf');
 
         Storage::disk('public')->assertExists('proformas/invoice-'.$invoice->id.'.pdf');
+    }
+
+    public function test_admin_can_download_the_same_invoice_as_an_english_pdf(): void
+    {
+        Storage::fake('public');
+        $admin = $this->admin();
+        $invoice = Invoice::create([
+            'invoice_number' => 'NVK-2026-00100', 'customer_name' => 'Test Customer',
+            'customer_phone' => '123', 'breakdown_json' => json_encode([['label' => 'Service', 'amount' => 17130240000]]),
+            'total_amount' => 17130240000, 'discount_amount' => 0, 'currency' => 'toman',
+            'invoice_type' => 'full', 'status' => 'draft', 'created_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->get(route('admin.invoices.pdf', [$invoice, 'en']))
+            ->assertOk()->assertHeader('content-type', 'application/pdf');
+        Storage::disk('public')->assertExists('proformas/invoice-'.$invoice->id.'-en.pdf');
+        $this->assertSame(17130240000.0, (float) $invoice->fresh()->total_amount);
+    }
+
+    public function test_invoice_form_exposes_editable_75_percent_customs_suggestion(): void
+    {
+        $admin = $this->admin();
+        $response = $this->actingAs($admin)->get(route('admin.invoices.create'));
+
+        $response->assertOk()
+            ->assertSee('customsAutoSuggested', false)
+            ->assertSee('0.75', false)
+            ->assertSee('onRealPriceChanged', false)
+            ->assertSee('customsUserEdited', false)
+            ->assertSee('استفاده از مقدار پیشنهادی', false);
+    }
+
+    public function test_pdf_failure_logs_diagnostic_context_without_secret_text(): void
+    {
+        Storage::fake('public');
+        Log::shouldReceive('error')->once()->with(
+            'Proforma PDF generation failed',
+            \Mockery::on(function (array $context): bool {
+                return $context['language'] === 'en'
+                    && $context['exception'] === \RuntimeException::class
+                    && str_contains($context['message'], 'token=[redacted]')
+                    && ! str_contains($context['message'], 'SECRET-DO-NOT-LOG');
+            })
+        );
+        Pdf::shouldReceive('loadHTML')->andThrow(new \RuntimeException('renderer token=SECRET-DO-NOT-LOG'));
+        $admin = $this->admin();
+        $invoice = Invoice::create([
+            'invoice_number' => 'NVK-2026-00101', 'customer_name' => 'Test Customer',
+            'total_amount' => 100, 'discount_amount' => 0, 'currency' => 'toman',
+            'invoice_type' => 'full', 'status' => 'draft', 'created_by' => $admin->id,
+        ]);
+
+        $this->expectException(\RuntimeException::class);
+        (new ProformaPdfGenerator)->fromInvoice($invoice, 'en');
     }
 }
