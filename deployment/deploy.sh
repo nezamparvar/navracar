@@ -64,14 +64,28 @@ done
 
 [[ -f "$APP_ROOT/.env" ]] || { echo 'Refusing staging deployment: staging .env is missing.' >&2; exit 23; }
 [[ -d "$APP_ROOT/storage" ]] || { echo 'Refusing staging deployment: staging storage/ is missing.' >&2; exit 24; }
-[[ -e "$PUBLIC_ROOT/storage" || -L "$PUBLIC_ROOT/storage" ]] || {
-    echo 'Refusing staging deployment: staging public storage path is missing.' >&2
+if [[ ! -e "$PUBLIC_ROOT/storage" && ! -L "$PUBLIC_ROOT/storage" ]]; then
+    mkdir -p -- "$PUBLIC_ROOT/storage" || {
+        echo 'Refusing staging deployment: cannot create staging public storage path.' >&2
+        exit 25
+    }
+fi
+[[ -d "$PUBLIC_ROOT/storage" ]] || {
+    echo 'Refusing staging deployment: staging public storage path is not a directory.' >&2
     exit 25
 }
+if [[ -L "$PUBLIC_ROOT/storage" ]]; then
+    readonly STAGING_STORAGE_TARGET="$(readlink -f -- "$PUBLIC_ROOT/storage")"
+    readonly PRODUCTION_STORAGE_TARGET="$(readlink -f -- "$PRODUCTION_PUBLIC_ROOT/storage")"
+    [[ "$STAGING_STORAGE_TARGET" != "$PRODUCTION_STORAGE_TARGET" ]] || {
+        echo 'Refusing staging deployment: staging public storage points to production storage.' >&2
+        exit 25
+    }
+fi
 
 # Git cannot track empty directories. Prepare missing Laravel runtime paths
 # in-place before any managed release item is swapped, preserving all files.
-ensure_staging_runtime_dirs "$APP_ROOT" || exit 26
+ensure_staging_runtime_dirs "$APP_ROOT" "$EXPECTED_PUBLIC_ROOT/storage" || exit 26
 
 rm -rf -- "$APP_STAGE" "$PUBLIC_STAGE" "$APP_BACKUP" "$PUBLIC_BACKUP"
 mkdir -p -- "$APP_STAGE" "$PUBLIC_STAGE" "$APP_BACKUP" "$PUBLIC_BACKUP"
