@@ -1,0 +1,7 @@
+---
+# Staging-only deployment task. The public document-root argument is the
+# documented default; change it only through a reviewed configuration change
+# if cPanel creates the subdomain at a different path.
+deployment:
+  tasks:
+    - /bin/bash deployment/deploy.sh /home/navrac/navracar-staging-app /home/navrac/staging.navracar.com

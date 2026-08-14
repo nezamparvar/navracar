@@ -8,6 +8,9 @@ if [[ $# -ne 1 ]]; then
 fi
 
 readonly ARTIFACT_DIR="$(cd "$1" && pwd -P)"
+readonly EXPECTED_ENVIRONMENT="${CPANEL_VALIDATION_ENV:-production}"
+readonly EXPECTED_APP_ROOT="${CPANEL_EXPECTED_APP_ROOT:-/home/navrac/navracar-app}"
+readonly EXPECTED_PUBLIC_ROOT="${CPANEL_EXPECTED_PUBLIC_ROOT:-/home/navrac/public_html}"
 
 required_files=(
     '.cpanel.yml'
@@ -27,6 +30,25 @@ required_files=(
 for file in "${required_files[@]}"; do
     [[ -f "$ARTIFACT_DIR/$file" ]] || { echo "Missing required artifact file: $file" >&2; exit 10; }
 done
+
+if command -v ruby >/dev/null 2>&1; then
+    ruby -rjson -e '
+        value = JSON.parse(File.read(ARGV[0]));
+        legacy_production = ARGV[1] == "production" && !value.key?("environment");
+        required = legacy_production ? %w[artifact_branch release source_main_commit] : %w[artifact_id artifact_sha application_checksum public_checksum source_commit release_candidate environment];
+        abort "metadata missing required fields" unless required.all? { |key| value[key].is_a?(String) && !value[key].empty? };
+        abort "unexpected environment" unless legacy_production || value["environment"] == ARGV[1];
+    ' "$ARTIFACT_DIR/DEPLOYMENT-METADATA.json" "$EXPECTED_ENVIRONMENT"
+else
+    if grep -Fq '"environment"' "$ARTIFACT_DIR/DEPLOYMENT-METADATA.json"; then
+        grep -Fq '"artifact_id"' "$ARTIFACT_DIR/DEPLOYMENT-METADATA.json"
+        grep -Fq '"application_checksum"' "$ARTIFACT_DIR/DEPLOYMENT-METADATA.json"
+        grep -Fq "\"environment\": \"$EXPECTED_ENVIRONMENT\"" "$ARTIFACT_DIR/DEPLOYMENT-METADATA.json"
+    elif [[ "$EXPECTED_ENVIRONMENT" != 'production' ]]; then
+        echo 'Staging metadata must use the expanded provenance schema.' >&2
+        exit 18
+    fi
+fi
 
 # Prefer Ruby on CI (available on ubuntu-latest). The PHP fallback keeps the
 # validator usable in this Laravel checkout without adding a parser to the
@@ -50,10 +72,10 @@ else
     }
 fi
 
-grep -Fq '/home/navrac/navracar-app' "$ARTIFACT_DIR/.cpanel.yml"
-grep -Fq '/home/navrac/public_html' "$ARTIFACT_DIR/.cpanel.yml"
-grep -Fq '../navracar-app/vendor/autoload.php' "$ARTIFACT_DIR/public_html/index.php"
-grep -Fq '../navracar-app/bootstrap/app.php' "$ARTIFACT_DIR/public_html/index.php"
+grep -Fq "$EXPECTED_APP_ROOT" "$ARTIFACT_DIR/.cpanel.yml"
+grep -Fq "$EXPECTED_PUBLIC_ROOT" "$ARTIFACT_DIR/.cpanel.yml"
+grep -Fq "../$(basename "$EXPECTED_APP_ROOT")/vendor/autoload.php" "$ARTIFACT_DIR/public_html/index.php"
+grep -Fq "../$(basename "$EXPECTED_APP_ROOT")/bootstrap/app.php" "$ARTIFACT_DIR/public_html/index.php"
 
 # public_html must be a strict allowlist.
 mapfile -t public_roots < <(find "$ARTIFACT_DIR/public_html" -mindepth 1 -maxdepth 1 -printf '%f\n' | LC_ALL=C sort)
@@ -91,6 +113,15 @@ fi
 grep -Fq "[[ -f \"\$APP_ROOT/.env\" ]]" "$ARTIFACT_DIR/deployment/deploy.sh"
 grep -Fq "[[ -d \"\$APP_ROOT/storage\" ]]" "$ARTIFACT_DIR/deployment/deploy.sh"
 grep -Fq "\$PUBLIC_ROOT/storage" "$ARTIFACT_DIR/deployment/deploy.sh"
+if [[ "$EXPECTED_ENVIRONMENT" == 'staging' ]]; then
+    if grep -Eq '(^|[[:space:]])(cp|mv)[^#]*\/home\/navrac\/(navracar-app|public_html)' "$ARTIFACT_DIR/deployment/deploy.sh"; then
+        echo 'Staging deployment script writes directly to a production destination.' >&2
+        exit 17
+    fi
+else
+    grep -Fq '/home/navrac/navracar-app' "$ARTIFACT_DIR/deployment/deploy.sh"
+    grep -Fq '/home/navrac/public_html' "$ARTIFACT_DIR/deployment/deploy.sh"
+fi
 if grep -Eq 'cp[[:space:]].*public_html/(app|bootstrap|config|database|resources|routes|storage)' "$ARTIFACT_DIR/deployment/deploy.sh"; then
     echo 'Deployment script could expose private or persistent application paths under public_html.' >&2
     exit 15

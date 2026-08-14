@@ -10,3 +10,15 @@
 
 - Never implement vehicle pricing formulas directly inside a page or controller. All landed-cost pricing must use `App\Services\VehiclePricing\VehiclePricingService`.
 - Never introduce a vehicle-pricing percentage outside Settings without explicit business approval.
+
+## Release Policy
+
+No significant feature or business-rule change goes directly from CI to Production.
+
+Required path:
+
+```text
+CI -> Staging -> owner acceptance -> Production promotion
+```
+
+Production must receive the exact accepted staging artifact whenever technically possible. Promotion must identify the source commit, candidate commit, artifact ID, and checksums; it must not rebuild after staging acceptance.
