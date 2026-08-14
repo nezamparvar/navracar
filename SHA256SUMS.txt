@@ -1,6 +1,6 @@
 3cf53e9febe0776c80e471f1cf61a6f193dbf70870c48b0104237d61fb6b909a  ./.cpanel.yml
-5474aacf47bf6cb4b7288a58ecdba1a85254d3339a69fdb1aa924795f7a8780c  ./DEPLOYMENT-METADATA.json
-5474aacf47bf6cb4b7288a58ecdba1a85254d3339a69fdb1aa924795f7a8780c  ./application/.cpanel-release.json
+082297f64ed774d430cf668e22d33d37e636b82bafe762f168c18c00c21f1ac7  ./DEPLOYMENT-METADATA.json
+082297f64ed774d430cf668e22d33d37e636b82bafe762f168c18c00c21f1ac7  ./application/.cpanel-release.json
 28507fe7f331e3a3a28b2af9d6b605957ed3bdfb359bf33e42cbb170dfe60c5d  ./application/.env.example
 62f6675f6a2f7f7f05e842ad37cc548e6e1ac502a5d74eac60842aa18236a952  ./application/app/Console/Commands/Admin/CreateUserCommand.php
 3af568f3e66a84c23bfd3b0a0a784ae5e4ae4b8396ebce79fd4359f91bd972d1  ./application/app/Http/Controllers/Admin/ActivityLogController.php
