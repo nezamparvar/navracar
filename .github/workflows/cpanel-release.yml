@@ -109,10 +109,18 @@ jobs:
       RELEASE_TAG: ${{ needs.verify-source.outputs.release_tag }}
       SOURCE_COMMIT: ${{ needs.verify-source.outputs.source_commit }}
     steps:
+      - name: Check out pipeline helpers
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: pipeline
+          fetch-depth: 0
+
       - name: Check out approved main commit
         uses: actions/checkout@v4
         with:
           ref: ${{ needs.verify-source.outputs.source_commit }}
+          path: source
           fetch-depth: 0
 
       - name: Set up PHP
@@ -128,8 +136,10 @@ jobs:
         with:
           node-version: '20'
           cache: npm
+          cache-dependency-path: source/package-lock.json
 
       - name: Validate locked dependencies
+        working-directory: source
         run: |
           composer validate --strict
           composer audit --locked
@@ -137,6 +147,7 @@ jobs:
           npm audit --audit-level=high
 
       - name: Install production dependencies and build assets
+        working-directory: source
         run: |
           composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
           npm run build
@@ -145,6 +156,12 @@ jobs:
         env:
           CPANEL_WORKFLOW_RUN: ${{ github.run_id }}
         run: |
+          cp pipeline/tools/build-cpanel-release.sh source/tools/build-cpanel-release.sh
+          cp pipeline/tools/validate-cpanel-release.sh source/tools/validate-cpanel-release.sh
+          cp pipeline/tools/compare-cpanel-package.sh source/tools/compare-cpanel-package.sh
+          mkdir -p source/deployment/cpanel
+          cp -a pipeline/deployment/cpanel/. source/deployment/cpanel/
+          cd source
           bash tools/build-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel" "$RELEASE_TAG" "$SOURCE_COMMIT"
           bash tools/validate-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel"
 
@@ -157,6 +174,7 @@ jobs:
           retention-days: 30
 
       - name: Publish immutable deployment commit
+        working-directory: source
         shell: bash
         run: |
           set -Eeuo pipefail
