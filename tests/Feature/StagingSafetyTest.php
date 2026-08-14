@@ -8,10 +8,8 @@ class StagingSafetyTest extends TestCase
 {
     public function test_staging_responses_are_marked_noindex_and_show_environment_indicator(): void
     {
-        config([
-            'app.env' => 'staging',
-            'navaracar.disable_outbound' => true,
-        ]);
+        $this->app->detectEnvironment(fn () => 'staging');
+        config(['navaracar.disable_outbound' => true]);
 
         $response = $this->get(route('login'));
 
