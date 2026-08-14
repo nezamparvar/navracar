@@ -58,4 +58,23 @@ class DubizzleParserTest extends TestCase
         $this->assertSame('phev', $mapper->detectCategory('2000 - 2499 cc', 'Plug-in Hybrid'));
         $this->assertSame('c3001', $mapper->detectCategory('4000 - 4499 cc', 'Petrol'));
     }
+
+    public function test_structured_product_data_is_used_before_dom_fallback(): void
+    {
+        $html = '<script type="application/ld+json">'.json_encode([
+            '@type' => 'Product',
+            'name' => 'Structured BMW',
+            'brand' => ['name' => 'BMW'],
+            'model' => 'X5',
+            'offers' => ['price' => 125000],
+            'image' => ['https://dbz-images.dubizzle.com/images/example.jpg'],
+        ]).'</script><div data-testid="listing-name">DOM title</div>';
+
+        $data = (new DubizzleParser)->parse($html, $this->sampleUrl());
+
+        $this->assertSame('Structured BMW', $data['title_en']);
+        $this->assertSame('BMW', $data['make']);
+        $this->assertSame(125000.0, $data['price_aed']);
+        $this->assertSame(['https://dbz-images.dubizzle.com/images/example.jpg'], $data['images']);
+    }
 }
