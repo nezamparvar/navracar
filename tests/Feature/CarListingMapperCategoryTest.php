@@ -27,4 +27,16 @@ class CarListingMapperCategoryTest extends TestCase
             $this->assertSame($expected, $mapper->detectCategory((string) $cc, 'Petrol'), "cc={$cc}");
         }
     }
+
+    public function test_engine_parser_distinguishes_exact_values_and_ranges(): void
+    {
+        $mapper = new CarListingMapper;
+
+        $this->assertSame(['kind' => 'exact', 'min' => 1499, 'max' => 1499], $mapper->parseEngineCapacity('1499 cc'));
+        $this->assertSame(['kind' => 'exact', 'min' => 2000, 'max' => 2000], $mapper->parseEngineCapacity('2.0 L'));
+        $this->assertSame(['kind' => 'range', 'min' => 1500, 'max' => 1999], $mapper->parseEngineCapacity('1,500 - 1,999 cc'));
+        $this->assertSame('c2000', $mapper->detectCategory('1500–1999 cc', 'Petrol'));
+        $this->assertSame('c2000', $mapper->detectCategory('1500 to 1999', 'Petrol'));
+        $this->assertSame('c2500', $mapper->detectCategory('2001 cc', 'Petrol'));
+    }
 }
