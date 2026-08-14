@@ -63,7 +63,7 @@ The generated public entry point references:
 ../navracar-app/bootstrap/app.php
 ```
 
-No Laravel application directories are copied into the web root. The artifact excludes `.env`, databases, uploads, logs, sessions, runtime caches, `node_modules`, tests, and `.git` metadata. `SHA256SUMS.txt` covers every deployable file except itself.
+No Laravel application directories are copied into the web root. The artifact excludes `.env`, databases, uploads, logs, sessions, runtime caches, `node_modules`, tests, and `.git` metadata. Git does not track empty Laravel runtime directories, so the staging deployment script creates only missing runtime directories (`storage/app/public`, `storage/framework/cache/data`, `storage/framework/sessions`, `storage/framework/views`, and `storage/logs`) and verifies they are writable before swapping code. It never copies or replaces their contents. `SHA256SUMS.txt` covers every deployable file except itself.
 
 ## cPanel deployment task safety
 

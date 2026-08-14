@@ -27,6 +27,10 @@ required_files=(
     'public_html/robots.txt'
 )
 
+if [[ "$EXPECTED_ENVIRONMENT" == 'staging' ]]; then
+    required_files+=( 'deployment/ensure-runtime.sh' )
+fi
+
 for file in "${required_files[@]}"; do
     [[ -f "$ARTIFACT_DIR/$file" ]] || { echo "Missing required artifact file: $file" >&2; exit 10; }
 done
