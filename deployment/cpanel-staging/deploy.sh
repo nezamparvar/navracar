@@ -20,6 +20,7 @@ if [[ "$APP_ROOT" == "$PRODUCTION_APP_ROOT" || "$PUBLIC_ROOT" == "$PRODUCTION_PU
 fi
 
 readonly ARTIFACT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
+source "$ARTIFACT_ROOT/deployment/ensure-runtime.sh"
 readonly APP_PAYLOAD="$ARTIFACT_ROOT/application"
 readonly PUBLIC_PAYLOAD="$ARTIFACT_ROOT/public_html"
 readonly APP_STAGE='/home/navrac/.navracar-staging-app-stage'
@@ -67,6 +68,10 @@ done
     echo 'Refusing staging deployment: staging public storage path is missing.' >&2
     exit 25
 }
+
+# Git cannot track empty directories. Prepare missing Laravel runtime paths
+# in-place before any managed release item is swapped, preserving all files.
+ensure_staging_runtime_dirs "$APP_ROOT" || exit 26
 
 rm -rf -- "$APP_STAGE" "$PUBLIC_STAGE" "$APP_BACKUP" "$PUBLIC_BACKUP"
 mkdir -p -- "$APP_STAGE" "$PUBLIC_STAGE" "$APP_BACKUP" "$PUBLIC_BACKUP"

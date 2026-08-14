@@ -55,6 +55,9 @@ cp -a public/.htaccess public/favicon.ico public/robots.txt "$OUTPUT_DIR/public_
 cp -a "$DEPLOYMENT_DIR/public_html/index.php" "$OUTPUT_DIR/public_html/index.php"
 cp -a "$DEPLOYMENT_DIR/.cpanel.yml" "$OUTPUT_DIR/.cpanel.yml"
 cp -a "$DEPLOYMENT_DIR/deploy.sh" "$OUTPUT_DIR/deployment/deploy.sh"
+if [[ "$ENVIRONMENT" == 'staging' ]]; then
+    cp -a "$DEPLOYMENT_DIR/ensure-runtime.sh" "$OUTPUT_DIR/deployment/ensure-runtime.sh"
+fi
 chmod 0755 "$OUTPUT_DIR/deployment/deploy.sh"
 
 generated_at="${CPANEL_GENERATED_AT:-$(date -u +'%Y-%m-%dT%H:%M:%SZ')}"
