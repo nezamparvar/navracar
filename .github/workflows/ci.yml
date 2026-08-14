@@ -34,6 +34,8 @@ jobs:
       - run: npm audit --audit-level=high
       - name: Test staging runtime preparation
         run: bash tools/test-cpanel-staging-runtime.sh
+      - name: Test production deployment controls
+        run: bash tools/test-cpanel-production-controls.sh
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

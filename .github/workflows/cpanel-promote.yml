@@ -115,6 +115,23 @@ jobs:
         shell: bash
         run: |
           set -Eeuo pipefail
+          for control in .htaccess index.php favicon.ico robots.txt; do
+            [[ -f "pipeline/deployment/cpanel/public_html/$control" ]] || {
+              echo "Refusing production promotion: missing production public-root control file pipeline/deployment/cpanel/public_html/$control" >&2
+              exit 20
+            }
+          done
+          for required in \
+            candidate/public_html/.htaccess \
+            candidate/public_html/index.php \
+            candidate/public_html/build/manifest.json \
+            candidate/public_html/favicon.ico \
+            candidate/public_html/robots.txt; do
+            [[ -f "$required" ]] || {
+              echo "Refusing production promotion: accepted candidate is missing required public-root file $required" >&2
+              exit 21
+            }
+          done
           output="$RUNNER_TEMP/navracar-cpanel-production"
           mkdir -p "$output"
           cp -a candidate/. "$output/"
