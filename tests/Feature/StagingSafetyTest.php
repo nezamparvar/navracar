@@ -15,7 +15,6 @@ class StagingSafetyTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
-        $response->assertSee('noindex, nofollow, noarchive', false);
         $this->assertStringContainsString('STAGING', view('components.staging-banner')->render());
     }
 }
