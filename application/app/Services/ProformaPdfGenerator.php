@@ -68,6 +68,7 @@ class ProformaPdfGenerator
         $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
 
         $path = 'proformas/quote-'.$lead->id.'.pdf';
+        Storage::disk('public')->makeDirectory('proformas');
         Storage::disk('public')->put($path, $pdf->output());
 
         return $path;
@@ -119,6 +120,7 @@ class ProformaPdfGenerator
         $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
 
         $path = 'proformas/invoice-'.$invoice->id.'.pdf';
+        Storage::disk('public')->makeDirectory('proformas');
         Storage::disk('public')->put($path, $pdf->output());
 
         return $path;

@@ -144,7 +144,7 @@
             <div x-data="templatePicker" class="rounded-2xl bg-gradient-to-br from-emerald-950 to-ink-950 p-5 text-white shadow-soft-lg sm:p-6">
                 <h2 class="mb-1 flex items-center gap-2 text-base font-extrabold"><x-icon name="message" class="w-5 h-5" /> قالب‌های پیام آماده</h2>
                 <p class="mb-3 text-xs text-emerald-200">یکی را انتخاب کنید تا متن با اطلاعات همین سرنخ پر شود، سپس «کپی متن» را بزنید و در واتساپ/تلگرام/بله بفرستید.</p>
-                <select x-model="selected" @change="render" class="mb-2.5 w-full rounded-xl border border-white/20 bg-white/10 px-3.5 py-2.5 text-sm text-white">
+                <select x-model="selected" @change="render" dir="rtl" class="mb-2.5 w-full rounded-xl border border-emerald-200 bg-white px-3.5 py-2.5 text-sm font-semibold text-ink-950 shadow-sm outline-none transition-colors hover:border-emerald-300 focus:border-amber-400 focus:ring-2 focus:ring-amber-300">
                     <option value="">— انتخاب قالب —</option>
                     @foreach ($templates as $t)
                         <option value="{{ $t->id }}">{{ $t->title }}</option>

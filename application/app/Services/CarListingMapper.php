@@ -11,6 +11,33 @@ use Illuminate\Support\Str;
  */
 class CarListingMapper
 {
+    /** @return array{kind: 'exact'|'range'|'unknown', min: ?int, max: ?int} */
+    public function parseEngineCapacity(?string $text): array
+    {
+        if (! $text) {
+            return ['kind' => 'unknown', 'min' => null, 'max' => null];
+        }
+
+        $normalized = str_replace([',', '–', '—', '−'], ['', '-', '-', '-'], $text);
+        if (preg_match('/(\d+(?:\.\d+)?)\s*(?:l|liter|litre)\b/i', $normalized, $m)) {
+            $cc = (int) round((float) $m[1] * 1000);
+            return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
+        }
+        if (preg_match('/(\d{3,5})\s*(?:cc)?\s*(?:-|to)\s*(\d{3,5})\s*(?:cc)?/i', $normalized, $m)) {
+            return ['kind' => 'range', 'min' => (int) $m[1], 'max' => (int) $m[2]];
+        }
+        if (preg_match('/\b(\d{3,5})\s*cc\b/i', $normalized, $m)) {
+            $cc = (int) $m[1];
+            return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
+        }
+        if (preg_match('/^\s*(\d{3,5})\s*$/', $normalized, $m)) {
+            $cc = (int) $m[1];
+            return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
+        }
+
+        return ['kind' => 'unknown', 'min' => null, 'max' => null];
+    }
+
     /**
      * کران پایین بازهٔ حجم موتور را می‌گیرد و روی آستانه‌های categories
      * صفحهٔ محاسبه‌گر (۱۵۰۰/۲۰۰۰/۲۵۰۰/۳۰۰۰) می‌نشاند. عمداً کران پایین
@@ -30,13 +57,14 @@ class CarListingMapper
             return 'hybrid';
         }
 
-        $cc = null;
-        if ($engineCapacityCcText && preg_match('/(\d[\d,]*)/', $engineCapacityCcText, $m)) {
-            $cc = (int) str_replace(',', '', $m[1]);
+        $engine = $this->parseEngineCapacity($engineCapacityCcText);
+        if ($engine['kind'] === 'unknown') {
+            return 'c2000';
         }
 
-        if ($cc === null) {
-            return 'c2000';
+        $cc = $engine['min'];
+        if ($engine['kind'] === 'range' && $cc === 1500 && ($engine['max'] ?? 0) > 1500) {
+            $cc = 1501;
         }
 
         return match (true) {
