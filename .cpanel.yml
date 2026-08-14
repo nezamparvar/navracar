@@ -4,4 +4,4 @@
 # if cPanel creates the subdomain at a different path.
 deployment:
   tasks:
-    - /bin/bash deployment/deploy.sh /home/navrac/navracar-staging-app /home/navrac/staging.navracar.com
+      - /bin/bash deployment/deploy.sh /home/navrac/navracar-staging-app /home/navrac/public_html/staging
