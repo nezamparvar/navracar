@@ -9,7 +9,7 @@
     @endpush
 
     @if ($slides->isNotEmpty())
-        <div x-data="{ active: 0, count: {{ $slides->count() }}, timer: null, start(){ this.timer = setInterval(() => this.active = (this.active + 1) % this.count, 6000) } }" x-init="start()" class="relative overflow-hidden">
+        <div x-data="homeSlider" data-slide-count="{{ $slides->count() }}" class="relative overflow-hidden">
             @foreach ($slides as $i => $slide)
                 <div x-show="active === {{ $i }}" x-cloak style="display:none" class="relative">
                     <div class="aspect-[16/7] w-full overflow-hidden bg-ink-900 sm:aspect-[16/5]">

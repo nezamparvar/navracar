@@ -41,7 +41,7 @@
 </head>
 <body class="min-h-screen bg-gradient-to-br from-brand-50 via-white to-amber-50/40 font-sans text-ink-900">
 
-<header x-data="{ mobileMenuOpen: false }" class="sticky top-0 z-40 bg-gradient-to-l from-brand-950 via-brand-900 to-brand-800 py-3.5 text-white shadow-soft-lg">
+<header x-data="publicHeader" class="sticky top-0 z-40 bg-gradient-to-l from-brand-950 via-brand-900 to-brand-800 py-3.5 text-white shadow-soft-lg">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4">
         <a href="{{ route('public.home') }}" class="flex min-w-0 items-center gap-3">
             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-ink-950 shadow-glow-amber">

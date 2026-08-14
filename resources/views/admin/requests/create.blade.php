@@ -1,6 +1,6 @@
 <x-layouts.admin :page-title="$pageTitle" page-subtitle="برای مشتریانی که تلفنی یا حضوری تماس می‌گیرند، اینجا ثبتشان کنید تا وارد چرخه پیگیری CRM شوند.">
 
-    <div x-data="leadForm()" class="mx-auto max-w-3xl">
+    <div x-data="leadForm" class="mx-auto max-w-3xl">
         <x-card x-show="!success">
             <div x-show="error" x-cloak class="mb-4 rounded-xl bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300" x-text="error"></div>
 

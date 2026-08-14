@@ -34,7 +34,7 @@
     ];
 @endphp
 
-<div x-data="{ sidebarOpen: false }" class="flex min-h-screen">
+<div x-data="adminShell" class="flex min-h-screen">
 
     {{-- Mobile overlay --}}
     <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false"
@@ -130,7 +130,7 @@
     <div class="flex min-w-0 flex-1 flex-col">
         <header class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink-200/70 bg-white/80 px-4 py-3.5 backdrop-blur-md dark:border-white/10 dark:bg-ink-900/70 sm:px-6">
             <div class="flex items-center gap-3">
-                <button @click="sidebarOpen = true" class="rounded-lg p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/10 lg:hidden">
+                <button @click="sidebarOpen = true" aria-label="باز کردن منوی مدیریت" class="rounded-lg p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/10 lg:hidden">
                     <x-icon name="menu" class="w-5 h-5" />
                 </button>
                 <div>

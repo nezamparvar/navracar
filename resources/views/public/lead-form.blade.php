@@ -1,6 +1,6 @@
 <x-layouts.public :title="$title">
 
-    <div class="mx-auto max-w-xl px-4 pb-16 pt-8" x-data="leadForm()">
+    <div class="mx-auto max-w-xl px-4 pb-16 pt-8" x-data="leadForm">
         <div class="mb-5 text-center">
             <div class="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-amber-600 text-ink-950 shadow-glow-amber">
                 <x-icon name="user" class="w-7 h-7" />
