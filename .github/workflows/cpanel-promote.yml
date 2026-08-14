@@ -1,0 +1,173 @@
+name: Promote accepted staging artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Existing vX.Y.Z GitHub release tag for this promotion'
+        required: true
+        type: string
+      release_candidate:
+        description: 'Accepted rc-vX.Y.Z-N candidate'
+        required: true
+        type: string
+      source_commit:
+        description: 'Full source main commit recorded by the candidate'
+        required: true
+        type: string
+      candidate_commit:
+        description: 'Full cpanel-staging commit tested by the owner'
+        required: true
+        type: string
+      artifact_id:
+        description: 'Artifact ID copied from candidate DEPLOYMENT-METADATA.json'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  checks: read
+
+concurrency:
+  group: cpanel-promote-${{ inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  verify-approval:
+    name: Verify accepted staging artifact
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      source_commit: ${{ steps.verify.outputs.source_commit }}
+      candidate_commit: ${{ steps.verify.outputs.candidate_commit }}
+      artifact_id: ${{ steps.verify.outputs.artifact_id }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - name: Verify release tag, candidate metadata, and protected CI
+        id: verify
+        env:
+          RELEASE_TAG: ${{ inputs.release_tag }}
+          RELEASE_CANDIDATE: ${{ inputs.release_candidate }}
+          SOURCE_COMMIT: ${{ inputs.source_commit }}
+          CANDIDATE_COMMIT: ${{ inputs.candidate_commit }}
+          ARTIFACT_ID: ${{ inputs.artifact_id }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo 'release_tag must be vX.Y.Z.' >&2; exit 1; }
+          [[ "$RELEASE_CANDIDATE" =~ ^rc-v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]] || { echo 'Invalid release candidate.' >&2; exit 1; }
+          [[ "$SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ && "$CANDIDATE_COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo 'Full source and candidate commits are required.' >&2; exit 1; }
+          git fetch origin main --tags cpanel-staging
+          [[ "$(git rev-list -n 1 "${RELEASE_TAG}^{commit}")" == "$SOURCE_COMMIT" ]] || { echo 'Release tag does not identify the supplied source commit.' >&2; exit 1; }
+          git cat-file -e "${CANDIDATE_COMMIT}^{commit}"
+          candidate_tree="$(git rev-parse "${CANDIDATE_COMMIT}^{tree}")"
+          git archive "$CANDIDATE_COMMIT" DEPLOYMENT-METADATA.json | tar -xOf - DEPLOYMENT-METADATA.json > "$RUNNER_TEMP/candidate-metadata.json"
+          python3 - "$RUNNER_TEMP/candidate-metadata.json" "$SOURCE_COMMIT" "$RELEASE_CANDIDATE" "$ARTIFACT_ID" <<'PY'
+          import json, sys
+          value = json.load(open(sys.argv[1]))
+          expected = {'source_commit': sys.argv[2], 'release_candidate': sys.argv[3], 'artifact_id': sys.argv[4], 'environment': 'staging', 'staging_status': 'pending-owner-acceptance'}
+          for key, wanted in expected.items():
+              if value.get(key) != wanted:
+                  raise SystemExit(f'metadata {key} mismatch')
+          PY
+          printf 'source_commit=%s\ncandidate_commit=%s\nartifact_id=%s\n' "$SOURCE_COMMIT" "$CANDIDATE_COMMIT" "$ARTIFACT_ID" >> "$GITHUB_OUTPUT"
+      - name: Require all protected checks on source commit
+        uses: actions/github-script@v7
+        env:
+          SOURCE_COMMIT: ${{ steps.verify.outputs.source_commit }}
+        with:
+          script: |
+            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA'];
+            const runs = await github.paginate(github.rest.checks.listForRef, {
+              owner: context.repo.owner, repo: context.repo.repo,
+              ref: process.env.SOURCE_COMMIT, per_page: 100,
+            });
+            const missing = required.filter((name) => !runs.some((run) => run.name === name && run.conclusion === 'success'));
+            if (missing.length) core.setFailed(`Protected CI is not green: ${missing.join(', ')}`);
+
+  promote:
+    name: Promote exact candidate payload to cpanel-release
+    needs: verify-approval
+    runs-on: ubuntu-latest
+    env:
+      SOURCE_COMMIT: ${{ needs.verify-approval.outputs.source_commit }}
+      CANDIDATE_COMMIT: ${{ needs.verify-approval.outputs.candidate_commit }}
+      ARTIFACT_ID: ${{ needs.verify-approval.outputs.artifact_id }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+      RELEASE_CANDIDATE: ${{ inputs.release_candidate }}
+    steps:
+      - name: Check out pipeline controls
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: pipeline
+          fetch-depth: 0
+      - name: Check out owner-accepted staging artifact
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify-approval.outputs.candidate_commit }}
+          path: candidate
+          fetch-depth: 0
+      - name: Prepare production tree without rebuilding
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          output="$RUNNER_TEMP/navracar-cpanel-production"
+          mkdir -p "$output"
+          cp -a candidate/. "$output/"
+          cp pipeline/deployment/cpanel/.cpanel.yml "$output/.cpanel.yml"
+          mkdir -p "$output/deployment" "$output/public_html"
+          cp pipeline/deployment/cpanel/deploy.sh "$output/deployment/deploy.sh"
+          cp pipeline/deployment/cpanel/public_html/index.php "$output/public_html/index.php"
+          cp pipeline/deployment/cpanel/public_html/.htaccess "$output/public_html/.htaccess"
+          cp pipeline/deployment/cpanel/public_html/robots.txt "$output/public_html/robots.txt"
+          chmod 0755 "$output/deployment/deploy.sh"
+          test "$(find candidate/application/public/build -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')" = "$(find "$output/application/public/build" -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')"
+          test "$(find candidate/public_html/build -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')" = "$(find "$output/public_html/build" -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')"
+          python3 - "$output/DEPLOYMENT-METADATA.json" "$output/application/.cpanel-release.json" "$SOURCE_COMMIT" "$RELEASE_TAG" "$RELEASE_CANDIDATE" "$ARTIFACT_ID" <<'PY'
+          import json, pathlib, sys
+          source = json.loads(pathlib.Path('candidate/DEPLOYMENT-METADATA.json').read_text())
+          source.update({'artifact_branch': 'cpanel-release', 'environment': 'production', 'release': sys.argv[4], 'source_commit': sys.argv[3], 'source_main_commit': sys.argv[3], 'release_candidate': sys.argv[5], 'artifact_id': sys.argv[6], 'staging_status': 'accepted-owner', 'workflow_run': '${{ github.run_id }}'})
+          text = json.dumps(source, indent=2, ensure_ascii=False) + '\n'
+          pathlib.Path(sys.argv[1]).write_text(text)
+          pathlib.Path(sys.argv[2]).write_text(text)
+          PY
+          (
+            cd "$output"
+            find . -type f ! -path './SHA256SUMS.txt' -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          )
+          echo "OUTPUT=$output" >> "$GITHUB_ENV"
+      - name: Validate promoted production artifact
+        run: bash pipeline/tools/validate-cpanel-release.sh "$OUTPUT"
+      - name: Publish cpanel-release and immutable production ref
+        working-directory: candidate
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git clean -fdx
+          git fetch origin cpanel-release
+          git checkout -B cpanel-release origin/cpanel-release
+          git rm -r --ignore-unmatch .
+          git clean -fdx
+          cp -a "$OUTPUT/." .
+          git add -A
+          git commit -m "Promote ${RELEASE_CANDIDATE} to production artifact ${RELEASE_TAG}"
+          deployment_commit="$(git rev-parse HEAD)"
+          git push origin HEAD:cpanel-release
+          immutable_branch="cpanel-release-${RELEASE_TAG}"
+          existing="$(git ls-remote --heads origin "$immutable_branch" | awk '{print $1}')"
+          [[ -z "$existing" || "$existing" == "$deployment_commit" ]] || { echo 'Production immutable ref already points elsewhere.' >&2; exit 1; }
+          [[ -n "$existing" ]] || git push origin "HEAD:$immutable_branch"
+          {
+            echo '### Production promotion'
+            echo "- Release: ${RELEASE_TAG}"
+            echo "- Release candidate: ${RELEASE_CANDIDATE}"
+            echo "- Source main commit: ${SOURCE_COMMIT}"
+            echo "- Promoted artifact ID: ${ARTIFACT_ID}"
+            echo "- cpanel-release commit: ${deployment_commit}"
+          } >> "$GITHUB_STEP_SUMMARY"

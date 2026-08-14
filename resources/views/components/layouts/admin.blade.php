@@ -4,10 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if (app()->environment('staging'))
+        <meta name="robots" content="noindex, nofollow, noarchive">
+    @endif
     <title>{{ $title ?? 'پنل مدیریت' }} | ناوراکار</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-ink-50 font-sans text-ink-900 dark:bg-ink-950 dark:text-ink-100">
+
+<x-staging-banner />
 
 @php
     $navItems = [

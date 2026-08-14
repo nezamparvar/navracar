@@ -1,23 +1,28 @@
 # cPanel Git deployment
 
-This repository uses a generated `cpanel-release` branch as a deployment artifact. It is not a development branch and must never be edited manually.
+This repository uses generated `cpanel-staging` and `cpanel-release` branches as deployment artifacts. They are not development branches and must never be edited manually.
 
 The owner-facing flow is:
 
 ```text
-development branch
+feature branch
   → pull request
   → protected CI
-  → approval and merge to main
-  → published GitHub Release
-  → verified cpanel-release artifact
-  → cPanel Update from Remote
-  → verify HEAD
-  → cPanel Deploy HEAD Commit
+  → merge to main
+  → one verified release candidate build
+  → cpanel-staging
+  → cPanel staging acceptance
+  → manual Promote accepted staging artifact
+  → cpanel-release
+  → cPanel production Update from Remote / Deploy HEAD
   → smoke test
 ```
 
-The release workflow is `.github/workflows/cpanel-release.yml`. It accepts only a published `vX.Y.Z` release (or a manual dispatch naming that exact tag and full commit), verifies that the tagged commit is contained in `origin/main`, and requires the four protected checks to be successful on that commit before publishing anything.
+The candidate workflow is `.github/workflows/cpanel-staging.yml`. It accepts only a manually supplied `rc-vX.Y.Z-N` candidate and full merged-main commit, verifies the four protected checks, builds once, and publishes `cpanel-staging`. The production workflow `.github/workflows/cpanel-promote.yml` is manual-only and requires the owner-supplied candidate commit, artifact ID, source commit, release tag, and acceptance decision. It copies the already-built candidate payload; it does not run Composer, npm, or a second frontend build.
+
+## Artifact identity and promotion
+
+`DEPLOYMENT-METADATA.json` records the source commit, release candidate, artifact ID, application checksum, public-build checksum, and workflow run. The candidate’s application and compiled asset bytes are compared again during promotion. Production deployment controls and environment metadata are intentionally different, but application code, `vendor/`, and compiled assets are copied from the accepted staging artifact unchanged.
 
 ## What the generated branch contains
 
@@ -84,7 +89,7 @@ It never copies or moves:
 
 It does not run Composer, npm, Artisan, migrations, or cache commands on cPanel. Production dependencies and assets are already present in the generated branch.
 
-## One-time cPanel setup
+## One-time production cPanel setup
 
 The existing cPanel repository is `/home/navrac/navracar-repo` and currently follows `main`.
 
@@ -99,9 +104,25 @@ After the first successful artifact workflow run:
 
 The one-time branch switch does not modify production. The existing live application and public root remain untouched until **Deploy HEAD Commit** is explicitly selected.
 
-## Normal owner workflow
+## One-time staging cPanel setup
 
-1. Confirm the GitHub Release is published and protected CI is green.
+Follow `docs/STAGING_SETUP_CPANEL.md`. Staging uses a separate Git clone, Laravel application, database, storage tree, and subdomain document root. The default public path in the generated task is `/home/navrac/staging.navracar.com`; replace it only through a reviewed configuration change if the actual cPanel subdomain uses another document root. Never point it at `/home/navrac/public_html` or production storage.
+
+## Staging candidate workflow
+
+1. Merge the approved PR into protected `main`.
+2. Dispatch **cPanel staging candidate** from `main` with the merged source SHA and a candidate such as `rc-v1.3.0-1`.
+3. Verify the workflow summary, artifact, `DEPLOYMENT-METADATA.json`, and `cpanel-staging` HEAD.
+4. In the staging cPanel clone, click **Update from Remote**, verify the candidate commit, then click **Deploy HEAD Commit**.
+5. Complete `docs/STAGING_ACCEPTANCE_CHECKLIST.md`.
+
+## Production promotion workflow
+
+After explicit owner acceptance, dispatch **Promote accepted staging artifact** from `main`. Supply the existing release tag, release candidate, source commit, exact accepted `cpanel-staging` commit, and artifact ID from candidate metadata. The workflow rechecks protected CI and metadata, verifies application/build identity, and publishes the same payload to `cpanel-release` and an immutable `cpanel-release-vX.Y.Z` ref. It does not rebuild.
+
+## Normal production owner workflow
+
+1. Confirm staging acceptance and successful manual promotion.
 2. Open cPanel **Git Version Control**.
 3. Click **Update from Remote**.
 4. Verify the `cpanel-release` HEAD commit and source main commit in `DEPLOYMENT-METADATA.json`.
@@ -135,6 +156,8 @@ To roll back:
 The deployment script also retains scoped previous-item backups under `/home/navrac/.navracar-app-cpanel-previous` and `/home/navrac/.public-html-cpanel-previous` until the next deployment. It never backs up or replaces `.env`, Laravel `storage/`, or `public_html/storage`.
 
 Do not import a database backup for a normal code rollback. Database restoration is a separate incident procedure.
+
+Staging rollback uses `cpanel-staging-rc-vX.Y.Z-N` in the staging cPanel clone and never involves production. Production rollback continues to use immutable `cpanel-release-vX.Y.Z` refs.
 
 ## Never manually edit `cpanel-release`
 

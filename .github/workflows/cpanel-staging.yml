@@ -1,0 +1,173 @@
+name: cPanel staging candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_candidate:
+        description: 'Candidate identifier, for example rc-v1.2.0-1'
+        required: true
+        type: string
+      source_commit:
+        description: 'Full approved main commit to build exactly once'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  checks: read
+
+concurrency:
+  group: cpanel-staging-${{ inputs.release_candidate }}
+  cancel-in-progress: false
+
+jobs:
+  verify-source:
+    name: Verify approved main source
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      source_commit: ${{ steps.source.outputs.source_commit }}
+      release_candidate: ${{ steps.source.outputs.release_candidate }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - id: source
+        env:
+          INPUT_COMMIT: ${{ inputs.source_commit }}
+          INPUT_CANDIDATE: ${{ inputs.release_candidate }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          [[ "$INPUT_COMMIT" =~ ^[0-9a-f]{40}$ ]] || { echo 'A full source commit is required.' >&2; exit 1; }
+          [[ "$INPUT_CANDIDATE" =~ ^rc-v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+$ ]] || { echo 'Candidate must match rc-vX.Y.Z-N.' >&2; exit 1; }
+          git fetch origin main --tags
+          git cat-file -e "$INPUT_COMMIT^{commit}"
+          git merge-base --is-ancestor "$INPUT_COMMIT" origin/main
+          printf 'source_commit=%s\nrelease_candidate=%s\n' "$INPUT_COMMIT" "$INPUT_CANDIDATE" >> "$GITHUB_OUTPUT"
+      - name: Require all protected checks on source commit
+        uses: actions/github-script@v7
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
+        with:
+          script: |
+            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA'];
+            const runs = await github.paginate(github.rest.checks.listForRef, {
+              owner: context.repo.owner, repo: context.repo.repo,
+              ref: process.env.SOURCE_COMMIT, per_page: 100,
+            });
+            const missing = required.filter((name) => !runs.some((run) => run.name === name && run.conclusion === 'success'));
+            if (missing.length) core.setFailed(`Protected CI is not green: ${missing.join(', ')}`);
+
+  publish:
+    name: Build and publish cpanel-staging
+    needs: verify-source
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_CANDIDATE: ${{ needs.verify-source.outputs.release_candidate }}
+      SOURCE_COMMIT: ${{ needs.verify-source.outputs.source_commit }}
+    steps:
+      - name: Check out pipeline helpers
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: pipeline
+          fetch-depth: 0
+      - name: Check out approved main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify-source.outputs.source_commit }}
+          path: source
+          fetch-depth: 0
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, fileinfo, gd, intl, mbstring, openssl, pdo_sqlite, sqlite3, zip
+          coverage: none
+          tools: composer:v2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: source/package-lock.json
+      - name: Validate locked dependencies
+        working-directory: source
+        run: |
+          composer validate --strict
+          composer audit --locked
+          npm ci
+          npm audit --audit-level=high
+      - name: Build one production-ready candidate
+        working-directory: source
+        run: |
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+          npm run build
+      - name: Build explicit staging deployment tree
+        env:
+          CPANEL_WORKFLOW_RUN: ${{ github.run_id }}
+        run: |
+          set -Eeuo pipefail
+          cp pipeline/tools/build-cpanel-release.sh source/tools/build-cpanel-release.sh
+          cp pipeline/tools/validate-cpanel-release.sh source/tools/validate-cpanel-release.sh
+          cp pipeline/tools/compare-cpanel-package.sh source/tools/compare-cpanel-package.sh
+          mkdir -p source/deployment/cpanel-staging
+          cp -a pipeline/deployment/cpanel-staging/. source/deployment/cpanel-staging/
+          cp pipeline/deployment/cpanel-staging/public_html/.htaccess source/public/.htaccess
+          cp pipeline/deployment/cpanel-staging/public_html/robots.txt source/public/robots.txt
+          cp pipeline/deployment/cpanel-staging/public_html/index.php source/deployment/cpanel-staging/public_html/index.php
+          cd source
+          CPANEL_ARTIFACT_BRANCH=cpanel-staging \
+          CPANEL_ENVIRONMENT=staging \
+          CPANEL_DEPLOYMENT_DIR=deployment/cpanel-staging \
+          CPANEL_RELEASE_CANDIDATE="$RELEASE_CANDIDATE" \
+          CPANEL_STAGING_STATUS=pending-owner-acceptance \
+          bash tools/build-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel-staging" "$RELEASE_CANDIDATE" "$SOURCE_COMMIT"
+          CPANEL_VALIDATION_ENV=staging \
+          CPANEL_EXPECTED_APP_ROOT=/home/navrac/navracar-staging-app \
+          CPANEL_EXPECTED_PUBLIC_ROOT=/home/navrac/staging.navracar.com \
+          bash tools/validate-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel-staging"
+      - name: Upload independently inspectable candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: navracar-cpanel-staging-${{ env.RELEASE_CANDIDATE }}
+          path: ${{ runner.temp }}/navracar-cpanel-staging
+          include-hidden-files: true
+          retention-days: 30
+      - name: Publish immutable staging candidate
+        working-directory: source
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git clean -fdx
+          if git ls-remote --exit-code --heads origin cpanel-staging >/dev/null 2>&1; then
+            git fetch origin cpanel-staging
+            git checkout -B cpanel-staging origin/cpanel-staging
+          else
+            git switch --orphan cpanel-staging
+          fi
+          git rm -r --ignore-unmatch .
+          git clean -fdx
+          cp -a "$RUNNER_TEMP/navracar-cpanel-staging/." .
+          git add -A
+          if git ls-files | grep -Eq '^(node_modules|vendor|public|tools)/'; then
+            echo 'Refusing to publish development artifacts at the staging branch root.' >&2
+            exit 1
+          fi
+          git commit -m "Publish staging candidate ${RELEASE_CANDIDATE} from main ${SOURCE_COMMIT}"
+          candidate_commit="$(git rev-parse HEAD)"
+          git push origin HEAD:cpanel-staging
+          immutable_branch="cpanel-staging-${RELEASE_CANDIDATE}"
+          existing="$(git ls-remote --heads origin "$immutable_branch" | awk '{print $1}')"
+          [[ -z "$existing" || "$existing" == "$candidate_commit" ]] || { echo 'Immutable staging candidate already differs.' >&2; exit 1; }
+          [[ -n "$existing" ]] || git push origin "HEAD:$immutable_branch"
+          {
+            echo "### Staging candidate"
+            echo "- Candidate: ${RELEASE_CANDIDATE}"
+            echo "- Source main commit: ${SOURCE_COMMIT}"
+            echo "- cpanel-staging commit: ${candidate_commit}"
+            echo "- Immutable candidate branch: ${immutable_branch}"
+            echo '- Status: pending owner acceptance'
+          } >> "$GITHUB_STEP_SUMMARY"
