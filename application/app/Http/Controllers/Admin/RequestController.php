@@ -1,0 +1,241 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\AdminUser;
+use App\Models\LeadActivity;
+use App\Models\MessageTemplate;
+use App\Models\QuoteRequest;
+use App\Support\ActivityLogger;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+
+class RequestController extends Controller
+{
+    public const STATUSES = ['باز', 'در حال پیگیری', 'فروخته شد', 'بسته - ناموفق'];
+
+    public const COUNTRIES = [
+        'ایران', 'امارات متحده عربی', 'ترکیه', 'عراق', 'افغانستان', 'آلمان', 'کانادا',
+        'آمریکا', 'انگلستان', 'استرالیا', 'سوئد', 'هلند', 'فرانسه', 'سایر',
+    ];
+
+    public function index(Request $request)
+    {
+        $user = $request->user();
+        $query = QuoteRequest::query()->with(['assignee']);
+
+        if (! $user->isAdmin()) {
+            $query->where('assigned_to', $user->id);
+        } elseif ((string) $request->string('assigned') === 'unassigned') {
+            $query->whereNull('assigned_to');
+        } elseif ($request->filled('assigned') && (string) $request->string('assigned') !== 'all') {
+            $query->where('assigned_to', (int) $request->input('assigned'));
+        }
+
+        if ($q = (string) $request->string('q', '')) {
+            $query->where(function ($w) use ($q) {
+                $w->where('name', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%")
+                    ->orWhere('car_label', 'like', "%{$q}%");
+            });
+        }
+        if ($from = (string) $request->string('from', '')) {
+            $query->where('created_at', '>=', $from.' 00:00:00');
+        }
+        if ($to = (string) $request->string('to', '')) {
+            $query->where('created_at', '<=', $to.' 23:59:59');
+        }
+        if ($status = (string) $request->string('status', '')) {
+            $query->where('follow_up_status', $status);
+        }
+
+        $rows = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
+        $staffList = $user->isAdmin() ? AdminUser::orderBy('username')->get() : collect();
+
+        return view('admin.requests.index', [
+            'pageTitle' => 'درخواست‌های استعلام قیمت (CRM)',
+            'rows' => $rows,
+            'staffList' => $staffList,
+            'statuses' => self::STATUSES,
+            'filters' => $request->only(['q', 'from', 'to', 'status', 'assigned']),
+        ]);
+    }
+
+    public function create(Request $request)
+    {
+        $user = $request->user();
+        $staffList = $user->isAdmin() ? AdminUser::orderBy('username')->get() : collect();
+
+        return view('admin.requests.create', [
+            'pageTitle' => 'ثبت دستی مشتری تماس‌گرفته',
+            'staffList' => $staffList,
+            'cities' => self::CITIES,
+            'countries' => self::COUNTRIES,
+        ]);
+    }
+
+    public function store(Request $request)
+    {
+        $user = $request->user();
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['required', 'string', 'max:64'],
+            'email' => ['nullable', 'email'],
+            'source' => ['nullable', 'string', 'max:50'],
+            'car_label' => ['nullable', 'string', 'max:255'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'budget_range' => ['nullable', 'string', 'max:100'],
+            'country' => ['nullable', 'string', 'max:100'],
+            'city' => ['nullable', 'string', 'max:100'],
+            'total_with_profit' => ['nullable', 'string'],
+            'next_call_date' => ['nullable', 'date'],
+            'notes' => ['nullable', 'string'],
+            'assigned_to' => ['nullable', 'integer'],
+        ]);
+
+        $assignedTo = ($user->isAdmin() && ! empty($data['assigned_to'])) ? (int) $data['assigned_to'] : $user->id;
+        $total = isset($data['total_with_profit']) ? (float) preg_replace('/[^0-9.]/', '', $data['total_with_profit']) : 0;
+
+        $lead = QuoteRequest::create([
+            'name' => $data['name'],
+            'phone' => $data['phone'],
+            'email' => $data['email'] ?? null,
+            'notes' => $data['notes'] ?? null,
+            'car_label' => $data['car_label'] ?? null,
+            'category' => $data['category'] ?? null,
+            'breakdown_json' => '[]',
+            'totals_json' => '{}',
+            'total_with_profit' => $total,
+            'email_sent' => false,
+            'source' => $data['source'] ?? 'تماس تلفنی',
+            'budget_range' => $data['budget_range'] ?? null,
+            'country' => $data['country'] ?? null,
+            'city' => $data['city'] ?? null,
+            'assigned_to' => $assignedTo,
+            'created_by' => $user->id,
+            'follow_up_status' => 'باز',
+            'next_call_date' => $data['next_call_date'] ?? null,
+            'ip_address' => $request->ip(),
+        ]);
+
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $user->id,
+            'activity_type' => 'note',
+            'note' => 'ثبت دستی توسط پنل مدیریت (منبع: '.($data['source'] ?? 'تماس تلفنی').')',
+        ]);
+
+        ActivityLogger::info('ثبت دستی مشتری در پنل', ['id' => $lead->id, 'name' => $lead->name, 'phone' => $lead->phone]);
+
+        return response()->json(['success' => true, 'message' => 'مشتری با موفقیت ثبت شد.', 'id' => $lead->id]);
+    }
+
+    public function show(Request $request, QuoteRequest $lead)
+    {
+        $user = $request->user();
+        abort_if(! $user->isAdmin() && $lead->assigned_to !== $user->id, 403, 'این درخواست به شما الحاق نشده است.');
+
+        $staffList = $user->isAdmin() ? AdminUser::orderBy('username')->get() : collect();
+        $templates = MessageTemplate::where('is_active', true)->orderBy('category')->orderBy('id')->get();
+        $activities = $lead->activities()->with('adminUser')->get();
+
+        return view('admin.requests.show', [
+            'pageTitle' => 'جزئیات درخواست #'.$lead->id,
+            'lead' => $lead,
+            'staffList' => $staffList,
+            'templates' => $templates,
+            'activities' => $activities,
+            'statuses' => self::STATUSES,
+        ]);
+    }
+
+    public function assign(Request $request, QuoteRequest $lead)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $data = $request->validate(['assigned_to' => ['nullable', 'integer']]);
+        $newAssignee = $data['assigned_to'] ?? null;
+        $lead->update(['assigned_to' => $newAssignee]);
+
+        $assigneeName = '—';
+        if ($newAssignee) {
+            $u = AdminUser::find($newAssignee);
+            $assigneeName = $u?->displayName() ?? '—';
+        }
+
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $request->user()->id,
+            'activity_type' => 'assign',
+            'note' => 'الحاق به: '.$assigneeName,
+        ]);
+
+        return back()->with('success', 'الحاق با موفقیت انجام شد.');
+    }
+
+    public function temperature(Request $request, QuoteRequest $lead)
+    {
+        $data = $request->validate(['temperature' => ['required', Rule::in(['hot', 'warm', 'cold'])]]);
+        $lead->update(['temperature' => $data['temperature']]);
+
+        $labels = ['hot' => 'داغ', 'warm' => 'معمولی', 'cold' => 'سرد'];
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $request->user()->id,
+            'activity_type' => 'note',
+            'note' => 'دمای سرنخ به «'.$labels[$data['temperature']].'» تغییر کرد',
+        ]);
+
+        return back()->with('success', 'دمای سرنخ به‌روزرسانی شد.');
+    }
+
+    public function status(Request $request, QuoteRequest $lead)
+    {
+        $data = $request->validate([
+            'follow_up_status' => ['nullable', Rule::in(self::STATUSES)],
+            'note' => ['nullable', 'string'],
+            'next_call_date' => ['nullable', 'date'],
+        ]);
+
+        $newStatus = $data['follow_up_status'] ?? null;
+        $note = trim($data['note'] ?? '');
+
+        if ($newStatus) {
+            $lead->update(['follow_up_status' => $newStatus]);
+            LeadActivity::create([
+                'request_id' => $lead->id,
+                'admin_user_id' => $request->user()->id,
+                'activity_type' => 'status_change',
+                'note' => 'تغییر وضعیت به «'.$newStatus.'»'.($note ? ' — '.$note : ''),
+            ]);
+        } elseif ($note !== '') {
+            LeadActivity::create([
+                'request_id' => $lead->id,
+                'admin_user_id' => $request->user()->id,
+                'activity_type' => 'note',
+                'note' => $note,
+            ]);
+        }
+
+        $previousNextCall = optional($lead->next_call_date)->toDateString();
+        $newNextCall = $data['next_call_date'] ?? null;
+        $lead->update(['next_call_date' => $newNextCall]);
+
+        if ($newNextCall && $newNextCall !== $previousNextCall) {
+            LeadActivity::create([
+                'request_id' => $lead->id,
+                'admin_user_id' => $request->user()->id,
+                'activity_type' => 'note',
+                'note' => 'تاریخ تماس بعدی به '.$newNextCall.' تنظیم شد',
+            ]);
+        }
+
+        return back()->with('success', 'به‌روزرسانی ثبت شد.');
+    }
+
+    public const CITIES = [
+        'تهران', 'کرج', 'مشهد', 'اصفهان', 'شیراز', 'تبریز', 'اهواز', 'قم', 'کرمانشاه', 'ارومیه',
+        'رشت', 'زاهدان', 'کرمان', 'اراک', 'یزد', 'اردبیل', 'بندرعباس', 'قزوین', 'ساری', 'همدان', 'سایر',
+    ];
+}

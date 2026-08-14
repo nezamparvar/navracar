@@ -1,0 +1,77 @@
+@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    body {
+        @apply bg-ink-50 text-ink-900 antialiased dark:bg-ink-950 dark:text-ink-100;
+        font-feature-settings: 'ss01' 1;
+    }
+
+    ::selection {
+        @apply bg-amber-400 text-ink-950;
+    }
+
+    /* Thin, unobtrusive scrollbars for tables / kanban / sidebars */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: theme('colors.ink.300') transparent;
+    }
+
+    .dark * {
+        scrollbar-color: theme('colors.ink.700') transparent;
+    }
+
+    ::-webkit-scrollbar {
+        height: 8px;
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+        @apply rounded-full bg-ink-300 dark:bg-ink-700;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: transparent;
+    }
+}
+
+@layer utilities {
+    .num-font {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: .2px;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+        display: none;
+    }
+
+    .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .print-only {
+        display: block !important;
+    }
+
+    body {
+        background: #fff !important;
+    }
+}
+
+.print-only {
+    display: none;
+}

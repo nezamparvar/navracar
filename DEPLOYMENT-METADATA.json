@@ -1,0 +1,7 @@
+{
+  "artifact_branch": "cpanel-release",
+  "release": "v1.2.0",
+  "source_main_commit": "649213c5ca1e0832fd0b6359c54c46a401dc3011",
+  "generated_at_utc": "2026-08-14T10:07:34Z",
+  "workflow_run": "31790897360"
+}

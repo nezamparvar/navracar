@@ -1,0 +1,4 @@
+User-agent: *
+Disallow:
+
+Sitemap: https://navaracar.com/sitemap.xml
