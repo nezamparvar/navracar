@@ -1,0 +1,8 @@
+---
+# Generated deployment branches copy only the audited payload through this
+# script. The script never copies the repository wholesale and never invokes
+# Composer, npm, or Artisan on the cPanel account.
+deployment:
+  tasks:
+    # These literal paths are validated again by deploy.sh before any copy.
+    - /bin/bash deployment/deploy.sh /home/navrac/navracar-app /home/navrac/public_html

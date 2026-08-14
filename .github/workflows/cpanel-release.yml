@@ -1,0 +1,200 @@
+name: cPanel release artifact
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Published vX.Y.Z release tag to materialize'
+        required: true
+        type: string
+      source_commit:
+        description: 'Expected full main commit for the release tag'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  checks: read
+
+concurrency:
+  group: cpanel-release-${{ github.event.release.tag_name || inputs.release_tag }}
+  cancel-in-progress: false
+
+jobs:
+  verify-source:
+    name: Verify approved main source
+    if: github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    runs-on: ubuntu-latest
+    outputs:
+      release_tag: ${{ steps.source.outputs.release_tag }}
+      source_commit: ${{ steps.source.outputs.source_commit }}
+    steps:
+      - name: Check out repository history
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Resolve and verify release source
+        id: source
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_TAG: ${{ github.event.release.tag_name }}
+          INPUT_TAG: ${{ inputs.release_tag }}
+          INPUT_COMMIT: ${{ inputs.source_commit }}
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          release_tag="${EVENT_TAG:-$INPUT_TAG}"
+          [[ "$release_tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+            echo "Only published semantic release tags are accepted: $release_tag" >&2
+            exit 1
+          }
+
+          git fetch --tags --force origin
+          source_commit="$(git rev-list -n 1 "${release_tag}^{commit}")"
+          [[ "$source_commit" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "Could not resolve a full commit for $release_tag" >&2
+            exit 1
+          }
+
+          if [[ "$EVENT_NAME" == 'workflow_dispatch' ]]; then
+            [[ "$INPUT_COMMIT" =~ ^[0-9a-f]{40}$ ]] || {
+              echo 'Manual dispatch requires a full source commit.' >&2
+              exit 1
+            }
+            [[ "$source_commit" == "$INPUT_COMMIT" ]] || {
+              echo "Release tag resolves to $source_commit, not requested $INPUT_COMMIT" >&2
+              exit 1
+            }
+          fi
+
+          git merge-base --is-ancestor "$source_commit" origin/main || {
+            echo "$source_commit is not contained in origin/main" >&2
+            exit 1
+          }
+
+          {
+            echo "release_tag=$release_tag"
+            echo "source_commit=$source_commit"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Require all protected checks on source commit
+        uses: actions/github-script@v7
+        env:
+          SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
+        with:
+          script: |
+            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA'];
+            const response = await github.paginate(github.rest.checks.listForRef, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: process.env.SOURCE_COMMIT,
+              per_page: 100,
+            });
+            const missing = required.filter((name) =>
+              !response.some((run) => run.name === name && run.conclusion === 'success')
+            );
+            if (missing.length) {
+              core.setFailed(`Protected CI is not green on ${process.env.SOURCE_COMMIT}: ${missing.join(', ')}`);
+            }
+
+  publish:
+    name: Build and publish cpanel-release
+    needs: verify-source
+    runs-on: ubuntu-latest
+    env:
+      RELEASE_TAG: ${{ needs.verify-source.outputs.release_tag }}
+      SOURCE_COMMIT: ${{ needs.verify-source.outputs.source_commit }}
+    steps:
+      - name: Check out approved main commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.verify-source.outputs.source_commit }}
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, fileinfo, gd, intl, mbstring, openssl, pdo_sqlite, sqlite3, zip
+          coverage: none
+          tools: composer:v2
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Validate locked dependencies
+        run: |
+          composer validate --strict
+          composer audit --locked
+          npm ci
+          npm audit --audit-level=high
+
+      - name: Install production dependencies and build assets
+        run: |
+          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+          npm run build
+
+      - name: Build explicit deployment tree
+        env:
+          CPANEL_WORKFLOW_RUN: ${{ github.run_id }}
+        run: |
+          tools/build-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel" "$RELEASE_TAG" "$SOURCE_COMMIT"
+          tools/validate-cpanel-release.sh "$RUNNER_TEMP/navracar-cpanel"
+
+      - name: Upload independently inspectable artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: navracar-cpanel-${{ env.RELEASE_TAG }}
+          path: ${{ runner.temp }}/navracar-cpanel
+          include-hidden-files: true
+          retention-days: 30
+
+      - name: Publish immutable deployment commit
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          if git ls-remote --exit-code --heads origin cpanel-release >/dev/null 2>&1; then
+            git fetch origin cpanel-release
+            git checkout -B cpanel-release origin/cpanel-release
+          else
+            git switch --orphan cpanel-release
+          fi
+
+          git rm -r --ignore-unmatch .
+          cp -a "$RUNNER_TEMP/navracar-cpanel/." .
+          git add -A
+          if git diff --cached --quiet; then
+            echo 'The existing cpanel-release already contains this artifact.'
+          else
+            git commit -m "Deploy ${RELEASE_TAG} from main ${SOURCE_COMMIT}"
+          fi
+          deployment_commit="$(git rev-parse HEAD)"
+          git push origin HEAD:cpanel-release
+
+          immutable_branch="cpanel-release-${RELEASE_TAG}"
+          existing="$(git ls-remote --heads origin "$immutable_branch" | awk '{print $1}')"
+          if [[ -n "$existing" && "$existing" != "$deployment_commit" ]]; then
+            echo "$immutable_branch already points to a different artifact" >&2
+            exit 1
+          fi
+          if [[ -z "$existing" ]]; then
+            git push origin "HEAD:$immutable_branch"
+          fi
+
+          {
+            echo "### cPanel deployment artifact"
+            echo "- Release: ${RELEASE_TAG}"
+            echo "- Source main commit: ${SOURCE_COMMIT}"
+            echo "- cpanel-release commit: ${deployment_commit}"
+            echo "- Immutable rollback branch: ${immutable_branch}"
+          } >> "$GITHUB_STEP_SUMMARY"
