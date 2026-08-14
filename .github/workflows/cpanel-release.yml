@@ -181,6 +181,10 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
 
+          # Helper/template copies used during the build are untracked in the
+          # pinned source checkout. Remove them before switching that checkout
+          # to the deployment branch.
+          git clean -fdx
           if git ls-remote --exit-code --heads origin cpanel-release >/dev/null 2>&1; then
             git fetch origin cpanel-release
             git checkout -B cpanel-release origin/cpanel-release
