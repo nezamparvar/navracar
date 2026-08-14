@@ -5,35 +5,49 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\CalculationLog;
 use App\Services\GeoLookupService;
+use App\Services\VehiclePricing\VehiclePricingCatalog;
+use App\Services\VehiclePricing\VehiclePricingInput;
+use App\Services\VehiclePricing\VehiclePricingService;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CalculationLogController extends Controller
 {
-    public function store(Request $request, GeoLookupService $geo)
+    public function store(Request $request, GeoLookupService $geo, VehiclePricingService $pricing)
     {
+        $data = $request->validate([
+            'car' => ['nullable', 'string', 'max:255'],
+            'pricing' => ['required', 'array'],
+            'pricing.real_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+            'pricing.customs_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+            'pricing.category' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
+        ]);
+
+        $result = $pricing->calculate(VehiclePricingInput::fromArray($data['pricing']));
+        $snapshot = $result->settingsSnapshot;
         $geoData = $geo->lookup($request->ip());
 
         CalculationLog::create([
-            'car_label' => mb_substr(trim((string) $request->input('car', '')), 0, 255),
-            'category' => mb_substr(trim((string) $request->input('category', '')), 0, 100),
-            'real_price_aed' => (float) $request->input('realPriceAED', 0),
-            'customs_price_aed' => (float) $request->input('customsPriceAED', 0),
-            'free_rate' => (float) $request->input('freeRate', 0),
-            'customs_rate' => (float) $request->input('customsRate', 0),
-            'sea_freight_aed' => (float) $request->input('seaFreightAED', 0),
-            'permits_aed' => (float) $request->input('permitsAED', 0),
-            'storage_toman' => (float) $request->input('storage', 0),
-            'sum_customs' => (float) $request->input('sumCustoms', 0),
-            'sum_plate' => (float) $request->input('sumPlate', 0),
-            'total_no_profit' => (float) $request->input('totalNoProfit', 0),
-            'service_profit' => (float) $request->input('serviceProfit', 0),
-            'total_with_profit' => (float) $request->input('totalWithProfit', 0),
+            'car_label' => mb_substr(trim((string) ($data['car'] ?? '')), 0, 255),
+            'category' => $result->category['id'],
+            'real_price_aed' => $result->input['realPriceAed'],
+            'customs_price_aed' => $result->input['customsPriceAed'],
+            'free_rate' => $snapshot['freeRate'],
+            'customs_rate' => $snapshot['customsRate'],
+            'sea_freight_aed' => $snapshot['seaFreightAed'],
+            'permits_aed' => $snapshot['licenseFeeAed'],
+            'storage_toman' => $snapshot['storageToman'],
+            'sum_customs' => $result->totals['customsSubtotalToman'],
+            'sum_plate' => $result->totals['plateSubtotalToman'],
+            'total_no_profit' => $result->totals['preServiceTotalToman'],
+            'service_profit' => $result->totals['serviceFeeToman'],
+            'total_with_profit' => $result->totals['finalTotalToman'],
             'country' => $geoData['country'],
             'city' => $geoData['city'],
             'ip_address' => $request->ip(),
             'user_agent' => mb_substr((string) $request->userAgent(), 0, 255),
         ]);
 
-        return response()->json(['success' => true]);
+        return response()->json(['success' => true, 'pricing' => $result->toArray()]);
     }
 }

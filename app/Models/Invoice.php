@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\VehiclePricing\VehiclePricingCatalog;
 use Illuminate\Database\Eloquent\Model;
 
 class Invoice extends Model
@@ -40,7 +41,23 @@ class Invoice extends Model
 
     public function breakdown(): array
     {
-        return json_decode($this->breakdown_json ?? '[]', true) ?: [];
+        $decoded = json_decode($this->breakdown_json ?? '[]', true) ?: [];
+
+        return isset($decoded['rows']) && is_array($decoded['rows'])
+            ? $decoded['rows']
+            : $decoded;
+    }
+
+    public function pricingMetadata(): array
+    {
+        $decoded = json_decode($this->breakdown_json ?? '[]', true) ?: [];
+
+        return isset($decoded['pricing_mode']) ? $decoded : [];
+    }
+
+    public function categoryLabel(): string
+    {
+        return VehiclePricingCatalog::CATEGORIES[$this->category]['label'] ?? (string) $this->category;
     }
 
     public function payableAmount(): float

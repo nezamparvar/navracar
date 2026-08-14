@@ -37,12 +37,10 @@ class ProformaPdfTest extends TestCase
             'phone' => '09121234567',
             'email' => 'ali@example.com',
             'car' => 'Mercedes-Benz S500',
-            'category' => 'بنزینی بالای ۳۰۰۰ سی‌سی',
-            'breakdown' => [
-                ['label' => 'سود بازرگانی', 'rate' => '۶۵٪', 'amount' => '500,000,000 تومان'],
-            ],
-            'totals' => [
-                'جمع کل نهایی' => '950,000,000 تومان',
+            'pricing' => [
+                'real_price_aed' => 100000,
+                'customs_price_aed' => 100000,
+                'category' => 'c3001',
             ],
             'website' => '',
             'pageLoadedAt' => 0,
@@ -67,8 +65,11 @@ class ProformaPdfTest extends TestCase
             'name' => 'سارا احمدی',
             'phone' => '09351234567',
             'car' => 'BMW X5',
-            'breakdown' => [['label' => 'سود بازرگانی', 'rate' => '۴۵٪', 'amount' => '200,000,000 تومان']],
-            'totals' => ['جمع کل نهایی' => '400,000,000 تومان'],
+            'pricing' => [
+                'real_price_aed' => 80000,
+                'customs_price_aed' => 80000,
+                'category' => 'c3000',
+            ],
             'website' => '',
             'pageLoadedAt' => 0,
         ]);

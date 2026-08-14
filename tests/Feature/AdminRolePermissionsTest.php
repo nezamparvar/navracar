@@ -103,6 +103,8 @@ class AdminRolePermissionsTest extends TestCase
         $response = $this->actingAs($sales)->post(route('admin.invoices.store'), [
             'customer_name' => 'مشتری تست',
             'customer_phone' => '09120000000',
+            'pricing_mode' => 'manual',
+            'adjustment_reason' => 'پیش‌فاکتور مستقل خدمات دستی',
             'total_amount' => '15,000,000',
             'currency' => 'toman',
             'invoice_type' => 'full',

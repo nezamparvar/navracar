@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CarListing;
 use App\Models\HomeSlide;
 use App\Models\Post;
+use App\Services\VehiclePricing\VehiclePricingCatalog;
 
 class HomeController extends Controller
 {
@@ -16,7 +17,7 @@ class HomeController extends Controller
             'slides' => HomeSlide::active()->get(),
             'latestListings' => CarListing::published()->with('images')->latest('published_at')->take(8)->get(),
             'latestPosts' => Post::published()->latest('published_at')->take(3)->get(),
-            'categories' => CarListing::CATEGORIES,
+            'categories' => VehiclePricingCatalog::CATEGORIES,
             'priceBrackets' => CarListing::PRICE_BRACKETS,
         ]);
     }

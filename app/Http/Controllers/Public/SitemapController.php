@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Public;
 use App\Http\Controllers\Controller;
 use App\Models\CarListing;
 use App\Models\Post;
+use App\Services\VehiclePricing\VehiclePricingCatalog;
 use Illuminate\Support\Facades\Response;
 
 class SitemapController extends Controller
@@ -21,7 +22,7 @@ class SitemapController extends Controller
             route('public.blog.index'),
         ];
 
-        foreach (CarListing::CATEGORIES as $id => $cat) {
+        foreach (VehiclePricingCatalog::CATEGORIES as $id => $cat) {
             $staticUrls[] = route('public.car-prices.category', $id);
         }
         foreach (CarListing::PRICE_BRACKETS as $id => $bracket) {

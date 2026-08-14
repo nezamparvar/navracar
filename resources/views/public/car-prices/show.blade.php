@@ -83,7 +83,7 @@
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div class="space-y-6">
                 @if ($l->images->isNotEmpty())
-                    <div x-data="{ active: 0, images: @js($l->images->map(fn($i) => $i->url())->values()) }" class="space-y-2">
+                    <div x-data="carGallery" data-images='@json($l->images->map(fn($i) => $i->url())->values())' class="space-y-2">
                         <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-ink-100">
                             <img :src="images[active]" alt="{{ $l->title_fa }}" class="h-full w-full object-cover">
                         </div>

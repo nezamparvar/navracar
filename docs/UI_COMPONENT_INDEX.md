@@ -13,8 +13,10 @@ This index describes the existing Blade/Tailwind UI. It is a documentation basel
 | `x-icon` | Inline SVG icon registry | icon name and CSS class |
 | `x-empty-state` | Empty collection placeholder | icon and title |
 | `x-toast-container` | Global transient messages | Alpine event-driven messages |
-| `x-car-calculator` | Public quotation calculator | endpoint configuration |
+| `x-car-calculator` | Listing quotation UI; renders the authoritative central pricing endpoint response and retains loan/payment presentation | vehicle, pricing endpoint, quote endpoint configuration |
 | `x-social-publish` | Admin social publishing controls | record-specific data |
 | `x-schema-breadcrumbs` | Structured breadcrumb metadata | breadcrumb items |
 
 Before adding page-local markup, reuse an existing component when its semantics match. Keep form labels explicitly associated with their controls and give icon-only controls an accessible name.
+
+The standalone calculator and admin Proforma form also call the central pricing endpoint. Their JavaScript may format or present returned values but must not contain a vehicle-pricing formula.

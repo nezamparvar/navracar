@@ -13,7 +13,6 @@
         'storageToman' => (float) \App\Models\Setting::get(\App\Models\Setting::STORAGE_TOMAN),
         'scrapCertPriceToman' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_CERT_PRICE_TOMAN),
         'scrapThresholdAed' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_THRESHOLD_AED),
-        'scrapCertCounts' => \App\Models\CarListing::SCRAP_CERT_COUNTS,
         'usdToAedRate' => (float) \App\Models\Setting::get(\App\Models\Setting::USD_TO_AED_RATE),
         'loanMaxAmountToman' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_MAX_AMOUNT_TOMAN),
         'loanTermYearsOptions' => collect(explode(',', \App\Models\Setting::get(\App\Models\Setting::LOAN_TERM_YEARS)))
@@ -21,11 +20,12 @@
         'loanInterestRatePercent' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_INTEREST_RATE_PERCENT),
         'carLabel' => $listing->title_fa,
         'quoteUrl' => route('public.quote-requests.store'),
+        'pricingUrl' => route('public.vehicle-pricing.calculate'),
         'csrfToken' => csrf_token(),
     ];
 @endphp
 
-<div x-data="carCalculatorApp(@js($config))" class="space-y-5">
+<div x-data="carCalculatorApp" class="space-y-5">
 
     <div class="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-900 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
         نرخ درهم امروز: <span class="num-font" x-text="fmt(freeRate)"></span> تومان
@@ -63,27 +63,27 @@
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">نرخ ارز آزاد (تومان)</label>
-            <input type="number" x-model.number="freeRate" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <input type="number" x-model.number="freeRate" readonly class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">نرخ ارز گمرک (تومان)</label>
-            <input type="number" x-model.number="customsRate" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <input type="number" x-model.number="customsRate" readonly class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">حمل دریایی (درهم)</label>
-            <input type="number" x-model.number="seaFreightAED" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <input type="number" x-model.number="seaFreightAED" readonly class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">صدور مجوزها (درهم)</label>
-            <input type="number" x-model.number="permitsAED" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <input type="number" x-model.number="permitsAED" readonly class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">انبارداری و دموراژ (تومان)</label>
-            <input type="number" x-model.number="storage" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <input type="number" x-model.number="storage" readonly class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">نرخ هر گواهی اسقاط (تومان)</label>
-            <input type="number" x-model.number="scrapCertPriceToman" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <input type="number" x-model.number="scrapCertPriceToman" readonly class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
     </div>
 
@@ -95,17 +95,11 @@
         <span x-show="recalced" x-transition.opacity.duration.600ms x-text="'محاسبه به‌روزرسانی شد.'" class="ms-2 text-xs font-bold text-emerald-600"></span>
     </div>
 
-    <details class="rounded-xl border border-ink-200/70 p-3.5 text-xs dark:border-white/10">
-        <summary class="cursor-pointer font-bold text-ink-600 dark:text-ink-300">تنظیمات پیشرفته نرخ‌ها و عوارض</summary>
-        <div class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
-            <template x-for="key in Object.keys(rates)" :key="key">
-                <label class="flex items-center justify-between gap-2 rounded-lg bg-ink-50 px-2.5 py-1.5 dark:bg-white/5">
-                    <span x-text="rateLabels[key]"></span>
-                    <input type="number" step="0.01" x-model.number="rates[key]" class="w-16 rounded-md border border-ink-200 bg-white px-1.5 py-0.5 text-left num-font dark:border-white/10 dark:bg-ink-900">
-                </label>
-            </template>
-        </div>
-    </details>
+    <div class="rounded-xl border border-ink-200/70 bg-ink-50 px-3.5 py-3 text-xs leading-6 text-ink-600 dark:border-white/10 dark:bg-white/5 dark:text-ink-300">
+        نرخ‌ها، عوارض، تعداد گواهی اسقاط و هزینه‌های پایه از تنظیمات مرکزی ناوراکار خوانده می‌شوند و در مرورگر قابل تغییر نیستند.
+        <span x-show="loading" class="ms-2 font-bold text-brand-700">در حال محاسبه…</span>
+        <span x-show="error" x-text="error" class="ms-2 font-bold text-red-600"></span>
+    </div>
 
     <div class="overflow-x-auto rounded-2xl border border-ink-200/70 dark:border-white/10">
         <table class="w-full text-xs sm:text-sm">
@@ -329,15 +323,13 @@
 
 @once
 <script>
-window.carCalculatorApp = function (config) {
-    const rateLabels = {
-        customsFixed: 'حقوق گمرکی ثابت', gasoline: 'عوارض بنزین‌سوز', fob: 'عوارض ۵٪ فوب',
-        vat: 'مالیات ارزش افزوده', advanceTax: 'مالیات علی‌الحساب', redCrescent: 'عوارض هلال احمر',
-        supervision: 'حق نظارت کارشناسان', waste: 'عوارض پسماند کالا', standard: 'هزینه استاندارد',
-        plateReg: 'عوارض شماره‌گذاری', transferTax: 'مالیات نقل و انتقال',
-        municipal: 'عوارض سالانه شهرداری', individual: 'عوارض شخص حقیقی', serviceProfit: 'کارمزد ترخیص‌کار و کارگزار (ناوراکار)',
-    };
-    const tierLabels = { ab: '(ای) و (بی)', cd: '(سی) و (دی)', efg: '(ای)، (اف) و (جی)' };
+window.carCalculatorApp = function (config = @js($config)) {
+    const emptyResults = () => ({
+        customsRows: [], plateRows: [], sumCustomsAll: 0, sumPlate: 0,
+        totalNoProfit: 0, serviceProfitAmt: 0, totalWithProfit: 0,
+        loan: { amount: 0, downPayment: 0, plans: [] },
+        paymentSteps: [], timeline: [],
+    });
 
     return {
         realPriceAED: config.priceAed,
@@ -345,6 +337,34 @@ window.carCalculatorApp = function (config) {
         usdToAedRate: config.usdToAedRate || 3.6725,
         priceCurrency: 'aed',
         customsPriceCurrency: 'aed',
+        categoryId: config.categoryId,
+        categories: config.categories,
+        freeRate: config.freeRate,
+        customsRate: config.customsRate,
+        seaFreightAED: config.seaFreightAed,
+        permitsAED: config.licenseFeeAed,
+        storage: config.storageToman,
+        scrapCertPriceToman: config.scrapCertPriceToman,
+        loanMaxAmountToman: config.loanMaxAmountToman || 0,
+        loanTermYearsOptions: (config.loanTermYearsOptions && config.loanTermYearsOptions.length) ? config.loanTermYearsOptions : [5],
+        loanInterestRatePercent: config.loanInterestRatePercent || 0,
+        pricingResult: null,
+        loading: false,
+        error: '',
+        recalced: false,
+        recalcTimer: null,
+        requestSequence: 0,
+        pageLoadedAt: Date.now(),
+
+        showProforma: false,
+        pfName: '', pfPhone: '', pfEmail: '', pfStatus: '', pfOk: false, pfSubmitting: false, pfPdfUrl: '',
+
+        init() {
+            this.$watch('realPriceAED', () => this.scheduleRecalc());
+            this.$watch('customsPriceAED', () => this.scheduleRecalc());
+            this.$watch('categoryId', () => this.scheduleRecalc());
+            this.recalc();
+        },
 
         get realPriceDisplay() {
             return this.priceCurrency === 'usd' ? Math.round((this.realPriceAED / this.usdToAedRate) * 100) / 100 : this.realPriceAED;
@@ -361,35 +381,55 @@ window.carCalculatorApp = function (config) {
             this.customsPriceAED = this.customsPriceCurrency === 'usd' ? n * this.usdToAedRate : n;
         },
 
-        categoryId: config.categoryId,
-        categories: config.categories,
-        freeRate: config.freeRate,
-        customsRate: config.customsRate,
-        seaFreightAED: config.seaFreightAed,
-        permitsAED: config.licenseFeeAed,
-        storage: config.storageToman,
-        scrapCertPriceToman: config.scrapCertPriceToman,
-        scrapThresholdAED: config.scrapThresholdAed,
-        scrapCertCounts: config.scrapCertCounts,
-        loanMaxAmountToman: config.loanMaxAmountToman || 0,
-        loanTermYearsOptions: (config.loanTermYearsOptions && config.loanTermYearsOptions.length) ? config.loanTermYearsOptions : [5],
-        loanInterestRatePercent: config.loanInterestRatePercent || 0,
-        rateLabels,
-        rates: {
-            customsFixed: 4, gasoline: 10, fob: 5, vat: 10, advanceTax: 2, redCrescent: 1,
-            supervision: 0.5, waste: 0.05, standard: 0.8, plateReg: 10,
-            transferTax: 3, municipal: 1, individual: 5, serviceProfit: 10,
+        scheduleRecalc() {
+            clearTimeout(this.recalcTimer);
+            this.recalcTimer = setTimeout(() => this.recalc(), 350);
         },
 
-        showProforma: false,
-        pfName: '', pfPhone: '', pfEmail: '', pfStatus: '', pfOk: false, pfSubmitting: false, pfPdfUrl: '',
-        recalced: false,
+        async recalc() {
+            const sequence = ++this.requestSequence;
+            this.loading = true;
+            this.error = '';
+            try {
+                const response = await fetch(config.pricingUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': config.csrfToken,
+                    },
+                    body: JSON.stringify(this.pricingInput),
+                });
+                if (!response.ok) throw new Error('pricing request failed');
+                const result = await response.json();
+                if (sequence !== this.requestSequence) return null;
+                this.pricingResult = result;
+                const settings = result.settingsSnapshot;
+                this.freeRate = settings.freeRate;
+                this.customsRate = settings.customsRate;
+                this.seaFreightAED = settings.seaFreightAed;
+                this.permitsAED = settings.licenseFeeAed;
+                this.storage = settings.storageToman;
+                this.scrapCertPriceToman = settings.scrapCertificatePriceToman;
+                this.recalced = true;
+                setTimeout(() => { this.recalced = false; }, 1500);
+                return result;
+            } catch (e) {
+                if (sequence === this.requestSequence) {
+                    this.error = 'محاسبه قیمت در دسترس نیست. لطفاً دوباره تلاش کنید.';
+                }
+                return null;
+            } finally {
+                if (sequence === this.requestSequence) this.loading = false;
+            }
+        },
 
-        recalc() {
-            // نتایج از روی x-model ها به‌صورت زنده محاسبه می‌شوند؛ این دکمه فقط
-            // یک تأیید بصری به کاربر می‌دهد که با تغییر دستی اعداد، جدول به‌روز شده.
-            this.recalced = true;
-            setTimeout(() => { this.recalced = false; }, 1500);
+        get pricingInput() {
+            return {
+                real_price_aed: Math.max(0, parseFloat(this.realPriceAED) || 0),
+                customs_price_aed: Math.max(0, parseFloat(this.customsPriceAED) || 0),
+                category: this.categoryId,
+            };
         },
 
         fmt(n) {
@@ -404,27 +444,29 @@ window.carCalculatorApp = function (config) {
             }
             this.pfSubmitting = true;
             this.pfStatus = '';
-            const r = this.results;
-            const cat = (this.categories[this.categoryId] || {}).label || this.categoryId;
+            if (!await this.recalc()) {
+                this.pfOk = false;
+                this.pfStatus = this.error;
+                this.pfSubmitting = false;
+                return;
+            }
             try {
                 const res = await fetch(config.quoteUrl, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': config.csrfToken,
+                    },
                     body: JSON.stringify({
                         name: this.pfName.trim(),
                         phone: this.pfPhone.trim(),
                         email: this.pfEmail.trim() || null,
                         notes: 'درخواست پیش‌فاکتور از صفحه خودرو',
                         car: config.carLabel,
-                        category: cat,
-                        breakdown: [...r.customsRows, ...r.plateRows],
-                        totals: {
-                            'جمع کل بدون کارمزد ترخیص‌کار و کارگزار': this.fmt(r.totalNoProfit) + ' تومان',
-                            'کارمزد ترخیص‌کار و کارگزار (ناوراکار)': this.fmt(r.serviceProfitAmt) + ' تومان',
-                            'قیمت تمام‌شده نهایی': this.fmt(r.totalWithProfit) + ' تومان',
-                        },
+                        pricing: this.pricingInput,
                         website: '',
-                        pageLoadedAt: 0,
+                        pageLoadedAt: this.pageLoadedAt,
                     }),
                 });
                 const data = await res.json();
@@ -442,71 +484,20 @@ window.carCalculatorApp = function (config) {
         },
 
         get results() {
-            const num = v => { const n = parseFloat(v); return isNaN(n) || n < 0 ? 0 : n; };
-            const pct = key => num(this.rates[key]) / 100;
+            const source = this.pricingResult;
+            if (!source) return emptyResults();
 
-            const realPriceAED = num(this.realPriceAED);
-            const customsPriceAED = num(this.customsPriceAED);
-            const freeRate = num(this.freeRate);
-            const customsRate = num(this.customsRate);
-            const seaFreightAED = num(this.seaFreightAED);
-            const permitsAED = num(this.permitsAED);
-            const storage = num(this.storage);
-            const coef = (this.categories[this.categoryId] || { coef: 1.2 }).coef;
-
-            const CIF = customsPriceAED * customsRate;
-            const realPriceToman = realPriceAED * freeRate;
-            const dutyProfit = coef * CIF;
-            const base9 = dutyProfit + CIF;
-
-            const customsRows = [
-                { label: 'عوارض گمرکی بر اساس تعرفه', rate: `${(coef * 100).toFixed(0)}٪ از ارزش گمرکی (دسته خودرو)`, value: dutyProfit },
-                { label: 'حقوق گمرکی ثابت', rate: `${this.rates.customsFixed}٪ از ارزش گمرکی`, value: pct('customsFixed') * CIF },
-                { label: 'عوارض بنزین‌سوز', rate: `${this.rates.gasoline}٪ از ارزش گمرکی`, value: pct('gasoline') * CIF },
-                { label: 'عوارض ۵٪ فوب', rate: `${this.rates.fob}٪ از ارزش فوب`, value: pct('fob') * CIF },
-                { label: 'مالیات ارزش افزوده (VAT)', rate: `${this.rates.vat}٪ از (گمرکی+حقوق ورودی)`, value: pct('vat') * base9 },
-                { label: 'مالیات علی‌الحساب واردات', rate: `${this.rates.advanceTax}٪ از (گمرکی+حقوق ورودی)`, value: pct('advanceTax') * base9 },
-                { label: 'عوارض هلال احمر', rate: `${this.rates.redCrescent}٪ از حقوق ورودی`, value: pct('redCrescent') * dutyProfit },
-                { label: 'حق نظارت کارشناسان گمرک', rate: `${this.rates.supervision}٪ از حقوق ورودی`, value: pct('supervision') * dutyProfit },
-                { label: 'عوارض پسماند کالا', rate: `${this.rates.waste}٪ از ارزش گمرکی`, value: pct('waste') * CIF },
-                { label: 'هزینه استاندارد', rate: `${this.rates.standard}٪ از ارزش گمرکی`, value: pct('standard') * CIF },
-            ];
-            const sumCustoms10 = customsRows.reduce((s, r) => s + r.value, 0);
-
-            const seaFreight = seaFreightAED * freeRate;
-            const permits = permitsAED * freeRate;
-            customsRows.push({ label: 'حمل دریایی', rate: 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', value: seaFreight });
-            customsRows.push({ label: 'هزینه صدور مجوزهای واردات', rate: 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', value: permits });
-            customsRows.push({ label: 'انبارداری، دموراژ و THC', rate: 'مبلغ دستی وارد شده', value: storage });
-            const sumCustomsAll = sumCustoms10 + seaFreight + permits + storage;
-
-            const tier = (this.categories[this.categoryId] || {}).tier || 'cd';
-            const bracket = customsPriceAED > num(this.scrapThresholdAED) ? 'above' : 'upto';
-            const certCount = (this.scrapCertCounts[tier] || this.scrapCertCounts.cd)[bracket];
-            const scrapFee = certCount * num(this.scrapCertPriceToman);
-
-            const plateRows = [
-                { label: 'گواهی اسقاط خودرو فرسوده', rate: `${certCount} فقره گواهی (رتبه انرژی ${tierLabels[tier] || tier}) × نرخ روز`, value: scrapFee },
-                { label: 'عوارض شماره‌گذاری راهور', rate: `${this.rates.plateReg}٪ از ارزش گمرکی`, value: pct('plateReg') * CIF },
-                { label: 'مالیات نقل و انتقال', rate: `${this.rates.transferTax}٪ از ارزش گمرکی`, value: pct('transferTax') * CIF },
-                { label: 'عوارض سالانه شهرداری', rate: `${this.rates.municipal}٪ از ارزش گمرکی`, value: pct('municipal') * CIF },
-                { label: 'عوارض شخص حقیقی', rate: `${this.rates.individual}٪ از ارزش گمرکی`, value: pct('individual') * CIF },
-            ];
-            const sumPlate = plateRows.reduce((s, r) => s + r.value, 0);
-
-            const totalNoProfit = sumCustomsAll + sumPlate + realPriceToman;
-            const serviceProfitAmt = pct('serviceProfit') * (sumCustoms10 + sumPlate + seaFreight + permits);
-            const totalWithProfit = totalNoProfit + serviceProfitAmt;
-
-            // سقف وام: کمترین مقدار از سقف مصوب پنل مدیریت و ۵۰٪ قیمت تمام‌شدهٔ
-            // نهایی خودرو — مثلاً قیمت تمام‌شدهٔ ۱۵ میلیارد یعنی سقف وام ۷.۵
-            // میلیارد، ولی قیمت تمام‌شدهٔ ۳۰ میلیارد یعنی سقف وام همان ۱۰ میلیارد
-            // (سقف مصوب پنل مدیریت) خواهد بود.
+            const num = value => Math.max(0, parseFloat(value) || 0);
+            const totalWithProfit = num(source.finalTotalToman);
+            const realPriceToman = num(source.realPriceToman);
+            const permits = num(source.licenseFeeToman);
+            const sumCustomsAll = num(source.customsSubtotalToman);
+            const sumPlate = num(source.plateSubtotalToman);
+            const serviceProfitAmt = num(source.serviceFeeToman);
             const loanAmount = Math.max(0, Math.min(num(this.loanMaxAmountToman), 0.5 * totalWithProfit));
             const downPayment = totalWithProfit - loanAmount;
             const annualRate = num(this.loanInterestRatePercent) / 100;
             const monthlyRate = annualRate / 12;
-
             const loanPlans = this.loanTermYearsOptions.map(years => {
                 const months = Math.max(0, Math.round(num(years) * 12));
                 let monthlyInstallment = 0;
@@ -516,10 +507,7 @@ window.carCalculatorApp = function (config) {
                         : loanAmount / months;
                 }
                 const totalRepayment = monthlyInstallment * months;
-                return {
-                    years, months, monthlyInstallment, totalRepayment,
-                    totalInterest: totalRepayment - loanAmount,
-                };
+                return { years, months, monthlyInstallment, totalRepayment, totalInterest: totalRepayment - loanAmount };
             });
             const loan = { amount: loanAmount, downPayment, plans: loanPlans };
 
@@ -532,25 +520,28 @@ window.carCalculatorApp = function (config) {
                 { no: 5, label: 'پرداخت کارمزد ترخیص‌کار و کارگزار (ناوراکار)', duration: '', value: serviceProfitAmt },
                 { no: 6, label: 'پرداخت هزینه‌های پلاک انتظامی', duration: '', value: sumPlate },
             ];
-
-            // چارت زمان‌بندی: طول تقریبی هر مرحله (روز کاری، بر پایهٔ همان بازه‌های
-            // جدول شرایط پرداخت بالا) — از جذر روزها به‌عنوان وزن بصری استفاده می‌شود
-            // تا مرحلهٔ ۱-روزهٔ بوک کردن در برابر مرحلهٔ ۳۰-روزهٔ ترخیص کاملاً محو نشود؛
-            // عدد دقیق مدت همچنان به‌صورت متن زیر هر بخش نوشته می‌شود.
             const stageColors = ['bg-brand-500', 'bg-brand-600', 'bg-brand-700', 'bg-brand-800', 'bg-brand-900', 'bg-brand-950'];
             const shortLabels = ['بوک کردن خودرو', 'صدور مجوز', 'باقی‌ماندهٔ قیمت خودرو', 'ترخیص گمرکی', 'کارمزد کارگزار', 'پلاک انتظامی'];
             const stageDays = [1, 7, 3, 30, 2, 2];
             const timeline = paymentSteps.map((step, i) => ({
-                no: step.no,
-                shortLabel: shortLabels[i],
+                no: step.no, shortLabel: shortLabels[i],
                 duration: step.duration || (stageDays[i] + ' روز کاری'),
-                value: step.value,
-                days: stageDays[i],
-                weight: Math.sqrt(stageDays[i]),
+                value: step.value, days: stageDays[i], weight: Math.sqrt(stageDays[i]),
                 colorClass: stageColors[i],
             }));
 
-            return { customsRows, plateRows, sumCustomsAll, sumPlate, totalNoProfit, serviceProfitAmt, totalWithProfit, loan, paymentSteps, timeline };
+            return {
+                customsRows: source.customsRows,
+                plateRows: source.plateRows,
+                sumCustomsAll,
+                sumPlate,
+                totalNoProfit: num(source.preServiceTotalToman),
+                serviceProfitAmt,
+                totalWithProfit,
+                loan,
+                paymentSteps,
+                timeline,
+            };
         },
     };
 };

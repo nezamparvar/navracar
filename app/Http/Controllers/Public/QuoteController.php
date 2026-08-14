@@ -8,19 +8,26 @@ use App\Mail\QuoteRequestReceived;
 use App\Models\QuoteRequest;
 use App\Services\GeoLookupService;
 use App\Services\ProformaPdfGenerator;
+use App\Services\VehiclePricing\VehiclePricingCatalog;
+use App\Services\VehiclePricing\VehiclePricingInput;
+use App\Services\VehiclePricing\VehiclePricingService;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\Rule;
 
 class QuoteController extends Controller
 {
-    public function store(Request $request, GeoLookupService $geo, ProformaPdfGenerator $pdfGenerator)
-    {
-        // Honeypot: bots fill hidden fields — silently report success without saving.
+    public function store(
+        Request $request,
+        GeoLookupService $geo,
+        ProformaPdfGenerator $pdfGenerator,
+        VehiclePricingService $pricing,
+    ) {
         if (! empty($request->input('website'))) {
-            return response()->json(['success' => true, 'id' => 0, 'message' => 'درخواست با موفقیت ثبت و ارسال شد.']);
+            return response()->json(['success' => true, 'id' => 0, 'message' => 'درخواست با موفقیت ثبت شد.']);
         }
 
         $loadedAt = (float) $request->input('pageLoadedAt', 0);
@@ -32,24 +39,20 @@ class QuoteController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:64'],
             'email' => ['nullable', 'email'],
-            'notes' => ['nullable', 'string'],
+            'notes' => ['nullable', 'string', 'max:5000'],
             'car' => ['nullable', 'string', 'max:255'],
-            'category' => ['nullable', 'string', 'max:100'],
+            'pricing' => ['required', 'array'],
+            'pricing.real_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+            'pricing.customs_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+            'pricing.category' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
+            // Accepted only for backward compatibility and deliberately ignored.
             'breakdown' => ['nullable', 'array'],
             'totals' => ['nullable', 'array'],
         ]);
 
-        $breakdown = $data['breakdown'] ?? [];
-        $totals = $data['totals'] ?? [];
-
-        $totalWithProfit = 0.0;
-        foreach ($totals as $label => $val) {
-            if (mb_strpos((string) $label, 'نهایی') !== false) {
-                $digits = preg_replace('/[^0-9.]/', '', (string) $val);
-                $totalWithProfit = $digits !== '' ? (float) $digits : 0;
-            }
-        }
-
+        $result = $pricing->calculate(VehiclePricingInput::fromArray($data['pricing']));
+        $breakdown = $result->breakdownRows(formatted: true);
+        $totals = $result->displayTotals();
         $geoData = $geo->lookup($request->ip());
 
         $lead = QuoteRequest::create([
@@ -58,10 +61,16 @@ class QuoteController extends Controller
             'email' => $data['email'] ?? null,
             'notes' => $data['notes'] ?? null,
             'car_label' => $data['car'] ?? null,
-            'category' => $data['category'] ?? null,
+            'category' => $result->category['id'],
             'breakdown_json' => json_encode($breakdown, JSON_UNESCAPED_UNICODE),
-            'totals_json' => json_encode($totals, JSON_UNESCAPED_UNICODE),
-            'total_with_profit' => $totalWithProfit,
+            'totals_json' => json_encode([
+                'display' => $totals,
+                'pricing_input' => $result->input,
+                'pricing_snapshot' => $result->settingsSnapshot,
+                'pricing_result' => $result->toArray(),
+                'engine_version' => 'v1.2.0',
+            ], JSON_UNESCAPED_UNICODE),
+            'total_with_profit' => $result->totals['finalTotalToman'],
             'email_sent' => false,
             'source' => 'سایت',
             'country' => $geoData['country'],
@@ -82,35 +91,39 @@ class QuoteController extends Controller
 
         $pdfUrl = null;
         $customerEmailOk = null;
-        if (! empty($breakdown)) {
-            try {
-                $pdfPath = $pdfGenerator->fromQuoteRequest($lead);
-                $pdfUrl = URL::signedRoute('public.quote-requests.pdf', ['quoteRequest' => $lead->id]);
+        try {
+            $pdfPath = $pdfGenerator->fromQuoteRequest($lead);
+            $pdfUrl = URL::signedRoute('public.quote-requests.pdf', ['quoteRequest' => $lead->id]);
 
-                if ($lead->email) {
-                    try {
-                        Mail::to($lead->email)->send(new ProformaInvoiceMail($lead, Storage::disk('public')->path($pdfPath)));
-                        $customerEmailOk = true;
-                    } catch (\Throwable $e) {
-                        $customerEmailOk = false;
-                        ActivityLogger::error('ارسال ایمیل پیش‌فاکتور به مشتری ناموفق بود', ['error' => $e->getMessage(), 'id' => $lead->id]);
-                    }
+            if ($lead->email) {
+                try {
+                    Mail::to($lead->email)->send(new ProformaInvoiceMail($lead, Storage::disk('public')->path($pdfPath)));
+                    $customerEmailOk = true;
+                } catch (\Throwable $e) {
+                    $customerEmailOk = false;
+                    ActivityLogger::error('ارسال ایمیل پیش‌فاکتور به مشتری ناموفق بود', ['error' => $e->getMessage(), 'id' => $lead->id]);
                 }
-            } catch (\Throwable $e) {
-                ActivityLogger::error('ساخت فایل PDF پیش‌فاکتور ناموفق بود', ['error' => $e->getMessage(), 'id' => $lead->id]);
             }
+        } catch (\Throwable $e) {
+            ActivityLogger::error('ساخت فایل PDF پیش‌فاکتور ناموفق بود', ['error' => $e->getMessage(), 'id' => $lead->id]);
         }
 
         $message = 'درخواست شما با موفقیت ثبت شد.';
         if ($pdfUrl) {
             $message = $customerEmailOk
-                ? 'درخواست شما ثبت شد؛ پیش‌فاکتور PDF هم برای شما ایمیل شد و هم می‌توانید همین‌جا دانلود کنید.'
-                : 'درخواست شما ثبت شد؛ پیش‌فاکتور PDF آماده شد — می‌توانید همین‌جا دانلود کنید.';
+                ? 'درخواست ثبت شد؛ پیش‌فاکتور PDF ایمیل شده و آماده دانلود است.'
+                : 'درخواست ثبت شد و پیش‌فاکتور PDF آماده دانلود است.';
         } elseif (! $emailOk) {
-            $message = 'درخواست شما ثبت شد؛ اما ارسال ایمیل با تأخیر مواجه شد. کارشناسان از پنل مدیریت آن را می‌بینند.';
+            $message = 'درخواست ثبت شد؛ ارسال ایمیل با تأخیر مواجه شد و کارشناسان آن را در پنل می‌بینند.';
         }
 
-        return response()->json(['success' => true, 'id' => $lead->id, 'message' => $message, 'pdfUrl' => $pdfUrl]);
+        return response()->json([
+            'success' => true,
+            'id' => $lead->id,
+            'message' => $message,
+            'pdfUrl' => $pdfUrl,
+            'pricing' => $result->toArray(),
+        ]);
     }
 
     public function downloadPdf(QuoteRequest $quoteRequest)

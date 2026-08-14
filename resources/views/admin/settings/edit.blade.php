@@ -2,6 +2,82 @@
     <form method="POST" action="{{ route('admin.settings.update') }}" class="space-y-5">
         @csrf
 
+        @if ($errors->any())
+            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <div class="font-extrabold">لطفاً خطاهای تنظیمات را اصلاح کنید.</div>
+                <ul class="mt-2 list-inside list-disc space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        @endif
+
+        @php
+            $percentageFields = [
+                'customsFixed' => ['حقوق گمرکی ثابت', 'درصد از ارزش گمرکی'],
+                'gasolineLevy' => ['عوارض بنزین‌سوز', 'درصد از ارزش گمرکی'],
+                'fobLevy' => ['عوارض فوب', 'درصد از ارزش گمرکی'],
+                'vat' => ['مالیات ارزش افزوده', 'درصد از ارزش گمرکی + عوارض تعرفه'],
+                'advanceImportTax' => ['مالیات علی‌الحساب واردات', 'درصد از ارزش گمرکی + عوارض تعرفه'],
+                'redCrescent' => ['عوارض هلال احمر', 'درصد از عوارض تعرفه'],
+                'customsSupervision' => ['حق نظارت کارشناسان گمرک', 'درصد از عوارض تعرفه'],
+                'wasteLevy' => ['عوارض پسماند کالا', 'درصد از ارزش گمرکی'],
+                'standardFee' => ['هزینه استاندارد', 'درصد از ارزش گمرکی'],
+                'registration' => ['عوارض شماره‌گذاری راهور', 'درصد از ارزش گمرکی'],
+                'transferTax' => ['مالیات نقل و انتقال', 'درصد از ارزش گمرکی'],
+                'municipal' => ['عوارض سالانه شهرداری', 'درصد از ارزش گمرکی'],
+                'individualPerson' => ['عوارض شخص حقیقی', 'درصد از ارزش گمرکی'],
+                'serviceFee' => ['کارمزد ناوراکار', 'درصد از پایه فعلی کارمزد؛ قیمت خودرو و انبارداری در پایه نیست'],
+            ];
+        @endphp
+
+        <x-card title="درصدهای گمرکی، شماره‌گذاری و کارمزد" icon="target"
+                subtitle="تمام درصدهای فعال موتور قیمت‌گذاری از این بخش خوانده می‌شوند و بلافاصله روی محاسبات جدید اثر دارند.">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                @foreach ($percentageFields as $key => [$label, $description])
+                    <div>
+                        <label class="mb-1 block text-xs font-bold text-ink-500">{{ $label }} (درصد)</label>
+                        <input type="number" step="0.001" min="0" max="500"
+                               name="pricing_percentages[{{ $key }}]"
+                               value="{{ old('pricing_percentages.'.$key, $pricingSettings['percentages'][$key]) }}" required
+                               class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                        <p class="mt-1 text-[11px] text-ink-400">{{ $description }}</p>
+                    </div>
+                @endforeach
+            </div>
+        </x-card>
+
+        <x-card title="جدول تعداد گواهی اسقاط" icon="target"
+                subtitle="مرز آستانه در حالت مساوی داخل ستون «تا آستانه» باقی می‌ماند.">
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead class="bg-ink-50 text-ink-500 dark:bg-white/5">
+                        <tr>
+                            <th class="p-2.5 text-right">رتبه انرژی</th>
+                            <th class="p-2.5 text-right">تا و مساوی آستانه (تعداد گواهی)</th>
+                            <th class="p-2.5 text-right">بالاتر از آستانه (تعداد گواهی)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (['ab' => 'AB', 'cd' => 'CD', 'efg' => 'EFG'] as $tier => $tierLabel)
+                            <tr class="border-t border-ink-100 dark:border-white/5">
+                                <td class="p-2.5 font-bold">{{ $tierLabel }}</td>
+                                @foreach (['upto', 'above'] as $bracket)
+                                    <td class="p-2.5">
+                                        <input type="number" step="1" min="0" max="100"
+                                               name="scrap_counts[{{ $tier }}][{{ $bracket }}]"
+                                               value="{{ old('scrap_counts.'.$tier.'.'.$bracket, $pricingSettings['scrapCertificateCounts'][$tier][$bracket]) }}" required
+                                               class="w-28 rounded-lg border border-ink-200 bg-ink-50 px-2 py-1.5 num-font dark:border-white/10 dark:bg-white/5">
+                                    </td>
+                                @endforeach
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </x-card>
+
         <x-card title="نرخ ارز" icon="target" class="max-w-lg">
             <div class="space-y-4">
                 <div>
@@ -46,8 +122,8 @@
             </div>
         </x-card>
 
-        <x-card title="هزینه‌های ثابت (پیش‌فرض جدول محاسبات)" icon="target"
-                subtitle="این مقادیر به‌صورت پیش‌فرض در جدول هزینه‌های صفحه هر خودرو قرار می‌گیرند و مثل نرخ ارز، مشتری هم می‌تواند دستی تغییرشان دهد.">
+        <x-card title="هزینه‌های ثابت موتور محاسبات" icon="target"
+                subtitle="این مقادیر در همه محاسبات عمومی و پیش‌فاکتورها مستقیماً از تنظیمات سرور خوانده می‌شوند و برای مشتری قابل تغییر نیستند.">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-xs font-bold text-ink-500">هزینه صدور مجوزها (درهم)</label>
@@ -74,7 +150,7 @@
         </x-card>
 
         <x-card title="گواهی اسقاط خودرو فرسوده" icon="target"
-                subtitle="محاسبه طبق آیین‌نامه اجرایی قانون ساماندهی صنعت خودرو (تصویب‌نامه هیئت وزیران، پیوست). تعداد گواهی‌ها طبق قانون ثابت است؛ فقط نرخ خرید هر گواهی و آستانه قیمتی قابل تنظیم است.">
+                subtitle="محاسبه بر اساس رتبه انرژی، آستانه قیمت و جدول تعداد گواهی انجام می‌شود؛ نرخ خرید، آستانه و تعدادها همگی از همین صفحه مدیریت می‌شوند.">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                     <label class="mb-1 block text-xs font-bold text-ink-500">نرخ خرید هر گواهی اسقاط (تومان)</label>
