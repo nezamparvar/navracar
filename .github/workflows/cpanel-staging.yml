@@ -141,6 +141,10 @@ jobs:
           set -Eeuo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          # The staging build overlays tracked public controls in the pinned
+          # source checkout. Restore them before switching that checkout to
+          # the generated deployment branch so Git cannot block the switch.
+          git restore -- public/.htaccess public/robots.txt
           git clean -fdx
           if git ls-remote --exit-code --heads origin cpanel-staging >/dev/null 2>&1; then
             git fetch origin cpanel-staging
