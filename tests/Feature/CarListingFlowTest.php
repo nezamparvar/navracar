@@ -52,6 +52,10 @@ class CarListingFlowTest extends TestCase
         $this->assertSame('c2000', $listing->category_id); // engine "2000 - 2499 cc" -> lower bound 2000 falls in the c2000 bucket
         $this->assertNotEmpty($listing->title_fa);
         $this->assertTrue($listing->images()->count() >= 1);
+        foreach ($listing->images as $image) {
+            Storage::disk('public')->assertExists($image->local_path);
+            $this->assertStringContainsString('/storage/', Storage::disk('public')->url($image->local_path));
+        }
 
         // Draft is not publicly visible to a guest (actingAs() persists across
         // calls within a test, so log out first to get a true guest request).

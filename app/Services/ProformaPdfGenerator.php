@@ -7,6 +7,7 @@ use App\Models\Invoice;
 use App\Models\QuoteRequest;
 use App\Models\Setting;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 /**
@@ -65,17 +66,15 @@ class ProformaPdfGenerator
                 .'مقادیر ممکن است با تغییر مقررات گمرکی یا نرخ ارز به‌روزرسانی شوند. برای پیش‌فاکتور رسمی و قطعی، کارشناسان ناوراکار به‌زودی با شما تماس می‌گیرند.',
         ]))->render();
 
-        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
-
-        $path = 'proformas/quote-'.$lead->id.'.pdf';
-        Storage::disk('public')->makeDirectory('proformas');
-        Storage::disk('public')->put($path, $pdf->output());
-
-        return $path;
+        return $this->renderAndStore($html, 'proformas/quote-'.$lead->id.'.pdf', $lead->id, 'quote');
     }
 
-    public function fromInvoice(Invoice $invoice): string
+    public function fromInvoice(Invoice $invoice, string $language = 'fa'): string
     {
+        $language = $language === 'en' ? 'en' : 'fa';
+        if ($language === 'en') {
+            return $this->fromInvoiceEnglish($invoice);
+        }
         $discount = (float) ($invoice->discount_amount ?? 0);
         $grandTotal = (float) $invoice->total_amount;
         $payable = $grandTotal - $discount;
@@ -86,18 +85,18 @@ class ProformaPdfGenerator
         $breakdown = array_map(fn ($row) => [
             'label' => $row['label'] ?? '',
             'rate' => $row['rate'] ?? '',
-            'amount' => ($row['amount'] ?? '').' '.$unitLabel,
+            'amount' => $this->formatAmount($row['amount'] ?? '').' '.$unitLabel,
         ], $invoice->breakdown());
 
         $totalsSummary = [
-            ['label' => 'جمع کل قبل از تخفیف', 'amount' => number_format($grandTotal).' '.$unitLabel],
+            ['label' => 'جمع کل قبل از تخفیف', 'amount' => $this->formatAmount($grandTotal).' '.$unitLabel],
         ];
         if ($discount > 0) {
-            $totalsSummary[] = ['label' => 'تخفیف', 'amount' => '- '.number_format($discount).' '.$unitLabel];
+            $totalsSummary[] = ['label' => 'تخفیف', 'amount' => '- '.$this->formatAmount($discount).' '.$unitLabel];
         }
-        $totalsSummary[] = ['label' => 'مبلغ قابل‌پرداخت', 'amount' => number_format($payable).' '.$unitLabel, 'emphasis' => true];
+        $totalsSummary[] = ['label' => 'مبلغ قابل‌پرداخت', 'amount' => $this->formatAmount($payable).' '.$unitLabel, 'emphasis' => true];
         if ($currency !== 'toman' && $exRate > 0) {
-            $totalsSummary[] = ['label' => 'معادل تقریبی به تومان (نرخ '.number_format($exRate).')', 'amount' => number_format($payable * $exRate).' تومان'];
+            $totalsSummary[] = ['label' => 'معادل تقریبی به تومان (نرخ '.$this->formatAmount($exRate).')', 'amount' => $this->formatAmount($payable * $exRate).' تومان'];
         }
 
         $html = view('pdf.proforma', array_merge($this->fonts(), [
@@ -117,12 +116,84 @@ class ProformaPdfGenerator
                 .'این سند صرفاً جنبهٔ برآوردی دارد و برای تعیین قطعی، قرارداد نهایی با کارشناسان ناوراکار ملاک عمل است.',
         ]))->render();
 
-        $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+        return $this->renderAndStore($html, 'proformas/invoice-'.$invoice->id.'.pdf', $invoice->id, 'fa');
+    }
 
-        $path = 'proformas/invoice-'.$invoice->id.'.pdf';
-        Storage::disk('public')->makeDirectory('proformas');
-        Storage::disk('public')->put($path, $pdf->output());
+    private function fromInvoiceEnglish(Invoice $invoice): string
+    {
+        $discount = (float) ($invoice->discount_amount ?? 0);
+        $grandTotal = (float) $invoice->total_amount;
+        $payable = $grandTotal - $discount;
+        $currency = $invoice->currency ?? 'toman';
+        $unitLabel = Invoice::CURRENCIES[$currency] ?? 'Toman';
+        $exRate = (float) ($invoice->exchange_rate ?? 0);
+        $breakdown = array_map(fn ($row) => [
+            'label' => $row['label'] ?? '',
+            'rate' => $row['rate'] ?? '',
+            'amount' => $this->formatAmount($row['amount'] ?? 0).' '.$unitLabel,
+        ], $invoice->breakdown());
+        $totalsSummary = [
+            ['label' => 'Subtotal before discount', 'amount' => $this->formatAmount($grandTotal).' '.$unitLabel],
+        ];
+        if ($discount > 0) {
+            $totalsSummary[] = ['label' => 'Discount', 'amount' => '- '.$this->formatAmount($discount).' '.$unitLabel];
+        }
+        $totalsSummary[] = ['label' => 'Total payable', 'amount' => $this->formatAmount($payable).' '.$unitLabel, 'emphasis' => true];
+        if ($currency !== 'toman' && $exRate > 0) {
+            $totalsSummary[] = ['label' => 'Approximate Toman equivalent (rate '.$this->formatAmount($exRate).')', 'amount' => $this->formatAmount($payable * $exRate).' Toman'];
+        }
+        $html = view('pdf.proforma-en', array_merge($this->fonts(), [
+            'docTitle' => ($invoice->invoice_type ?? 'full') === 'single_item' ? 'Service Proforma Invoice' : 'Vehicle Import Proforma Invoice',
+            'docNumber' => $invoice->invoice_number,
+            'docDate' => $invoice->created_at?->format('Y-m-d') ?? now()->format('Y-m-d'),
+            'validUntil' => optional($invoice->valid_until)->format('Y-m-d'),
+            'customerName' => $invoice->customer_name,
+            'customerPhone' => $invoice->customer_phone,
+            'customerEmail' => $invoice->customer_email,
+            'carLabel' => $invoice->car_label,
+            'categoryLabel' => $invoice->categoryLabel(),
+            'breakdown' => $breakdown,
+            'totalsSummary' => $totalsSummary,
+            'contact' => $this->contact(),
+        ]))->render();
+        $path = 'proformas/invoice-'.$invoice->id.'-en.pdf';
 
-        return $path;
+        return $this->renderAndStore($html, $path, $invoice->id, 'en');
+    }
+
+    private function renderAndStore(string $html, string $path, int $recordId, string $language): string
+    {
+        try {
+            $pdf = Pdf::loadHTML($html)->setPaper('a4', 'portrait');
+            Storage::disk('public')->makeDirectory('proformas');
+            Storage::disk('public')->put($path, $pdf->output());
+
+            return $path;
+        } catch (\Throwable $exception) {
+            $message = preg_replace(
+                '/(password|secret|token|api[_-]?key|authorization)\s*[:=]\s*[^\s,;]+/i',
+                '$1=[redacted]',
+                $exception->getMessage()
+            ) ?? 'PDF generation failed';
+            Log::error('Proforma PDF generation failed', [
+                'record_id' => $recordId,
+                'language' => $language,
+                'exception' => $exception::class,
+                'message' => mb_substr($message, 0, 500),
+            ]);
+
+            throw $exception;
+        }
+    }
+
+    private function formatAmount(mixed $value): string
+    {
+        if ($value === '' || $value === null) {
+            return '';
+        }
+        $number = (float) str_replace(',', '', (string) $value);
+        $decimals = fmod($number, 1.0) === 0.0 ? 0 : 2;
+
+        return number_format($number, $decimals, '.', ',');
     }
 }

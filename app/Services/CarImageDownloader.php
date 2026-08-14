@@ -79,7 +79,13 @@ class CarImageDownloader
         $filename = sprintf('%02d-%s.%s', $index, Str::lower(Str::random(8)), $ext);
         $path = "car-listings/{$carListingId}/{$filename}";
 
-        Storage::disk('public')->put($path, $body);
+        $disk = Storage::disk('public');
+        if (! $disk->put($path, $body) || ! $disk->exists($path)) {
+            // Never create a database row for an image that was not persisted.
+            $disk->delete($path);
+
+            return null;
+        }
 
         return ['local_path' => $path, 'source_url' => $url];
     }

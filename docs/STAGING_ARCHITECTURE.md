@@ -31,6 +31,15 @@ Staging defaults disable real outbound mail and social publishing in application
 
 The application displays a visible `STAGING` banner only when `APP_ENV=staging`.
 
+### Public uploads without SSH
+
+The staging `.env` must set `PUBLIC_DISK_ROOT=/home/navrac/public_html/staging/storage`.
+The `public` Laravel disk then writes new uploads directly into the directory
+served by cPanel at `/staging/storage`; no `storage:link` command or one-time
+copy is required. This is staging-only and must not be added to the production
+`.env`. The deployment helper creates and validates this directory without
+copying or deleting any existing staging uploads.
+
 ## Security controls
 
 The staging `robots.txt`, HTML metadata, and `X-Robots-Tag` header all request no indexing. Protect the entire staging document root with cPanel Directory Privacy in addition to Laravel authentication. Do not put the directory password in GitHub, this repository, or the artifact.

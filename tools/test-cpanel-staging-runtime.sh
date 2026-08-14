@@ -5,6 +5,7 @@ set -Eeuo pipefail
 readonly ROOT="$(mktemp -d)"
 trap 'rm -rf -- "$ROOT"' EXIT
 readonly APP_ROOT="$ROOT/app"
+readonly PUBLIC_ROOT="$ROOT/public"
 source deployment/cpanel-staging/ensure-runtime.sh
 
 # A completely missing runtime tree is created.
@@ -17,6 +18,13 @@ for path in \
     storage/logs; do
     [[ -d "$APP_ROOT/$path" && -w "$APP_ROOT/$path" ]] || exit 10
 done
+
+# The cPanel-served public disk is also created and validated independently.
+ensure_staging_runtime_dirs "$APP_ROOT" "$PUBLIC_ROOT/storage"
+[[ -d "$PUBLIC_ROOT/storage" && -w "$PUBLIC_ROOT/storage" ]] || exit 14
+printf 'staging upload\n' > "$PUBLIC_ROOT/storage/keep.txt"
+ensure_staging_runtime_dirs "$APP_ROOT" "$PUBLIC_ROOT/storage"
+[[ "staging upload" == "$(cat "$PUBLIC_ROOT/storage/keep.txt")" ]] || exit 15
 
 # Existing persistent files survive preparation byte-for-byte.
 printf 'uploaded image\n' > "$APP_ROOT/storage/app/public/vehicle.jpg"

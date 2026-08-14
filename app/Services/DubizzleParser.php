@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Psr\Http\Message\StreamInterface;
 
 /**
@@ -14,6 +15,8 @@ use Psr\Http\Message\StreamInterface;
  */
 class DubizzleParser
 {
+    public const DIRECT_FETCH_BLOCKED_MESSAGE = 'دریافت مستقیم این آگهی توسط دابی‌زل مسدود شد. برای ادامه، View Page Source صفحه آگهی را کپی و در کادر زیر وارد کنید.';
+
     private const ALLOWED_HOSTS = ['dubai.dubizzle.com', 'uae.dubizzle.com', 'www.dubizzle.com', 'dubizzle.com'];
 
     private const MAX_HTML_BYTES = 5 * 1024 * 1024;
@@ -51,13 +54,29 @@ class DubizzleParser
                 'Upgrade-Insecure-Requests' => '1',
             ])->timeout(25)->connectTimeout(10)->get($url);
         } catch (\Throwable $e) {
+            Log::warning('Dubizzle direct fetch failed', [
+                'classification' => 'transport_error',
+                'host' => parse_url($url, PHP_URL_HOST),
+                'exception' => $e::class,
+            ]);
+
             return ['html' => null, 'error' => 'خطا در اتصال: '.$e->getMessage()];
         }
 
         if (! $response->successful()) {
+            Log::warning('Dubizzle direct fetch rejected', [
+                'classification' => $this->classifyFetchResponse($response->status(), $response->header('content-type')),
+                'status' => $response->status(),
+                'content_type' => $response->header('content-type'),
+                'host' => parse_url($url, PHP_URL_HOST),
+            ]);
             if ($response->status() >= 300 && $response->status() < 400) {
                 return ['html' => null, 'error' => 'Dubizzle redirected the listing URL. Open the final listing URL or paste its page source manually.'];
             }
+            if (in_array($response->status(), [401, 403, 406, 429], true)) {
+                return ['html' => null, 'error' => self::DIRECT_FETCH_BLOCKED_MESSAGE.' (HTTP '.$response->status().').'];
+            }
+
             return [
                 'html' => null,
                 'error' => 'دریافت صفحه ناموفق بود (کد '.$response->status().'). دابیزل معمولاً درخواست‌های خودکار از سرورها را مسدود می‌کند (حفاظت ضد ربات) — '
@@ -81,6 +100,24 @@ class DubizzleParser
         }
 
         return ['html' => $html, 'error' => null];
+    }
+
+    public function classifyFetchResponse(int $status, ?string $contentType = null): string
+    {
+        if ($status >= 300 && $status < 400) {
+            return 'redirect';
+        }
+        if (in_array($status, [401, 403, 406, 429], true)) {
+            return 'remote_access_blocked';
+        }
+        if ($status >= 500) {
+            return 'remote_server_error';
+        }
+        if ($contentType !== null && ! str_contains(strtolower($contentType), 'html')) {
+            return 'unexpected_content';
+        }
+
+        return 'http_error';
     }
 
     public function isAllowedSourceUrl(string $url): bool
@@ -157,10 +194,16 @@ class DubizzleParser
             $decoded = json_decode(html_entity_decode(trim($json), ENT_QUOTES | ENT_HTML5, 'UTF-8'), true);
             $nodes = is_array($decoded) && array_is_list($decoded) ? $decoded : [$decoded];
             foreach ($nodes as $node) {
-                if (! is_array($node)) continue;
-                if (isset($node['@graph']) && is_array($node['@graph'])) $nodes = array_merge($nodes, $node['@graph']);
+                if (! is_array($node)) {
+                    continue;
+                }
+                if (isset($node['@graph']) && is_array($node['@graph'])) {
+                    $nodes = array_merge($nodes, $node['@graph']);
+                }
                 $type = strtolower((string) ($node['@type'] ?? ''));
-                if (! str_contains($type, 'product') && ! str_contains($type, 'vehicle') && ! isset($node['offers'])) continue;
+                if (! str_contains($type, 'product') && ! str_contains($type, 'vehicle') && ! isset($node['offers'])) {
+                    continue;
+                }
                 $result['title_en'] ??= $node['name'] ?? null;
                 $result['description_en'] ??= $node['description'] ?? null;
                 $result['source_url'] ??= $node['url'] ?? null;
@@ -175,6 +218,7 @@ class DubizzleParser
                 $result['images'] ??= is_array($images) ? array_values(array_filter($images, 'is_string')) : (is_string($images) ? [$images] : []);
             }
         }
+
         return array_filter($result, static fn ($value) => $value !== null && $value !== []);
     }
 
