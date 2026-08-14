@@ -1,0 +1,15 @@
+{
+  "artifact_branch": "cpanel-staging",
+  "environment": "staging",
+  "release": "rc-v1.2.0-1",
+  "release_candidate": "rc-v1.2.0-1",
+  "staging_status": "pending-owner-acceptance",
+  "source_commit": "b54eab5157bdc54741a6f2f3a79062e2b9be4c8d",
+  "source_main_commit": "b54eab5157bdc54741a6f2f3a79062e2b9be4c8d",
+  "artifact_id": "rc-v1.2.0-1-b54eab5157bd-8b60f8b5db48",
+  "artifact_sha": "8b60f8b5db4867b2700f0c3533e18d93f6f028959fe58b41b6576b05d18081b5",
+  "application_checksum": "2621af6c9e8aa6d4ab9d0de2308902d10c7c5e75ff1085ce0c533fbf40c934c7",
+  "public_checksum": "b942c76ffd32a7dac4dfe6aac97b2bb11a819fb100fd1856af9e1c4a5198e594",
+  "generated_at_utc": "2026-08-14T11:30:26Z",
+  "workflow_run": "31796441762"
+}
