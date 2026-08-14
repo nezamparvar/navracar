@@ -562,32 +562,15 @@
       <div class="field-grid">
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/></svg>قیمت واقعی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="realPriceAED" value="400,000"><button type="button" class="unit unit-toggle" id="realPriceAEDUnit" onclick="togglePriceCurrency('realPriceAED')">درهم</button></div></div>
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M4 10h16"/></svg>قیمت گمرکی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsPriceAED" value="400,000"><button type="button" class="unit unit-toggle" id="customsPriceAEDUnit" onclick="togglePriceCurrency('customsPriceAED')">درهم</button></div></div>
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز آزاد</label><div class="input-wrap"><input type="text" inputmode="decimal" id="freeRate" value="51,000"><span class="unit">تومان</span></div></div>
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز گمرک</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsRate" value="35,688"><span class="unit">تومان</span></div></div>
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20c2 1 4 1 6 0s4-1 6 0 4 1 6 0M5 20l1-9 4-6h4l4 6 1 9"/></svg>حمل دریایی</label><div class="input-wrap"><input type="text" inputmode="decimal" id="seaFreightAED" value="1,500"><span class="unit">درهم</span></div></div>
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>صدور مجوزها</label><div class="input-wrap"><input type="text" inputmode="decimal" id="permitsAED" value="60,000"><span class="unit">درهم</span></div></div>
-        <div class="field" style="grid-column:1/-1;"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>انبارداری، دموراژ و THC <span class="hint">(متغیر)</span></label><div class="input-wrap"><input type="text" inputmode="decimal" id="storage" value="0"><span class="unit">تومان</span></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز آزاد</label><div class="input-wrap"><input type="text" inputmode="decimal" id="freeRate" value="{{ number_format($pricingSettings['freeRate']) }}" readonly><span class="unit">تومان</span></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز گمرک</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsRate" value="{{ number_format($pricingSettings['customsRate']) }}" readonly><span class="unit">تومان</span></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20c2 1 4 1 6 0s4-1 6 0 4 1 6 0M5 20l1-9 4-6h4l4 6 1 9"/></svg>حمل دریایی</label><div class="input-wrap"><input type="text" inputmode="decimal" id="seaFreightAED" value="{{ number_format($pricingSettings['seaFreightAed']) }}" readonly><span class="unit">درهم</span></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12l2 2 4-4"/><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/></svg>صدور مجوزها</label><div class="input-wrap"><input type="text" inputmode="decimal" id="permitsAED" value="{{ number_format($pricingSettings['licenseFeeAed']) }}" readonly><span class="unit">درهم</span></div></div>
+        <div class="field" style="grid-column:1/-1;"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V9l7-5 7 5v12M9 21v-6h6v6"/></svg>انبارداری، دموراژ و THC <span class="hint">(تنظیمات سرور)</span></label><div class="input-wrap"><input type="text" inputmode="decimal" id="storage" value="{{ number_format($pricingSettings['storageToman']) }}" readonly><span class="unit">تومان</span></div></div>
       </div>
-      <details class="adv">
-        <summary>تنظیمات پیشرفته نرخ‌ها و عوارض</summary>
-        <div class="rate-grid">
-          <div class="rate-row"><span>حقوق گمرکی ثابت</span><input type="number" step="0.1" id="r_customsFixed" value="4"></div>
-          <div class="rate-row"><span>عوارض بنزین‌سوز</span><input type="number" step="0.1" id="r_gasoline" value="10"></div>
-          <div class="rate-row"><span>عوارض ۵٪ فوب</span><input type="number" step="0.1" id="r_fob" value="5"></div>
-          <div class="rate-row"><span>مالیات ارزش افزوده</span><input type="number" step="0.1" id="r_vat" value="10"></div>
-          <div class="rate-row"><span>مالیات علی‌الحساب</span><input type="number" step="0.1" id="r_advanceTax" value="2"></div>
-          <div class="rate-row"><span>عوارض هلال احمر</span><input type="number" step="0.1" id="r_redCrescent" value="1"></div>
-          <div class="rate-row"><span>حق نظارت کارشناسان</span><input type="number" step="0.05" id="r_supervision" value="0.5"></div>
-          <div class="rate-row"><span>عوارض پسماند کالا</span><input type="number" step="0.01" id="r_waste" value="0.05"></div>
-          <div class="rate-row"><span>هزینه استاندارد</span><input type="number" step="0.1" id="r_standard" value="0.8"></div>
-          <div class="rate-row"><span>گواهی اسقاط</span><input type="number" step="0.1" id="r_scrapCert" value="1.5"></div>
-          <div class="rate-row"><span>عوارض شماره‌گذاری</span><input type="number" step="0.1" id="r_plateReg" value="10"></div>
-          <div class="rate-row"><span>مالیات نقل و انتقال</span><input type="number" step="0.1" id="r_transferTax" value="3"></div>
-          <div class="rate-row"><span>عوارض سالانه شهرداری</span><input type="number" step="0.1" id="r_municipal" value="1"></div>
-          <div class="rate-row"><span>عوارض شخص حقیقی</span><input type="number" step="0.1" id="r_individual" value="5"></div>
-          <div class="rate-row"><span>کارمزد ترخیص‌کار و کارگزار (ناوراکار)</span><input type="number" step="0.1" id="r_serviceProfit" value="10"></div>
-        </div>
-      </details>
+      <div class="disclaimer-box">
+        <span>درصدها، تعرفه، اسقاط و هزینه‌های عملیاتی مستقیماً از تنظیمات زنده ناوراکار خوانده می‌شوند و نتیجه نهایی توسط سرور محاسبه می‌شود.</span>
+      </div>
     </div>
   </div>
 
@@ -788,6 +771,8 @@ const CSRF_TOKEN = '{{ csrf_token() }}';
 const CALC_LOG_URL = '{{ route('public.calculation-logs.store') }}';
 const VIN_LOG_URL = '{{ route('public.vin-checks.store') }}';
 const QUOTE_URL = '{{ route('public.quote-requests.store') }}';
+const PRICING_URL = @js($pricingUrl);
+const PRICING_SETTINGS = @js($pricingSettings);
 const CAR_LISTINGS = @js($carListings);
 const CONTACT_IRAN = @js($contactIran);
 const CONTACT_UAE = @js($contactUae);
@@ -818,15 +803,15 @@ window.__pageLoadedAt = Date.now();
 const gaugeIcon = tip => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 15a8 8 0 1 1 16 0"/><path d="M12 15L${tip}"/><circle cx="12" cy="15" r="1.3" fill="currentColor" stroke="none"/><path d="M4 15h1.4M18.6 15H20" stroke-width="1.4" opacity=".6"/></svg>`;
 const leafIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c8 0 14-6 14-14-8 0-14 6-14 14Z"/><path d="M5 19c2-4 5-7 9-9"/><path d="M15 4.2v3M20.2 9h-3"/></svg>`;
 
-const categories = [
-  {id:'ev',   label:'هیبرید / برقی', coef:1.00, icon:leafIcon},
-  {id:'c1500',label:'زیر ۱۵۰۰ سی‌سی', coef:1.10, icon:gaugeIcon('6.4,11.7')},
-  {id:'c2000',label:'۱۵۰۰ تا ۲۰۰۰ سی‌سی', coef:1.20, icon:gaugeIcon('8.7,9.4')},
-  {id:'c2500',label:'۲۰۰۰ تا ۲۵۰۰ سی‌سی', coef:1.30, icon:gaugeIcon('12,8.5')},
-  {id:'c3000',label:'۲۵۰۰ تا ۳۰۰۰ سی‌سی', coef:1.45, icon:gaugeIcon('15.3,9.4')},
-  {id:'c3001',label:'بالای ۳۰۰۰ سی‌سی', coef:1.65, icon:gaugeIcon('17.6,11.7')},
-];
-let activeCat = categories[1];
+const gaugeTips = {c1500:'6.4,11.7', c2000:'8.7,9.4', c2500:'12,8.5', c3000:'15.3,9.4', c3001:'17.6,11.7'};
+const categories = Object.entries(PRICING_SETTINGS.categories).map(([id, category]) => ({
+  id,
+  label: category.label,
+  coef: Number(category.tariffPercent) / 100,
+  tier: category.scrapTier,
+  icon: ['ev', 'phev', 'hybrid'].includes(id) ? leafIcon : gaugeIcon(gaugeTips[id] || '12,8.5'),
+}));
+let activeCat = categories.find(category => category.id === 'c1500') || categories[0];
 const catButtons = {};
 
 const catGrid = document.getElementById('catGrid');
@@ -1291,7 +1276,9 @@ makeSearchable(carSearchInput, document.getElementById('carSearchList'), ()=>car
 
 function applyEngineSelection(cc, fuel){
   let catId;
-  if(fuel==='electric' || fuel==='hybrid') catId='ev';
+  if(fuel==='electric') catId='ev';
+  else if(fuel==='phev') catId='phev';
+  else if(fuel==='hybrid') catId='hybrid';
   else if(cc<=1500) catId='c1500';
   else if(cc<=2000) catId='c2000';
   else if(cc<=2500) catId='c2500';
@@ -1405,121 +1392,104 @@ function logCalcNow(){
   }).catch(()=>{});
 }
 
-function calc(){
-  const realPriceAED = getPriceAED('realPriceAED');
-  const customsPriceAED = getPriceAED('customsPriceAED');
-  const freeRate = num('freeRate');
-  const customsRate = num('customsRate');
-  const seaFreightAED = num('seaFreightAED');
-  const permitsAED = num('permitsAED');
-  const storage = num('storage');
+let lastPricingResult = null;
+let calculationSequence = 0;
+let calculationTimer = null;
 
-  const CIF = customsPriceAED * customsRate;
-  const realPriceToman = realPriceAED * freeRate;
-  const dutyProfit = activeCat.coef * CIF;
-  const base9 = dutyProfit + CIF;
-
-  const r = {
-    customsFixed: pct('r_customsFixed'), gasoline: pct('r_gasoline'), fob: pct('r_fob'),
-    vat: pct('r_vat'), advanceTax: pct('r_advanceTax'), redCrescent: pct('r_redCrescent'),
-    supervision: pct('r_supervision'), waste: pct('r_waste'), standard: pct('r_standard'),
-    scrapCert: pct('r_scrapCert'), plateReg: pct('r_plateReg'), transferTax: pct('r_transferTax'),
-    municipal: pct('r_municipal'), individual: pct('r_individual'), serviceProfit: pct('r_serviceProfit'),
+async function calc(){
+  const sequence = ++calculationSequence;
+  const pricing = {
+    real_price_aed: getPriceAED('realPriceAED'),
+    customs_price_aed: getPriceAED('customsPriceAED'),
+    category: activeCat.id,
   };
 
-  const customsRows = [
-    ['سود بازرگانی', `${(activeCat.coef*100).toFixed(0)}٪ از ارزش گمرکی (بر اساس دسته خودرو)`, dutyProfit],
-    ['حقوق گمرکی ثابت', `${(r.customsFixed*100).toFixed(2)}٪ از ارزش گمرکی`, r.customsFixed*CIF],
-    ['عوارض بنزین‌سوز', `${(r.gasoline*100).toFixed(2)}٪ از ارزش گمرکی`, r.gasoline*CIF],
-    ['عوارض ۵٪ فوب', `${(r.fob*100).toFixed(2)}٪ از ارزش فوب`, r.fob*CIF],
-    ['مالیات ارزش افزوده (VAT)', `${(r.vat*100).toFixed(2)}٪ از (گمرکی+حقوق ورودی)`, r.vat*base9],
-    ['مالیات علی‌الحساب واردات', `${(r.advanceTax*100).toFixed(2)}٪ از (گمرکی+حقوق ورودی)`, r.advanceTax*base9],
-    ['عوارض هلال احمر', `${(r.redCrescent*100).toFixed(2)}٪ از حقوق ورودی`, r.redCrescent*dutyProfit],
-    ['حق نظارت کارشناسان گمرک', `${(r.supervision*100).toFixed(2)}٪ از حقوق ورودی`, r.supervision*dutyProfit],
-    ['عوارض پسماند کالا', `${(r.waste*100).toFixed(3)}٪ از ارزش گمرکی`, r.waste*CIF],
-    ['هزینه استاندارد', `${(r.standard*100).toFixed(2)}٪ از ارزش گمرکی`, r.standard*CIF],
-  ];
-  const sumCustoms10 = customsRows.reduce((s,row)=>s+row[2],0);
-  const seaFreight = seaFreightAED * freeRate;
-  const permits = permitsAED * freeRate;
-  customsRows.push(['حمل دریایی', 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', seaFreight]);
-  customsRows.push(['هزینه صدور مجوزهای واردات', 'مبلغ دستی وارد شده (درهم × نرخ ارز آزاد)', permits]);
-  customsRows.push(['انبارداری، دموراژ و THC','مبلغ دستی وارد شده', storage]);
-  const sumCustomsAll = sumCustoms10 + seaFreight + permits + storage;
+  try {
+    const response = await fetch(PRICING_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'X-CSRF-TOKEN': CSRF_TOKEN,
+      },
+      body: JSON.stringify(pricing),
+    });
+    if (!response.ok) throw new Error('pricing request failed');
+    const result = await response.json();
+    if (sequence !== calculationSequence) return null;
 
-  const plateRows = [
-    ['خرید گواهی اسقاط', `${(r.scrapCert*100).toFixed(2)}٪ از ارزش گمرکی`, r.scrapCert*CIF],
-    ['عوارض شماره‌گذاری راهور', `${(r.plateReg*100).toFixed(2)}٪ از ارزش گمرکی`, r.plateReg*CIF],
-    ['مالیات نقل و انتقال', `${(r.transferTax*100).toFixed(2)}٪ از ارزش گمرکی`, r.transferTax*CIF],
-    ['عوارض سالانه شهرداری', `${(r.municipal*100).toFixed(2)}٪ از ارزش گمرکی`, r.municipal*CIF],
-    ['عوارض شخص حقیقی', `${(r.individual*100).toFixed(2)}٪ از ارزش گمرکی`, r.individual*CIF],
-  ];
-  const sumPlate = plateRows.reduce((s,row)=>s+row[2],0);
-
-  const totalNoProfit = sumCustomsAll + sumPlate + realPriceToman;
-  const serviceProfitAmt = r.serviceProfit * (sumCustoms10 + sumPlate + seaFreight + permits);
-  const totalWithProfit = totalNoProfit + serviceProfitAmt;
-
-  const rowHtml = (row,i) => `<tr>
+    const rowHtml = (row,i) => `<tr>
       <td class="idx">${i+1}</td>
-      <td data-label="شرح هزینه">${row[0]}</td>
-      <td class="rate" data-label="نرخ">${row[1]}</td>
-      <td class="amt num-font" data-label="مبلغ (تومان)">${fmt(row[2])}</td>
+      <td data-label="شرح هزینه">${row.label}</td>
+      <td class="rate" data-label="نرخ">${row.rate}</td>
+      <td class="amt num-font" data-label="مبلغ (تومان)">${fmt(row.value)}</td>
     </tr>`;
 
-  document.getElementById('tblCustoms').innerHTML = customsRows.map(rowHtml).join('');
-  document.getElementById('sumCustomsCell').textContent = fmt(sumCustomsAll);
-  document.getElementById('tblPlate').innerHTML = plateRows.map(rowHtml).join('');
-  document.getElementById('sumPlateCell').textContent = fmt(sumPlate);
+    document.getElementById('tblCustoms').innerHTML = result.customsRows.map(rowHtml).join('');
+    document.getElementById('sumCustomsCell').textContent = fmt(result.customsSubtotalToman);
+    document.getElementById('tblPlate').innerHTML = result.plateRows.map(rowHtml).join('');
+    document.getElementById('sumPlateCell').textContent = fmt(result.plateSubtotalToman);
 
-  document.getElementById('s_noProfit').textContent = fmt(totalNoProfit);
-  document.getElementById('s_profit').textContent = fmt(serviceProfitAmt);
-  document.getElementById('s_total').textContent = fmt(totalWithProfit);
-  document.getElementById('stampVal').textContent = fmt(totalWithProfit);
+    document.getElementById('s_noProfit').textContent = fmt(result.preServiceTotalToman);
+    document.getElementById('s_profit').textContent = fmt(result.serviceFeeToman);
+    document.getElementById('s_total').textContent = fmt(result.finalTotalToman);
+    document.getElementById('stampVal').textContent = fmt(result.finalTotalToman);
 
-  const palette = ['#2952E0','#FF8A1E','#8B5CF6','#5B6478','#16A34A','#9FB2FF'];
-  renderDonut(document.getElementById('donutWrap'), [
-    {label:'سود بازرگانی', value:dutyProfit, color:palette[0]},
-    {label:'سایر حقوق و عوارض گمرکی (شامل حمل و مجوز)', value:sumCustomsAll-dutyProfit, color:palette[1]},
-    {label:'پلاک انتظامی', value:sumPlate, color:palette[2]},
-    {label:'قیمت خودرو', value:realPriceToman, color:palette[3]},
-    {label:'کارمزد ترخیص‌کار و کارگزار (ناوراکار)', value:serviceProfitAmt, color:palette[5]},
-  ]);
-  renderBars(document.getElementById('barRows'), [
-    {label:'ترخیص گمرکی (شامل حمل و مجوز)', value:sumCustomsAll, color:palette[0]},
-    {label:'پلاک انتظامی', value:sumPlate, color:palette[1]},
-    {label:'قیمت خودرو', value:realPriceToman, color:palette[3]},
-    {label:'کارمزد ترخیص‌کار', value:serviceProfitAmt, color:palette[4]},
-  ]);
+    const palette = ['#2952E0','#FF8A1E','#8B5CF6','#5B6478','#16A34A','#9FB2FF'];
+    renderDonut(document.getElementById('donutWrap'), [
+      {label:'عوارض گمرکی بر اساس تعرفه', value:result.tariffDutyToman, color:palette[0]},
+      {label:'سایر هزینه‌های گمرکی (شامل حمل و مجوز)', value:result.customsSubtotalToman-result.tariffDutyToman, color:palette[1]},
+      {label:'پلاک انتظامی', value:result.plateSubtotalToman, color:palette[2]},
+      {label:'قیمت خودرو', value:result.realPriceToman, color:palette[3]},
+      {label:'کارمزد ترخیص‌کار و کارگزار (ناوراکار)', value:result.serviceFeeToman, color:palette[5]},
+    ]);
+    renderBars(document.getElementById('barRows'), [
+      {label:'ترخیص گمرکی (شامل حمل و مجوز)', value:result.customsSubtotalToman, color:palette[0]},
+      {label:'پلاک انتظامی', value:result.plateSubtotalToman, color:palette[1]},
+      {label:'قیمت خودرو', value:result.realPriceToman, color:palette[3]},
+      {label:'کارمزد ترخیص‌کار', value:result.serviceFeeToman, color:palette[4]},
+    ]);
 
-  renderMiniGauges(document.getElementById('miniGaugeGrid'), [
-    {label:'قیمت خودرو', icon:miniIcons.car, color:'#3E6BFF', pct:(realPriceToman/totalWithProfit)*100},
-    {label:'ترخیص گمرکی', icon:miniIcons.customs, color:'#FF8A1E', pct:(sumCustomsAll/totalWithProfit)*100},
-    {label:'پلاک انتظامی', icon:miniIcons.plate, color:'#8B5CF6', pct:(sumPlate/totalWithProfit)*100},
-    {label:'کارمزد ترخیص‌کار', icon:miniIcons.profit, color:'#16A34A', pct:(serviceProfitAmt/totalWithProfit)*100},
-  ]);
+    const total = Math.max(Number(result.finalTotalToman) || 0, 1);
+    renderMiniGauges(document.getElementById('miniGaugeGrid'), [
+      {label:'قیمت خودرو', icon:miniIcons.car, color:'#3E6BFF', pct:(result.realPriceToman/total)*100},
+      {label:'ترخیص گمرکی', icon:miniIcons.customs, color:'#FF8A1E', pct:(result.customsSubtotalToman/total)*100},
+      {label:'پلاک انتظامی', icon:miniIcons.plate, color:'#8B5CF6', pct:(result.plateSubtotalToman/total)*100},
+      {label:'کارمزد ترخیص‌کار', icon:miniIcons.profit, color:'#16A34A', pct:(result.serviceFeeToman/total)*100},
+    ]);
 
-  lastBreakdownRows = [
-    ...customsRows.map(row=>({label:row[0], rate:row[1], amount:fmt(row[2])+' تومان'})),
-    ...plateRows.map(row=>({label:row[0], rate:row[1], amount:fmt(row[2])+' تومان'})),
-    {label:'قیمت خودرو (اصل کالا)', rate:'-', amount:fmt(realPriceToman)+' تومان'},
-  ];
-  lastTotals = {
-    'جمع کل بدون کارمزد': fmt(totalNoProfit)+' تومان',
-    'کارمزد ترخیص‌کار و کارگزار (ناوراکار)': fmt(serviceProfitAmt)+' تومان',
-    'جمع کل نهایی': fmt(totalWithProfit)+' تومان',
-  };
-  lastRawValues = {
-    car: getSelectedCarLabel(),
-    category: activeCat.label,
-    realPriceAED, customsPriceAED, freeRate, customsRate, seaFreightAED, permitsAED, storage,
-    sumCustoms: sumCustomsAll, sumPlate,
-    totalNoProfit, serviceProfit: serviceProfitAmt, totalWithProfit,
-  };
-  updateWhatsAppLinks();
+    lastBreakdownRows = [
+      ...result.customsRows.map(row=>({label:row.label, rate:row.rate, amount:fmt(row.value)+' تومان'})),
+      ...result.plateRows.map(row=>({label:row.label, rate:row.rate, amount:fmt(row.value)+' تومان'})),
+      {label:'قیمت خودرو (اصل کالا)', rate:'قیمت واقعی خودرو × نرخ ارز آزاد', amount:fmt(result.realPriceToman)+' تومان'},
+      {label:'کارمزد ترخیص‌کار و کارگزار (ناوراکار)', rate:result.settingsSnapshot.percentages.serviceFee+'٪ از پایه کارمزد', amount:fmt(result.serviceFeeToman)+' تومان'},
+    ];
+    lastTotals = {
+      'جمع کل بدون کارمزد': fmt(result.preServiceTotalToman)+' تومان',
+      'کارمزد ترخیص‌کار و کارگزار (ناوراکار)': fmt(result.serviceFeeToman)+' تومان',
+      'جمع کل نهایی': fmt(result.finalTotalToman)+' تومان',
+    };
+    lastRawValues = {
+      car: getSelectedCarLabel(),
+      pricing,
+    };
+    lastPricingResult = result;
+    updateWhatsAppLinks();
+    return result;
+  } catch (error) {
+    if (sequence === calculationSequence) {
+      console.error(error);
+    }
+    return null;
+  }
 }
 
-document.querySelectorAll('input').forEach(inp=>inp.addEventListener('input', calc));
+function scheduleCalc(){
+  clearTimeout(calculationTimer);
+  calculationTimer = setTimeout(calc, 350);
+}
+
+document.querySelectorAll('#realPriceAED, #customsPriceAED').forEach(inp=>inp.addEventListener('input', scheduleCalc));
 
 /* ---- VIN / Chassis-number lookup ----
    Primary: public NHTSA vPIC API (free, no key). Its coverage is strongest for
@@ -1644,12 +1614,17 @@ document.getElementById('qSubmitBtn').addEventListener('click', async ()=>{
     return;
   }
 
+  const pricingResult = await calc();
+  if(!pricingResult){
+    statusEl.textContent = 'محاسبه قیمت در دسترس نیست. لطفاً دوباره تلاش کنید.';
+    statusEl.className = 'qf-status err';
+    return;
+  }
+
   const payload = {
     name, phone, email, notes,
     car: getSelectedCarLabel(),
-    category: activeCat.label,
-    breakdown: lastBreakdownRows,
-    totals: lastTotals,
+    pricing: lastRawValues.pricing,
     website: document.getElementById('qWebsite').value,
     pageLoadedAt: window.__pageLoadedAt || 0,
   };
@@ -1716,8 +1691,9 @@ function updateWhatsAppLinks(){
 });
 updateWhatsAppLinks();
 
-function buildPrintSheet(){
-  calc();
+async function buildPrintSheet(){
+  const pricingResult = await calc();
+  if(!pricingResult) return false;
 
   const now = new Date();
   const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
@@ -1725,7 +1701,7 @@ function buildPrintSheet(){
 
   const carLabel = getSelectedCarLabel();
   const realPriceAED = getPriceAED('realPriceAED');
-  const realPriceToman = realPriceAED * num('freeRate');
+  const realPriceToman = pricingResult.realPriceToman;
   const realPriceRial = realPriceToman * 10;
 
   let carHtml = '<div class="ps-car-title">مشخصات خودرو</div><div class="ps-car-grid">';
@@ -1755,10 +1731,11 @@ function buildPrintSheet(){
   document.getElementById('psTotalsTable').innerHTML = totalsEntries.map(([label,val],i)=>
     `<tr class="${i===totalsEntries.length-1?'total':''}"><td>${label}</td><td class="amt">${val}</td></tr>`
   ).join('');
+  return true;
 }
 
-function printReport(){
-  buildPrintSheet();
+async function printReport(){
+  if(!await buildPrintSheet()) return;
   setTimeout(()=>window.print(), 150);
 }
 
@@ -1857,8 +1834,7 @@ document.getElementById('wizPrevBtn').addEventListener('click', ()=>{
 document.getElementById('wizNextBtn').addEventListener('click', async ()=>{
   const idx = wizardSteps.indexOf(currentStep);
   if(currentStep === 'pricing'){
-    calc();
-    await logCalcNow();
+    if(await calc()) await logCalcNow();
   }
   if(idx < wizardSteps.length-1){ goToStep(wizardSteps[idx+1]); }
 });

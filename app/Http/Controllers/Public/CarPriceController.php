@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\CarListing;
 use App\Models\Setting;
 use App\Services\DubizzleTranslator;
+use App\Services\VehiclePricing\VehiclePricingCatalog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -55,8 +56,8 @@ class CarPriceController extends Controller
 
     public function category(string $categoryId)
     {
-        abort_unless(array_key_exists($categoryId, CarListing::CATEGORIES), 404);
-        $label = CarListing::CATEGORIES[$categoryId]['label'];
+        abort_unless(array_key_exists($categoryId, VehiclePricingCatalog::CATEGORIES), 404);
+        $label = VehiclePricingCatalog::CATEGORIES[$categoryId]['label'];
 
         return $this->renderIndex(
             CarListing::published()->where('category_id', $categoryId),
@@ -177,7 +178,7 @@ class CarPriceController extends Controller
                 'label' => (string) Str::of($make)->replace('-', ' ')->title(),
                 'url' => route('public.car-prices.brand', $make),
             ])->all(),
-            'categories' => collect(CarListing::CATEGORIES)->map(fn ($cat, $id) => [
+            'categories' => collect(VehiclePricingCatalog::CATEGORIES)->map(fn ($cat, $id) => [
                 'label' => $cat['label'],
                 'url' => route('public.car-prices.category', $id),
             ])->values()->all(),

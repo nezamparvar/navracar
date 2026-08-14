@@ -11,6 +11,7 @@ use App\Services\CarListingMapper;
 use App\Services\DubizzleParser;
 use App\Services\DubizzleTranslator;
 use App\Services\SocialPublisher;
+use App\Services\VehiclePricing\VehiclePricingCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
@@ -99,7 +100,7 @@ class CarListingController extends Controller
             'model_year' => ['nullable', 'string', 'max:10'],
             'price_aed' => ['required', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
-            'category_id' => ['required', Rule::in(array_keys(CarListing::CATEGORIES))],
+            'category_id' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
             'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
             'body_type' => ['nullable', 'string', 'max:100'],
             'fuel_type' => ['nullable', 'string', 'max:100'],
@@ -173,7 +174,7 @@ class CarListingController extends Controller
             'model_year' => ['nullable', 'string', 'max:10'],
             'price_aed' => ['required', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
-            'category_id' => ['required', Rule::in(array_keys(CarListing::CATEGORIES))],
+            'category_id' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
             'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
             'body_type' => ['nullable', 'string', 'max:100'],
             'fuel_type' => ['nullable', 'string', 'max:100'],

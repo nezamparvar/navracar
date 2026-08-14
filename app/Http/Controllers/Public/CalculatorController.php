@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\Models\CarListing;
 use App\Models\MenuItem;
 use App\Models\Setting;
+use App\Services\VehiclePricing\VehiclePricingSettings;
 
 class CalculatorController extends Controller
 {
     public function index()
     {
+        $pricingSettings = VehiclePricingSettings::current();
         $listings = CarListing::published()->with('images')->latest('published_at')->get()
             ->map(fn (CarListing $l) => [
                 'make' => $l->make,
@@ -27,6 +29,8 @@ class CalculatorController extends Controller
             'carListings' => $listings,
             'menuItems' => MenuItem::active()->get(),
             'usdToAedRate' => (float) Setting::get(Setting::USD_TO_AED_RATE),
+            'pricingSettings' => $pricingSettings->toArray(),
+            'pricingUrl' => route('public.vehicle-pricing.calculate'),
         ]);
     }
 }

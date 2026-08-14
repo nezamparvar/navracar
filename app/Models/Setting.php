@@ -23,6 +23,34 @@ class Setting extends Model
 
     public const SCRAP_THRESHOLD_AED = 'scrap_threshold_aed';
 
+    public const CUSTOMS_FIXED_PERCENT = 'customs_fixed_percent';
+
+    public const GASOLINE_LEVY_PERCENT = 'gasoline_levy_percent';
+
+    public const FOB_LEVY_PERCENT = 'fob_levy_percent';
+
+    public const VAT_PERCENT = 'vat_percent';
+
+    public const ADVANCE_IMPORT_TAX_PERCENT = 'advance_import_tax_percent';
+
+    public const RED_CRESCENT_PERCENT = 'red_crescent_percent';
+
+    public const CUSTOMS_SUPERVISION_PERCENT = 'customs_supervision_percent';
+
+    public const WASTE_LEVY_PERCENT = 'waste_levy_percent';
+
+    public const STANDARD_FEE_PERCENT = 'standard_fee_percent';
+
+    public const REGISTRATION_PERCENT = 'registration_percent';
+
+    public const TRANSFER_TAX_PERCENT = 'transfer_tax_percent';
+
+    public const MUNICIPAL_PERCENT = 'municipal_percent';
+
+    public const INDIVIDUAL_PERSON_PERCENT = 'individual_person_percent';
+
+    public const SERVICE_FEE_PERCENT = 'service_fee_percent';
+
     public const WHATSAPP_UAE = 'whatsapp_uae_number';
 
     public const WHATSAPP_IRAN = 'whatsapp_iran_number';
@@ -55,6 +83,20 @@ class Setting extends Model
         self::STORAGE_TOMAN => '0',
         self::SCRAP_CERT_PRICE_TOMAN => '0',
         self::SCRAP_THRESHOLD_AED => '60000',
+        self::CUSTOMS_FIXED_PERCENT => '4',
+        self::GASOLINE_LEVY_PERCENT => '10',
+        self::FOB_LEVY_PERCENT => '5',
+        self::VAT_PERCENT => '10',
+        self::ADVANCE_IMPORT_TAX_PERCENT => '2',
+        self::RED_CRESCENT_PERCENT => '1',
+        self::CUSTOMS_SUPERVISION_PERCENT => '0.5',
+        self::WASTE_LEVY_PERCENT => '0.05',
+        self::STANDARD_FEE_PERCENT => '0.8',
+        self::REGISTRATION_PERCENT => '10',
+        self::TRANSFER_TAX_PERCENT => '3',
+        self::MUNICIPAL_PERCENT => '1',
+        self::INDIVIDUAL_PERSON_PERCENT => '5',
+        self::SERVICE_FEE_PERCENT => '10',
         self::WHATSAPP_UAE => '+971 50 515 8484',
         self::WHATSAPP_IRAN => '+98 912 051 2149',
         self::TEHRAN_OFFICE_PHONE => '+98 21 8887 0878',
@@ -77,6 +119,8 @@ class Setting extends Model
      */
     public const SCRAP_TIER_PREFIX = 'scrap_tier_';
 
+    public const SCRAP_CERT_COUNT_PREFIX = 'scrap_cert_count_';
+
     public static function get(string $key, ?string $default = null): string
     {
         return Cache::rememberForever("setting.$key", function () use ($key, $default) {
@@ -91,5 +135,10 @@ class Setting extends Model
     {
         static::query()->updateOrCreate(['key' => $key], ['value' => $value]);
         Cache::forget("setting.$key");
+    }
+
+    public static function scrapCertificateCountKey(string $tier, string $bracket): string
+    {
+        return self::SCRAP_CERT_COUNT_PREFIX.$tier.'_'.$bracket;
     }
 }
