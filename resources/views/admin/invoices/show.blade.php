@@ -55,7 +55,7 @@
                     @if ($invoice->customer_email)<div><span class="block text-xs text-ink-500">ایمیل</span>{{ $invoice->customer_email }}</div>@endif
                     @unless ($isSingleItem)
                         <div><span class="block text-xs text-ink-500">خودرو</span>{{ $invoice->car_label ?: '-' }}</div>
-                        <div><span class="block text-xs text-ink-500">دسته خودرو</span>{{ $invoice->category ?: '-' }}</div>
+                        <div><span class="block text-xs text-ink-500">دسته خودرو</span>{{ $invoice->categoryLabel() ?: '-' }}</div>
                     @endunless
                     @if ($invoice->customer_address)<div class="col-span-2"><span class="block text-xs text-ink-500">آدرس</span>{{ $invoice->customer_address }}</div>@endif
                 </div>

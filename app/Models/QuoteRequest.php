@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\VehiclePricing\VehiclePricingCatalog;
 use Illuminate\Database\Eloquent\Model;
 
 class QuoteRequest extends Model
@@ -56,6 +57,22 @@ class QuoteRequest extends Model
 
     public function totals(): array
     {
-        return json_decode($this->totals_json ?? '{}', true) ?: [];
+        $decoded = json_decode($this->totals_json ?? '{}', true) ?: [];
+
+        return isset($decoded['display']) && is_array($decoded['display'])
+            ? $decoded['display']
+            : $decoded;
+    }
+
+    public function pricingMetadata(): array
+    {
+        $decoded = json_decode($this->totals_json ?? '{}', true) ?: [];
+
+        return isset($decoded['pricing_snapshot']) ? $decoded : [];
+    }
+
+    public function categoryLabel(): string
+    {
+        return VehiclePricingCatalog::CATEGORIES[$this->category]['label'] ?? (string) $this->category;
     }
 }
