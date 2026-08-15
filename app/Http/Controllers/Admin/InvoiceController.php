@@ -230,17 +230,13 @@ class InvoiceController extends Controller
         return back();
     }
 
-    public function downloadPdf(Request $request, Invoice $invoice, ProformaPdfGenerator $pdfGenerator, string $language = 'fa')
+    public function downloadPdf(Request $request, Invoice $invoice, ProformaPdfGenerator $pdfGenerator)
     {
         abort_unless($this->ownsInvoice($invoice, $request->user()), 403);
-        $language = $language === 'en' ? 'en' : 'fa';
-        $path = $pdfGenerator->fromInvoice($invoice, $language);
+        $locale = $request->string('lang')->lower()->value() === 'en' ? 'en' : 'fa';
+        $path = $pdfGenerator->fromInvoice($invoice, $locale);
 
-        $downloadName = $language === 'fa'
-            ? $invoice->invoice_number.'.pdf'
-            : $invoice->invoice_number.'-en.pdf';
-
-        return Storage::disk('public')->download($path, $downloadName);
+        return Storage::disk('public')->download($path, $invoice->invoice_number.'.pdf');
     }
 
     private function automaticCalculation(array $data, VehiclePricingService $pricing): array
@@ -360,3 +356,4 @@ class InvoiceController extends Controller
         return (float) preg_replace('/[^0-9.\-]/', '', (string) $value);
     }
 }
+
