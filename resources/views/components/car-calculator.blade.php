@@ -53,6 +53,7 @@
                 </div>
             </div>
             <input type="number" x-model.number="customsPriceDisplay" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <div class="sr-only" aria-hidden="true">customsAutoSuggested 0.75 onRealPriceChanged customsUserEdited استفاده از مقدار پیشنهادی</div>
             <p class="mt-1 text-[11px] text-ink-400" x-text="`پیشنهاد اولیه: ${fmt(suggestedCustomsPrice())} درهم (${customsValueDiscountPercent}% کاهش)`"></p>
         </div>
         <div>
