@@ -1,6 +1,9 @@
 <?php
 
 return [
+    // Staging defaults to blocking real outbound communication. Production
+    // keeps the existing behavior unless explicitly configured otherwise.
+    'disable_outbound' => (bool) env('NAVARACAR_DISABLE_OUTBOUND', false),
     // Address that receives lead-form and quote-request notification emails.
     'notify_email' => env('NAVARACAR_NOTIFY_EMAIL', 'nezamparvar@gmail.com'),
 

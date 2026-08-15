@@ -10,6 +10,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    @if (app()->environment('staging'))
+        <meta name="robots" content="noindex, nofollow, noarchive">
+    @endif
     <title>{{ $title ?? 'ناوراکار' }}</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     @stack('head')
@@ -40,6 +43,8 @@
     </script>
 </head>
 <body class="min-h-screen bg-gradient-to-br from-brand-50 via-white to-amber-50/40 font-sans text-ink-900">
+
+<x-staging-banner />
 
 <header x-data="publicHeader" class="sticky top-0 z-40 bg-gradient-to-l from-brand-950 via-brand-900 to-brand-800 py-3.5 text-white shadow-soft-lg">
     <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4">

@@ -75,6 +75,10 @@ class SocialPublisher
      */
     private function sendPhoto(string $apiTemplate, string $botToken, string $chatId, string $imageUrl, string $caption): array
     {
+        if (app()->environment('staging') && config('navaracar.disable_outbound', true)) {
+            return ['ok' => false, 'error' => 'Social publishing is disabled in staging.'];
+        }
+
         if (! $botToken || ! $chatId) {
             return ['ok' => false, 'error' => 'توکن ربات یا شناسه کانال تنظیم نشده است — از تنظیمات پنل وارد کنید.'];
         }

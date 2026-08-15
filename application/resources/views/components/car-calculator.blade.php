@@ -433,7 +433,7 @@ window.carCalculatorApp = function (config = @js($config)) {
         },
 
         fmt(n) {
-            return Math.round(n || 0).toLocaleString('en-US');
+            return Number(n || 0).toLocaleString('en-US', {maximumFractionDigits: 2});
         },
 
         async submitProforma() {
