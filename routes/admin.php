@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\MessageTemplateController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\RequestController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\BrowserCaptureController;
 use App\Http\Controllers\Admin\TemplateUseController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VinCheckController;
@@ -43,8 +44,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             Route::get('/create', [InvoiceController::class, 'create'])->name('create');
             Route::post('/', [InvoiceController::class, 'store'])->name('store');
             Route::get('/{invoice}', [InvoiceController::class, 'show'])->name('show');
-            Route::get('/{invoice}/pdf/{language?}', [InvoiceController::class, 'downloadPdf'])
-                ->where('language', 'fa|en')->name('pdf');
+            Route::get('/{invoice}/pdf', [InvoiceController::class, 'downloadPdf'])->name('pdf');
             Route::post('/{invoice}/status', [InvoiceController::class, 'updateStatus'])->name('status');
         });
     });
@@ -122,5 +122,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
+        Route::post('/imports/browser-capture', BrowserCaptureController::class)->name('imports.browser-capture');
     });
 });
+
