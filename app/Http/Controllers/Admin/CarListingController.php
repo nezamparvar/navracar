@@ -99,6 +99,7 @@ class CarListingController extends Controller
             'trim_level' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'string', 'max:10'],
             'price_aed' => ['required', 'numeric', 'min:0'],
+            'customs_price_aed' => ['nullable', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
             'category_id' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
             'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
@@ -173,6 +174,7 @@ class CarListingController extends Controller
             'trim_level' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'string', 'max:10'],
             'price_aed' => ['required', 'numeric', 'min:0'],
+            'customs_price_aed' => ['nullable', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
             'category_id' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
             'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
@@ -456,3 +458,4 @@ class CarListingController extends Controller
         }
     }
 }
+
