@@ -129,6 +129,18 @@ class BrowserCaptureController extends Controller
 
         $validated = validator($data, $rules)->validate();
 
+        // Validate source matches source URL (prevent source spoofing)
+        $sourceValidation = $this->validateSourceUrl($validated['source'], $validated['source_url']);
+        if ($sourceValidation['error']) {
+            return $sourceValidation;
+        }
+
+        // Validate payload size limits
+        $sizeValidation = $this->validatePayloadSize($validated);
+        if ($sizeValidation['error']) {
+            return $sizeValidation;
+        }
+
         if (empty($validated['vehicle']['title']) && empty($validated['vehicle']['make'])) {
             return [
                 'error' => 'Must provide either title or make/model',
@@ -144,6 +156,63 @@ class BrowserCaptureController extends Controller
         }
 
         return $validated;
+    }
+
+    private function validateSourceUrl(string $source, string $sourceUrl): array
+    {
+        $host = parse_url($sourceUrl, PHP_URL_HOST) ?? '';
+        $host = str_replace('www.', '', $host);
+
+        $sourceDomainMap = [
+            'dubizzle' => 'dubizzle.com',
+            'dubicars' => 'dubicars.com',
+            'yallamotor' => 'yallamotor.com',
+        ];
+
+        $expectedDomain = $sourceDomainMap[$source] ?? null;
+
+        if (!$expectedDomain || !str_ends_with($host, $expectedDomain)) {
+            return [
+                'error' => 'Source mismatch',
+                'message' => 'مطابقت منبع برقرار نیست',
+            ];
+        }
+
+        return ['error' => false];
+    }
+
+    private function validatePayloadSize(array $validated): array
+    {
+        $maxImages = 50;
+        $maxImageUrlLength = 2000;
+        $maxDescriptionLength = 5000;
+
+        if (!empty($validated['images'])) {
+            if (count($validated['images']) > $maxImages) {
+                return [
+                    'error' => 'Too many images',
+                    'message' => 'تعداد تصاویر بیش از حد است',
+                ];
+            }
+
+            foreach ($validated['images'] as $image) {
+                if (strlen($image['url'] ?? '') > $maxImageUrlLength) {
+                    return [
+                        'error' => 'Image URL too long',
+                        'message' => 'URL تصویر بیش از حد طولانی است',
+                    ];
+                }
+            }
+        }
+
+        if (!empty($validated['vehicle']['description']) && strlen($validated['vehicle']['description']) > $maxDescriptionLength) {
+            return [
+                'error' => 'Description too long',
+                'message' => 'توضیحات بیش از حد طولانی است',
+            ];
+        }
+
+        return ['error' => false];
     }
 
     private function processCapture(array $validated, BrowserExtensionPairing $pairing): ImportQueue
@@ -180,18 +249,41 @@ class BrowserCaptureController extends Controller
 
     private function findDuplicate(array $validated): ?CarListing
     {
-        if (empty($validated['source_listing_id'])) {
-            return null;
+        // Priority 1: Match by source_listing_id (most reliable)
+        if (!empty($validated['source_listing_id'])) {
+            $duplicate = CarListing::where('source', $validated['source'])
+                ->where('source_listing_id', $validated['source_listing_id'])
+                ->first();
+
+            if ($duplicate) {
+                return $duplicate;
+            }
         }
 
-        return CarListing::where('source_url', $validated['source_url'])
-            ->orWhere(function ($query) use ($validated) {
-                if (!empty($validated['vehicle']['make']) && !empty($validated['vehicle']['model'])) {
-                    $query->where('make', $validated['vehicle']['make'])
-                        ->where('model', $validated['vehicle']['model']);
-                }
-            })
-            ->first();
+        // Priority 2: Match by source URL (already published)
+        $duplicate = CarListing::where('source_url', $validated['source_url'])->first();
+        if ($duplicate) {
+            return $duplicate;
+        }
+
+        // Priority 3: Match by make/model/year combination (potential duplicate)
+        if (!empty($validated['vehicle']['make']) && !empty($validated['vehicle']['model'])) {
+            $duplicate = CarListing::where('make', $validated['vehicle']['make'])
+                ->where('model', $validated['vehicle']['model'])
+                ->where('source', $validated['source']);
+
+            if (!empty($validated['vehicle']['year'])) {
+                $duplicate = $duplicate->where('model_year', $validated['vehicle']['year']);
+            }
+
+            $duplicate = $duplicate->orderBy('created_at', 'desc')->first();
+
+            if ($duplicate) {
+                return $duplicate;
+            }
+        }
+
+        return null;
     }
 
     private function checkDuplicate(array $validated): ?array
