@@ -8,15 +8,17 @@ PR #21 remains open and is **not release-ready**. No merge, deployment, staging 
 
 ## Marketplace fixture evidence
 
-The repository contains deterministic synthetic fixtures for DubiCars and YallaMotor and an existing Dubizzle fixture, but no provenance-backed sanitized real-page fixture for all three sources.
+The owner supplied `NAVRACAR_REAL_MARKETPLACE_FIXTURES.zip`. The archive SHA-256 matches the declared value:
 
-A bounded manual browser attempt was made against one representative public listing per source:
+`D6D8915782CF116A9073412FCF16934CE8EBF8EA13583C78822DF5FDAE949D53`
 
-- YallaMotor category loaded, but the selected listing rendered only an obfuscated/empty challenge response.
-- DubiCars category and one representative listing loaded in the public browser.
-- Dubizzle category loaded, but no representative listing link was exposed in the rendered page during the bounded attempt.
+It contains provenance sidecars and sanitized fixtures for all three marketplaces:
 
-No HTML was saved or relabeled as real evidence. Owner capture instructions are in `docs/SAVE_SANITIZED_LISTING_HTML.md`.
+- `tests/Fixtures/real/dubizzle_real_sanitized.html`
+- `tests/Fixtures/real/dubicars_real_sanitized.html`
+- `tests/Fixtures/real/yallamotor_real_sanitized.html`
+
+All three HTML SHA-256 values match their sidecars. The sidecars identify signed-out manual rendered-DOM acquisition, representative individual listing URLs, sanitization, and no credentials/personal data. The fixtures were added without expanding direct-URL crawling.
 
 ## PDF evidence
 
@@ -31,7 +33,7 @@ The repository has CI coverage for the PDF routes and bundled fonts, but CI succ
 
 ## Automated checks
 
-The latest completed CI run before this report commit was run #74:
+CI run #75 completed successfully after the fixture commits:
 
 - Dependencies: passed (including Composer audit, npm audit, secret scan, staging runtime and production deployment controls)
 - Backend tests: passed
