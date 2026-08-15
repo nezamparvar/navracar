@@ -33,18 +33,12 @@ class BrowserCaptureSettingsController extends Controller
             'environment' => 'required|in:staging,production',
         ]);
 
-        $code = BrowserExtensionPairing::generatePairingCode();
-
-        $pairing = BrowserExtensionPairing::create([
-            'pairing_code' => $code,
-            'environment' => $validated['environment'],
-            'status' => 'pending',
-            'created_by' => Auth::id(),
-        ]);
+        $admin = Auth::user();
+        $pairing = BrowserExtensionPairing::generatePairingCode($admin, $validated['environment']);
 
         return response()->json([
             'status' => 'success',
-            'pairing_code' => $code,
+            'pairing_code' => $pairing->pairing_code,
             'environment' => $validated['environment'],
             'expires_in_minutes' => 60,
         ]);
@@ -54,35 +48,24 @@ class BrowserCaptureSettingsController extends Controller
     {
         $validated = $request->validate([
             'pairing_code' => 'required|string|size:6',
-            'environment' => 'required|in:staging,production',
             'device_name' => 'nullable|string|max:255',
+            'device_fingerprint' => 'nullable|string|max:255',
         ]);
 
-        $pairing = BrowserExtensionPairing::where('pairing_code', $validated['pairing_code'])
-            ->where('status', 'pending')
-            ->where('created_at', '>', now()->subHour())
-            ->first();
+        $result = BrowserExtensionPairing::exchangeCodeForToken(
+            $validated['pairing_code'],
+            $validated['device_name'] ?? 'Extension Device',
+            $validated['device_fingerprint'] ?? null
+        );
 
-        if (!$pairing) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Invalid, expired, or already used pairing code',
-            ], 400);
+        if ($result['status'] === 'error') {
+            return response()->json($result, 400);
         }
-
-        if ($pairing->environment !== $validated['environment']) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Pairing code environment mismatch',
-            ], 400);
-        }
-
-        $pairing->activate($validated['device_name'] ?? 'Extension Device');
 
         return response()->json([
             'status' => 'success',
-            'token' => $pairing->extension_token,
-            'environment' => $pairing->environment,
+            'token' => $result['token'],
+            'environment' => $result['environment'],
             'message' => 'Extension successfully paired',
         ]);
     }
