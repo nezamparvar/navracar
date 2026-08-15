@@ -6,6 +6,11 @@
     $unitLabel = \App\Models\Invoice::CURRENCIES[$currency] ?? 'تومان';
     $exRate = (float) ($invoice->exchange_rate ?? 0);
     $isSingleItem = ($invoice->invoice_type ?? 'full') === 'single_item';
+    $money = static function ($value): string {
+        if ($value === null || $value === '') return '';
+        $raw = str_replace(',', '', (string) $value);
+        return is_numeric($raw) ? number_format((float) $raw, fmod((float) $raw, 1) === 0.0 ? 0 : 2, '.', ',') : (string) $value;
+    };
 @endphp
 <!DOCTYPE html>
 <html lang="fa" dir="rtl">
@@ -16,6 +21,7 @@
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-ink-100 p-4 font-sans text-ink-900 sm:p-8">
+<style>.invoice-table{overflow-x:auto}.invoice-table table{min-width:38rem}</style>
 
     <div class="no-print mx-auto mb-5 flex max-w-3xl flex-wrap justify-end gap-2.5">
         <a href="{{ route('admin.invoices.index') }}" class="rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-bold text-ink-600">← بازگشت به لیست</a>
@@ -63,28 +69,28 @@
             </div>
 
             <h3 class="mb-2 mt-6 border-b-2 border-brand-100 pb-1.5 text-base font-extrabold text-brand-900">تفکیک هزینه‌ها <span class="text-xs font-normal text-ink-500">(واحد: {{ $unitLabel }})</span></h3>
-            <table class="w-full text-sm">
+            <div class="invoice-table"><table class="w-full text-sm">
                 <thead><tr class="bg-ink-50 text-xs text-ink-500"><th class="p-2.5 text-start">شرح</th><th class="p-2.5 text-start">نرخ / توضیح</th><th class="p-2.5 text-start">مبلغ</th></tr></thead>
                 <tbody>
                     @foreach ($breakdown as $row)
-                        <tr class="border-b border-ink-100"><td class="p-2.5">{{ $row['label'] ?? '' }}</td><td class="p-2.5 text-xs text-ink-500">{{ $row['rate'] ?? '' }}</td><td class="num-font p-2.5 font-bold">{{ $row['amount'] ?? '' }}</td></tr>
+                        <tr class="border-b border-ink-100"><td class="p-2.5">{{ $row['label'] ?? '' }}</td><td class="p-2.5 text-xs text-ink-500">{{ $row['rate'] ?? '' }}</td><td class="num-font p-2.5 font-bold">{{ $money($row['amount'] ?? '') }}</td></tr>
                     @endforeach
                 </tbody>
-            </table>
+            </table></div>
 
             <h3 class="mb-2 mt-6 border-b-2 border-brand-100 pb-1.5 text-base font-extrabold text-brand-900">جمع‌بندی</h3>
             <table class="w-full text-sm">
                 <tbody>
-                    <tr class="border-b border-ink-100"><td class="p-2.5" colspan="2">جمع کل قبل از تخفیف</td><td class="num-font p-2.5 font-bold">{{ number_format($grandTotal) }} {{ $unitLabel }}</td></tr>
+                    <tr class="border-b border-ink-100"><td class="p-2.5" colspan="2">جمع کل قبل از تخفیف</td><td class="num-font p-2.5 font-bold">{{ $money($grandTotal) }} {{ $unitLabel }}</td></tr>
                     @if ($discount > 0)
-                        <tr class="border-b border-ink-100 text-amber-700"><td class="p-2.5" colspan="2">تخفیف</td><td class="num-font p-2.5 font-bold">− {{ number_format($discount) }} {{ $unitLabel }}</td></tr>
+                        <tr class="border-b border-ink-100 text-amber-700"><td class="p-2.5" colspan="2">تخفیف</td><td class="num-font p-2.5 font-bold">− {{ $money($discount) }} {{ $unitLabel }}</td></tr>
                     @endif
-                    <tr class="bg-brand-50 text-brand-900"><td class="p-3" colspan="2 " style="font-weight:900;">مبلغ قابل‌پرداخت</td><td class="num-font p-3 text-base font-black">{{ number_format($payable) }} {{ $unitLabel }}</td></tr>
+                    <tr class="bg-brand-50 text-brand-900"><td class="p-3" colspan="2 " style="font-weight:900;">مبلغ قابل‌پرداخت</td><td class="num-font p-3 text-base font-black">{{ $money($payable) }} {{ $unitLabel }}</td></tr>
                     @if ($currency !== 'toman' && $exRate > 0)
-                        <tr><td class="p-2.5 text-xs text-ink-500" colspan="2">معادل تقریبی به تومان (نرخ {{ number_format($exRate) }})</td><td class="num-font p-2.5 text-sm text-ink-500">{{ number_format($payable * $exRate) }} تومان</td></tr>
+                        <tr><td class="p-2.5 text-xs text-ink-500" colspan="2">معادل تقریبی به تومان (نرخ {{ $money($exRate) }})</td><td class="num-font p-2.5 text-sm text-ink-500">{{ $money($payable * $exRate) }} تومان</td></tr>
                     @endif
                 </tbody>
-            </table>
+            </table></div>
 
             @if ($invoice->payment_terms)
                 <div class="mt-4 text-xs text-ink-500"><b>شرایط پرداخت:</b> {{ $invoice->payment_terms }}</div>
