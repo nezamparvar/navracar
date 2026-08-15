@@ -142,8 +142,11 @@ jobs:
           cp pipeline/deployment/cpanel/public_html/.htaccess "$output/public_html/.htaccess"
           cp pipeline/deployment/cpanel/public_html/robots.txt "$output/public_html/robots.txt"
           chmod 0755 "$output/deployment/deploy.sh"
-          test "$(find candidate/application/public/build -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')" = "$(find "$output/application/public/build" -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')"
-          test "$(find candidate/public_html/build -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')" = "$(find "$output/public_html/build" -type f -print0 | sort -z | sha256sum | sha256sum | awk '{print $1}')"
+          tree_hash() {
+            (cd "$1" && find . -type f -print0 | LC_ALL=C sort -z | sha256sum | sha256sum | awk '{print $1}')
+          }
+          test "$(tree_hash candidate/application/public/build)" = "$(tree_hash "$output/application/public/build")"
+          test "$(tree_hash candidate/public_html/build)" = "$(tree_hash "$output/public_html/build")"
           python3 - "$output/DEPLOYMENT-METADATA.json" "$output/application/.cpanel-release.json" "$SOURCE_COMMIT" "$RELEASE_TAG" "$RELEASE_CANDIDATE" "$ARTIFACT_ID" <<'PY'
           import json, pathlib, sys
           source = json.loads(pathlib.Path('candidate/DEPLOYMENT-METADATA.json').read_text())
