@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Jobs\ImportCaptureImages;
 use App\Models\BrowserExtensionPairing;
 use App\Models\CarListing;
 use App\Models\ImportQueue;
@@ -174,9 +175,7 @@ class BrowserCaptureController extends Controller
 
     private function queueImageImports(ImportQueue $queueItem, array $images): void
     {
-        // For now, this is a placeholder
-        // In Phase 1, we'll implement actual image import logic here
-        // This would typically queue a job to download and import images
+        ImportCaptureImages::dispatch($queueItem, $images);
     }
 
     private function findDuplicate(array $validated): ?CarListing
