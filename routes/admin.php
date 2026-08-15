@@ -1,13 +1,11 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\BrowserCaptureSettingsController;
 use App\Http\Controllers\Admin\CalculationLogController;
 use App\Http\Controllers\Admin\CarListingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\HomeSlideController;
-use App\Http\Controllers\Admin\ImportQueueController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\KanbanController;
 use App\Http\Controllers\Admin\MenuItemController;
@@ -124,23 +122,5 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
-
-        // Browser Capture Settings
-        Route::prefix('browser-capture')->name('browser-capture.')->group(function () {
-            Route::get('/', [BrowserCaptureSettingsController::class, 'index'])->name('index');
-            Route::post('/generate-code', [BrowserCaptureSettingsController::class, 'generatePairingCode'])->name('generate-code');
-            Route::get('/pairings', [BrowserCaptureSettingsController::class, 'listPairings'])->name('pairings.index');
-            Route::post('/revoke/{pairing}', [BrowserCaptureSettingsController::class, 'revokePairing'])->name('revoke');
-        });
-
-        // Import Queue
-        Route::prefix('import-queue')->name('import-queue.')->group(function () {
-            Route::get('/', [ImportQueueController::class, 'index'])->name('index');
-            Route::get('/{importQueue}', [ImportQueueController::class, 'show'])->name('show');
-            Route::put('/{importQueue}', [ImportQueueController::class, 'update'])->name('update');
-            Route::post('/{importQueue}/publish', [ImportQueueController::class, 'publish'])->name('publish');
-            Route::post('/{importQueue}/cancel', [ImportQueueController::class, 'cancel'])->name('cancel');
-            Route::post('/{importQueue}/retry-images', [ImportQueueController::class, 'retryImages'])->name('retry-images');
-        });
     });
 });
