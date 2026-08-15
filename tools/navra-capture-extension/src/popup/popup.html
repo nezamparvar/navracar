@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Navra Capture</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <div id="app">
+    <!-- Not Authenticated State -->
+    <div id="auth-state" style="display: none">
+      <div class="auth-container">
+        <h2>اتصال به ناوراکار</h2>
+        <p class="subtitle">قبل از استفاده از این افزونه، لطفاً به ناوراکار متصل شوید</p>
+
+        <div class="form-group">
+          <label for="pairing-code">کد جفت‌سازی:</label>
+          <input type="text" id="pairing-code" placeholder="کد ۶ رقمی را وارد کنید" maxlength="6" />
+        </div>
+
+        <div class="form-group">
+          <label for="environment">محیط:</label>
+          <select id="environment">
+            <option value="staging">Staging</option>
+            <option value="production">Production</option>
+          </select>
+        </div>
+
+        <button id="connect-btn" class="btn btn-primary">اتصال</button>
+        <div id="auth-error" class="error-message"></div>
+      </div>
+    </div>
+
+    <!-- Authenticated State -->
+    <div id="authenticated-state" style="display: none">
+      <!-- Not a Vehicle Listing Page -->
+      <div id="unsupported-page-state" style="display: none">
+        <div class="unsupported-container">
+          <div class="icon-warning">⚠️</div>
+          <h3>صفحهٔ پشتیبانی‌نشده</h3>
+          <p>این صفحه یک آگهی خودروی قابل‌شناسایی نیست.</p>
+          <p class="subtitle">لطفاً به صفحهٔ آگهی روی Dubizzle، DubiCars یا YallaMotor بروید.</p>
+        </div>
+      </div>
+
+      <!-- Vehicle Listing Detected -->
+      <div id="listing-detected-state" style="display: none">
+        <div class="listing-container">
+          <div class="header">
+            <h2 id="source-name">Dubizzle</h2>
+            <span id="status-badge" class="badge">آماده ارسال</span>
+          </div>
+
+          <!-- Preview -->
+          <div class="preview">
+            <div id="preview-image" class="preview-image">
+              <img src="" alt="تصویر خودرو" />
+            </div>
+
+            <div class="preview-info">
+              <div class="info-row">
+                <span class="label">نام آگهی:</span>
+                <span id="preview-title" class="value"></span>
+              </div>
+              <div class="info-row">
+                <span class="label">برند/مدل:</span>
+                <span id="preview-make-model" class="value"></span>
+              </div>
+              <div class="info-row">
+                <span class="label">سال:</span>
+                <span id="preview-year" class="value"></span>
+              </div>
+              <div class="info-row">
+                <span class="label">قیمت:</span>
+                <span id="preview-price" class="value"></span>
+              </div>
+              <div class="info-row">
+                <span class="label">کارکرد:</span>
+                <span id="preview-mileage" class="value"></span>
+              </div>
+              <div class="info-row">
+                <span class="label">موتور:</span>
+                <span id="preview-engine" class="value"></span>
+              </div>
+              <div class="info-row">
+                <span class="label">تصاویر:</span>
+                <span id="preview-image-count" class="value"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Missing Fields Warning -->
+          <div id="missing-fields" style="display: none" class="warning-box">
+            <strong>فیلدهای گمشده:</strong>
+            <ul id="missing-fields-list"></ul>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="actions">
+            <button id="send-btn" class="btn btn-primary">ارسال به ناوراکار</button>
+            <button id="preview-btn" class="btn btn-secondary">باز کردن پیش‌نمایش</button>
+          </div>
+
+          <!-- Settings -->
+          <div class="settings">
+            <button id="settings-btn" class="btn-settings">⚙️ تنظیمات</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Settings Panel -->
+      <div id="settings-panel" style="display: none">
+        <div class="settings-container">
+          <div class="settings-header">
+            <button id="back-btn" class="btn-back">← بازگشت</button>
+            <h3>تنظیمات</h3>
+          </div>
+
+          <div class="settings-content">
+            <div class="setting-group">
+              <label>اطلاعات اتصال:</label>
+              <div class="connected-info">
+                <p id="connected-as">متصل شده</p>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label for="environment-select">محیط:</label>
+              <select id="environment-select">
+                <option value="staging">Staging</option>
+                <option value="production">Production</option>
+              </select>
+            </div>
+
+            <div class="setting-group">
+              <button id="disconnect-btn" class="btn btn-danger">قطع اتصال</button>
+            </div>
+
+            <div class="setting-group">
+              <label>تاریخچه کپچرها:</label>
+              <button id="clear-history-btn" class="btn btn-secondary">حذف تاریخچه</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
