@@ -25,6 +25,8 @@ class Setting extends Model
 
     public const CUSTOMS_FIXED_PERCENT = 'customs_fixed_percent';
 
+    public const CUSTOMS_VALUE_DISCOUNT_PERCENT = 'customs_value_discount_percent';
+
     public const GASOLINE_LEVY_PERCENT = 'gasoline_levy_percent';
 
     public const FOB_LEVY_PERCENT = 'fob_levy_percent';
@@ -84,6 +86,7 @@ class Setting extends Model
         self::SCRAP_CERT_PRICE_TOMAN => '0',
         self::SCRAP_THRESHOLD_AED => '60000',
         self::CUSTOMS_FIXED_PERCENT => '4',
+        self::CUSTOMS_VALUE_DISCOUNT_PERCENT => '30',
         self::GASOLINE_LEVY_PERCENT => '10',
         self::FOB_LEVY_PERCENT => '5',
         self::VAT_PERCENT => '10',
@@ -142,3 +145,4 @@ class Setting extends Model
         return self::SCRAP_CERT_COUNT_PREFIX.$tier.'_'.$bracket;
     }
 }
+
