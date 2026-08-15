@@ -36,7 +36,21 @@ class BrowserExtensionPairing extends Model
         return $this->belongsTo(AdminUser::class, 'created_by');
     }
 
-    public static function generatePairingCode(): string
+    public static function generatePairingCode(AdminUser $admin, string $environment): self
+    {
+        do {
+            $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
+        } while (self::where('pairing_code', $code)->exists());
+
+        return self::create([
+            'pairing_code' => $code,
+            'environment' => $environment,
+            'status' => 'pending',
+            'created_by' => $admin->id,
+        ]);
+    }
+
+    private static function generateUniquePairingCode(): string
     {
         do {
             $code = str_pad(random_int(0, 999999), 6, '0', STR_PAD_LEFT);
@@ -93,5 +107,36 @@ class BrowserExtensionPairing extends Model
     public function updateLastUsed(): void
     {
         $this->update(['last_used_at' => now()]);
+    }
+
+    public static function exchangeCodeForToken(string $code, string $deviceName, string $fingerprint): array
+    {
+        $pairing = self::where('pairing_code', $code)
+            ->where('status', 'pending')
+            ->first();
+
+        if (!$pairing) {
+            return [
+                'status' => 'error',
+                'message' => 'Invalid pairing code',
+            ];
+        }
+
+        // Check if code has expired (60 minutes)
+        if ($pairing->created_at->addHour()->isPast()) {
+            return [
+                'status' => 'error',
+                'message' => 'Pairing code has expired',
+            ];
+        }
+
+        // Activate the pairing and generate token
+        $pairing->activate($deviceName, $fingerprint);
+
+        return [
+            'status' => 'success',
+            'token' => $pairing->extension_token,
+            'environment' => $pairing->environment,
+        ];
     }
 }
