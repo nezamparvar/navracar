@@ -135,6 +135,7 @@ jobs:
           output="$RUNNER_TEMP/navracar-cpanel-production"
           mkdir -p "$output"
           cp -a candidate/. "$output/"
+          rm -rf "$output/.git"
           cp pipeline/deployment/cpanel/.cpanel.yml "$output/.cpanel.yml"
           mkdir -p "$output/deployment" "$output/public_html"
           cp pipeline/deployment/cpanel/deploy.sh "$output/deployment/deploy.sh"
