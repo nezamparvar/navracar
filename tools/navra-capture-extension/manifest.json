@@ -6,8 +6,7 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage",
-    "webRequest"
+    "storage"
   ],
   "host_permissions": [
     "*://*.dubizzle.com/*",

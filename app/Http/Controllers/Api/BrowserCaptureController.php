@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\BrowserExtensionPairing;
 use App\Models\CarListing;
 use App\Models\ImportQueue;
 use Illuminate\Http\Request;
@@ -12,6 +13,12 @@ class BrowserCaptureController extends Controller
 {
     public function store(Request $request)
     {
+        // Authenticate extension token
+        $auth = $this->authenticateExtension($request);
+        if ($auth['error']) {
+            return response()->json($auth, 401);
+        }
+
         $validated = $this->validatePayload($request->all());
 
         if (is_array($validated) && isset($validated['error'])) {
@@ -19,8 +26,8 @@ class BrowserCaptureController extends Controller
         }
 
         try {
-            $queueItem = DB::transaction(function () use ($validated) {
-                return $this->processCapture($validated);
+            $queueItem = DB::transaction(function () use ($validated, $auth) {
+                return $this->processCapture($validated, $auth['pairing']);
             });
 
             return response()->json([
@@ -40,6 +47,52 @@ class BrowserCaptureController extends Controller
                 'error' => 'Failed to process capture',
             ], 500);
         }
+    }
+
+    private function authenticateExtension(Request $request): array
+    {
+        $token = $this->extractBearerToken($request);
+
+        if (!$token) {
+            return [
+                'error' => true,
+                'message' => 'Missing authentication token',
+            ];
+        }
+
+        $pairing = BrowserExtensionPairing::where('extension_token', $token)
+            ->where('status', 'active')
+            ->where(function ($q) {
+                $q->whereNull('expires_at')
+                    ->orWhere('expires_at', '>', now());
+            })
+            ->first();
+
+        if (!$pairing) {
+            return [
+                'error' => true,
+                'message' => 'Invalid or expired authentication token',
+            ];
+        }
+
+        // Update last used timestamp
+        $pairing->updateLastUsed();
+
+        return [
+            'error' => false,
+            'pairing' => $pairing,
+        ];
+    }
+
+    private function extractBearerToken(Request $request): ?string
+    {
+        $header = $request->header('Authorization');
+
+        if (!$header || !str_starts_with($header, 'Bearer ')) {
+            return null;
+        }
+
+        return substr($header, 7);
     }
 
     private function validatePayload(array $data): array
@@ -92,7 +145,7 @@ class BrowserCaptureController extends Controller
         return $validated;
     }
 
-    private function processCapture(array $validated): ImportQueue
+    private function processCapture(array $validated, BrowserExtensionPairing $pairing): ImportQueue
     {
         $duplicate = $this->findDuplicate($validated);
 
@@ -101,7 +154,7 @@ class BrowserCaptureController extends Controller
             'source_listing_id' => $validated['source_listing_id'],
             'source_url' => $validated['source_url'],
             'source_method' => 'browser_extension',
-            'status' => 'captured',
+            'status' => 'images_pending',
             'captured_data' => $validated,
             'canonical_url' => $this->normalizeUrl($validated['source_url']),
             'duplicate_detected_with' => $duplicate?->slug,
@@ -109,7 +162,21 @@ class BrowserCaptureController extends Controller
             'diagnostics' => $validated['diagnostics'] ?? [],
         ]);
 
+        // Queue image imports if images are present
+        if (!empty($validated['images'])) {
+            $this->queueImageImports($queueItem, $validated['images']);
+        } else {
+            $queueItem->update(['status' => 'needs_review']);
+        }
+
         return $queueItem;
+    }
+
+    private function queueImageImports(ImportQueue $queueItem, array $images): void
+    {
+        // For now, this is a placeholder
+        // In Phase 1, we'll implement actual image import logic here
+        // This would typically queue a job to download and import images
     }
 
     private function findDuplicate(array $validated): ?CarListing

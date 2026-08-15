@@ -1,6 +1,11 @@
 console.log('[Navra Capture] Service worker started');
 
-// Configuration
+// Configuration - Build-time environment
+// Staging build: points ONLY to staging
+// Production build: points ONLY to production
+// No runtime switching allowed
+const EXTENSION_ENVIRONMENT = 'staging'; // Will be replaced by build script
+
 const CONFIG = {
   staging: {
     baseUrl: 'https://navracar.com/staging',
@@ -11,6 +16,8 @@ const CONFIG = {
     apiUrl: 'https://navracar.com/api',
   },
 };
+
+const CURRENT_CONFIG = CONFIG[EXTENSION_ENVIRONMENT];
 
 // Initialize default environment
 chrome.storage.local.get(['environment'], (result) => {
@@ -50,19 +57,58 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.action === 'getEnvironment') {
-    chrome.storage.local.get(['environment'], (result) => {
-      sendResponse({ environment: result.environment || 'staging' });
-    });
+    // Environment is fixed at build time, not runtime
+    sendResponse({ environment: EXTENSION_ENVIRONMENT });
     return true;
   }
 
-  if (request.action === 'setEnvironment') {
-    chrome.storage.local.set({ environment: request.environment }, () => {
-      sendResponse({ status: 'ok' });
-    });
+  if (request.action === 'exchangePairingCode') {
+    handlePairingExchange(request.pairingCode)
+      .then((response) => sendResponse(response))
+      .catch((error) => sendResponse({ status: 'error', error: error.message }));
     return true;
   }
 });
+
+async function handlePairingExchange(pairingCode) {
+  try {
+    const response = await fetch(`${CURRENT_CONFIG.apiUrl}/browser-capture/v1/pairing/exchange`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        pairing_code: pairingCode,
+        environment: EXTENSION_ENVIRONMENT,
+        device_name: 'Browser Extension',
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { status: 'error', error: data.message || 'Failed to exchange pairing code' };
+    }
+
+    // Store the token
+    await new Promise((resolve) => {
+      chrome.storage.local.set(
+        {
+          authToken: {
+            token: data.token,
+            environment: EXTENSION_ENVIRONMENT,
+            created_at: new Date().toISOString(),
+          },
+        },
+        resolve
+      );
+    });
+
+    return { status: 'success', message: 'Extension successfully paired' };
+  } catch (error) {
+    return { status: 'error', error: error.message };
+  }
+}
 
 async function handleSendCapture(payload) {
   const token = await getAuthToken();
@@ -70,11 +116,8 @@ async function handleSendCapture(payload) {
     return { status: 'error', error: 'Not authenticated. Connect to NavraCar first.' };
   }
 
-  const environment = await getEnvironment();
-  const config = CONFIG[environment];
-
   try {
-    const response = await fetch(`${config.apiUrl}/browser-capture/v1/listings`, {
+    const response = await fetch(`${CURRENT_CONFIG.apiUrl}/browser-capture/v1/listings`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

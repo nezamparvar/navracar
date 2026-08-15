@@ -38,7 +38,6 @@ function setupAuthListeners() {
 
 async function connectToNavraCar() {
   const pairingCode = document.getElementById('pairing-code').value.trim();
-  const environment = document.getElementById('environment').value;
 
   if (!pairingCode || pairingCode.length !== 6) {
     showAuthError('لطفاً کد جفت‌سازی ۶ رقمی را وارد کنید');
@@ -49,23 +48,13 @@ async function connectToNavraCar() {
   btn.classList.add('loading');
 
   try {
-    // In production, this would call the NavraCar pairing endpoint
-    // For now, we'll just store the token locally
-    const token = {
-      token: pairingCode + '_' + Math.random().toString(36).substr(2, 9),
-      environment,
-      created_at: new Date().toISOString(),
-    };
-
-    await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ action: 'setAuth', token }, () => {
-        resolve();
-      });
-    });
-
-    await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ action: 'setEnvironment', environment }, () => {
-        resolve();
+    await new Promise((resolve, reject) => {
+      chrome.runtime.sendMessage({ action: 'exchangePairingCode', pairingCode }, (response) => {
+        if (response && response.status === 'success') {
+          resolve();
+        } else {
+          reject(new Error(response?.error || 'Failed to exchange pairing code'));
+        }
       });
     });
 
@@ -172,14 +161,6 @@ function setupAuthenticatedListeners() {
   document.getElementById('disconnect-btn').addEventListener('click', disconnect);
   document.getElementById('back-btn').addEventListener('click', hideSettings);
   document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
-
-  chrome.storage.local.get(['environment'], (result) => {
-    document.getElementById('environment-select').value = result.environment || 'staging';
-  });
-
-  document.getElementById('environment-select').addEventListener('change', (e) => {
-    chrome.runtime.sendMessage({ action: 'setEnvironment', environment: e.target.value });
-  });
 }
 
 async function sendCapture() {
