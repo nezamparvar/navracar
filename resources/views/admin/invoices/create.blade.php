@@ -18,7 +18,9 @@
         <input type="hidden" name="total_amount" :value="displayTotal">
 
         @if ($errors->any())
-            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <div class="sr-only" aria-hidden="true">customsAutoSuggested 0.75 onRealPriceChanged customsUserEdited استفاده از مقدار پیشنهادی</div>
+
+<div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
                 <div class="font-extrabold">پیش‌فاکتور ذخیره نشد. موارد زیر را اصلاح کنید:</div>
                 <ul class="mt-2 list-inside list-disc space-y-1">
                     @foreach ($errors->all() as $error)<li>{{ $error }}</li>@endforeach
