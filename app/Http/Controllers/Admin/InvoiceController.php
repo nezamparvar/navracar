@@ -210,10 +210,12 @@ class InvoiceController extends Controller
     public function show(Request $request, Invoice $invoice)
     {
         abort_unless($this->ownsInvoice($invoice, $request->user()), 403);
+        $locale = $request->string('lang')->lower()->value() === 'en' ? 'en' : 'fa';
 
         return view('admin.invoices.show', [
             'pageTitle' => 'پیش‌فاکتور '.$invoice->invoice_number,
             'invoice' => $invoice,
+            'locale' => $locale,
             'breakdown' => $invoice->breakdown(),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
