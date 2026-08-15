@@ -6,6 +6,8 @@
     $unitLabel = \App\Models\Invoice::CURRENCIES[$currency] ?? 'تومان';
     $exRate = (float) ($invoice->exchange_rate ?? 0);
     $isSingleItem = ($invoice->invoice_type ?? 'full') === 'single_item';
+    $isEnglish = ($locale ?? 'fa') === 'en';
+    $labels = $isEnglish ? ['title'=>'Proforma Invoice','back'=>'Back to invoices','edit'=>'Edit','pdf'=>'Download PDF','customer'=>'Customer and vehicle','name'=>'Customer name','phone'=>'Phone','email'=>'Email','vehicle'=>'Vehicle','category'=>'Vehicle category','costs'=>'Cost breakdown','summary'=>'Summary','subtotal'=>'Subtotal before discount','discount'=>'Discount','payable'=>'Total payable','terms'=>'Payment terms'] : ['title'=>'پیش‌فاکتور رسمی','back'=>'بازگشت به لیست','edit'=>'ویرایش','pdf'=>'دانلود PDF','customer'=>'مشخصات مشتری و خودرو','name'=>'{{ $labels['name'] }}','phone'=>'{{ $labels['phone'] }}','email'=>'{{ $labels['email'] }}','vehicle'=>'خودرو','category'=>'دسته خودرو','costs'=>'{{ $labels['costs'] }}','summary'=>'{{ $labels['summary'] }}','subtotal'=>'{{ $labels['subtotal'] }}','discount'=>'تخفیف','payable'=>'{{ $labels['payable'] }}','terms'=>'شرایط پرداخت'];
     $money = static function ($value): string {
         if ($value === null || $value === '') return '';
         $raw = str_replace(',', '', (string) $value);
@@ -13,18 +15,18 @@
     };
 @endphp
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="{{ $isEnglish ? "en" : "fa" }}" dir="{{ $isEnglish ? "ltr" : "rtl" }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پیش‌فاکتور {{ $invoice->invoice_number }} | ناوراکار</title>
+    <title>{{ $labels['title'] }} {{ $invoice->invoice_number }} | NavraCar</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 <body class="min-h-screen bg-ink-100 p-4 font-sans text-ink-900 sm:p-8">
 <style>.invoice-table{overflow-x:auto}.invoice-table table{min-width:38rem}</style>
 
     <div class="no-print mx-auto mb-5 flex max-w-3xl flex-wrap justify-end gap-2.5">
-        <a href="{{ route('admin.invoices.index') }}" class="rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-bold text-ink-600">← بازگشت به لیست</a>
+        <a href="{{ route('admin.invoices.index') }}" class="rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-bold text-ink-600">{{ $labels['back'] }}</a>
         <a href="{{ route('admin.invoices.create', ['id' => $invoice->id]) }}" class="rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 px-4 py-2.5 text-sm font-bold text-ink-950">✏️ ویرایش پیش‌فاکتور</a>
         <form method="POST" action="{{ route('admin.invoices.status', $invoice) }}">
             @csrf
@@ -55,11 +57,11 @@
 
         <div class="border border-t-0 border-ink-200 bg-white p-7">
             <div class="mb-5 rounded-xl bg-brand-50 p-4">
-                <div class="mb-2.5 text-base font-extrabold text-brand-900">مشخصات مشتری{{ $isSingleItem ? '' : ' و خودرو' }}</div>
+                <div class="mb-2.5 text-base font-extrabold text-brand-900">{{ $labels['customer'] }}</div>
                 <div class="grid grid-cols-2 gap-x-5 gap-y-2 text-sm">
-                    <div><span class="block text-xs text-ink-500">نام مشتری</span>{{ $invoice->customer_name }}</div>
-                    <div><span class="block text-xs text-ink-500">شماره تماس</span>{{ $invoice->customer_phone }}</div>
-                    @if ($invoice->customer_email)<div><span class="block text-xs text-ink-500">ایمیل</span>{{ $invoice->customer_email }}</div>@endif
+                    <div><span class="block text-xs text-ink-500">{{ $labels['name'] }}</span>{{ $invoice->customer_name }}</div>
+                    <div><span class="block text-xs text-ink-500">{{ $labels['phone'] }}</span>{{ $invoice->customer_phone }}</div>
+                    @if ($invoice->customer_email)<div><span class="block text-xs text-ink-500">{{ $labels['email'] }}</span>{{ $invoice->customer_email }}</div>@endif
                     @unless ($isSingleItem)
                         <div><span class="block text-xs text-ink-500">خودرو</span>{{ $invoice->car_label ?: '-' }}</div>
                         <div><span class="block text-xs text-ink-500">دسته خودرو</span>{{ $invoice->categoryLabel() ?: '-' }}</div>
@@ -68,7 +70,7 @@
                 </div>
             </div>
 
-            <h3 class="mb-2 mt-6 border-b-2 border-brand-100 pb-1.5 text-base font-extrabold text-brand-900">تفکیک هزینه‌ها <span class="text-xs font-normal text-ink-500">(واحد: {{ $unitLabel }})</span></h3>
+            <h3 class="mb-2 mt-6 border-b-2 border-brand-100 pb-1.5 text-base font-extrabold text-brand-900">{{ $labels['costs'] }} <span class="text-xs font-normal text-ink-500">(واحد: {{ $unitLabel }})</span></h3>
             <div class="invoice-table"><table class="w-full text-sm">
                 <thead><tr class="bg-ink-50 text-xs text-ink-500"><th class="p-2.5 text-start">شرح</th><th class="p-2.5 text-start">نرخ / توضیح</th><th class="p-2.5 text-start">مبلغ</th></tr></thead>
                 <tbody>
@@ -78,14 +80,14 @@
                 </tbody>
             </table></div>
 
-            <h3 class="mb-2 mt-6 border-b-2 border-brand-100 pb-1.5 text-base font-extrabold text-brand-900">جمع‌بندی</h3>
+            <h3 class="mb-2 mt-6 border-b-2 border-brand-100 pb-1.5 text-base font-extrabold text-brand-900">{{ $labels['summary'] }}</h3>
             <table class="w-full text-sm">
                 <tbody>
-                    <tr class="border-b border-ink-100"><td class="p-2.5" colspan="2">جمع کل قبل از تخفیف</td><td class="num-font p-2.5 font-bold">{{ $money($grandTotal) }} {{ $unitLabel }}</td></tr>
+                    <tr class="border-b border-ink-100"><td class="p-2.5" colspan="2">{{ $labels['subtotal'] }}</td><td class="num-font p-2.5 font-bold">{{ $money($grandTotal) }} {{ $unitLabel }}</td></tr>
                     @if ($discount > 0)
                         <tr class="border-b border-ink-100 text-amber-700"><td class="p-2.5" colspan="2">تخفیف</td><td class="num-font p-2.5 font-bold">− {{ $money($discount) }} {{ $unitLabel }}</td></tr>
                     @endif
-                    <tr class="bg-brand-50 text-brand-900"><td class="p-3" colspan="2 " style="font-weight:900;">مبلغ قابل‌پرداخت</td><td class="num-font p-3 text-base font-black">{{ $money($payable) }} {{ $unitLabel }}</td></tr>
+                    <tr class="bg-brand-50 text-brand-900"><td class="p-3" colspan="2 " style="font-weight:900;">{{ $labels['payable'] }}</td><td class="num-font p-3 text-base font-black">{{ $money($payable) }} {{ $unitLabel }}</td></tr>
                     @if ($currency !== 'toman' && $exRate > 0)
                         <tr><td class="p-2.5 text-xs text-ink-500" colspan="2">معادل تقریبی به تومان (نرخ {{ $money($exRate) }})</td><td class="num-font p-2.5 text-sm text-ink-500">{{ $money($payable * $exRate) }} تومان</td></tr>
                     @endif
@@ -93,7 +95,7 @@
             </table></div>
 
             @if ($invoice->payment_terms)
-                <div class="mt-4 text-xs text-ink-500"><b>شرایط پرداخت:</b> {{ $invoice->payment_terms }}</div>
+                <div class="mt-4 text-xs text-ink-500"><b>{{ $labels['terms'] }}:</b> {{ $invoice->payment_terms }}</div>
             @endif
 
             <div class="mt-6 rounded-xl bg-ink-50 p-4 text-sm leading-8">
