@@ -101,7 +101,15 @@ class ImportQueueController extends Controller
 
         $data = $importQueue->parsed_data ?? $importQueue->captured_data;
 
+        // Generate slug from title and make/model
+        $slug = $this->generateSlug(
+            $data['vehicle']['title'] ?? '',
+            $data['vehicle']['make'] ?? '',
+            $data['vehicle']['model'] ?? ''
+        );
+
         $listing = CarListing::create([
+            'slug' => $slug,
             'source_url' => $data['source_url'],
             'source_site' => $data['source'],
             'status' => 'published',
@@ -127,8 +135,49 @@ class ImportQueueController extends Controller
             'published_at' => now(),
         ]);
 
+        // Link imported images to the listing
+        $this->linkImagesToListing($listing, $data);
+
         return redirect()->route('admin.car-listings.edit', $listing)
             ->with('success', 'Listing published successfully');
+    }
+
+    private function linkImagesToListing(CarListing $listing, array $data): void
+    {
+        if (empty($data['downloaded_images'])) {
+            return;
+        }
+
+        $isCover = true;
+        $sortOrder = 0;
+        foreach ($data['downloaded_images'] as $image) {
+            CarListingImage::create([
+                'car_listing_id' => $listing->id,
+                'local_path' => $image['stored_path'],
+                'source_url' => $image['url'],
+                'sort_order' => $sortOrder++,
+                'is_cover' => $isCover,
+            ]);
+            $isCover = false;
+        }
+    }
+
+    private function generateSlug(string $title, string $make, string $model): string
+    {
+        $text = trim("{$title} {$make} {$model}");
+        $text = preg_replace('/[^a-z0-9]+/i', '-', $text);
+        $text = trim($text, '-');
+        $slug = strtolower($text);
+
+        // Ensure uniqueness
+        $count = 1;
+        $original = $slug;
+        while (CarListing::where('slug', $slug)->exists()) {
+            $slug = "{$original}-{$count}";
+            $count++;
+        }
+
+        return $slug;
     }
 
     public function cancel(ImportQueue $importQueue)
