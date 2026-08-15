@@ -1,6 +1,6 @@
 # Navra Capture and import architecture
 
-Dubizzle direct retrieval is best-effort only. A 401/403/429, challenge page, timeout, or blocked response is reported as `REMOTE_ACCESS_BLOCKED`; it is not reported as a parser defect and no anti-bot or proxy circumvention is attempted.
+Manual HTML is the supported fallback for Dubizzle, DubiCars, and YallaMotor. Server-side direct URL retrieval is deprecated and is not expanded; it remains only for backward compatibility. A 401/403/429, challenge page, timeout, or blocked response is reported as `REMOTE_ACCESS_BLOCKED`; it is not reported as a parser defect and no anti-bot or proxy circumvention is attempted.
 
 All sources use the same pipeline:
 
@@ -14,3 +14,10 @@ The owner workflow is: open the listing in Chrome/Edge, invoke an explicit Navra
 
 Persistent image import protections remain unchanged: approved hosts, redirect checks, MIME and size validation, safe filenames, timeouts, and no successful image record until persistence succeeds.
 
+
+
+## Revised capture direction
+
+Navra Capture is a separate browser-extension project. This backend PR does not modify extension files or duplicate extension DOM extraction logic. The backend accepts a versioned structured payload from that extension through the browser-capture contract.
+
+Until the extension is available, operators submit saved page HTML. Marketplace adapters are independent and identify source_platform (dubizzle, dubicars, yallamotor) separately from capture_method (manual_html, browser_extension). Submitted scripts are never executed, URLs are never fetched as a side effect of manual import, and credential/session/header material is rejected.
