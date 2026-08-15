@@ -8,7 +8,7 @@ class ImportQueueItem extends Model
 {
     protected $table = 'import_queue';
 
-    protected $fillable = ['user_id', 'source', 'source_url', 'status', 'payload_json', 'parsed_json', 'warnings_json', 'confidence', 'error'];
+    protected $fillable = ['user_id', 'source', 'source_platform', 'capture_method', 'source_url', 'status', 'payload_json', 'parsed_json', 'warnings_json', 'confidence', 'error'];
 
     protected $casts = ['payload_json' => 'array', 'parsed_json' => 'array', 'warnings_json' => 'array', 'confidence' => 'float'];
 
