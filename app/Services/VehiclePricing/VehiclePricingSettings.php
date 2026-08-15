@@ -15,6 +15,7 @@ final readonly class VehiclePricingSettings
         public float $storageToman,
         public float $scrapCertificatePriceToman,
         public float $scrapThresholdAed,
+        public float $customsValueDiscountPercent,
         public array $percentages,
         public array $categories,
         public array $scrapCertificateCounts,
@@ -56,6 +57,7 @@ final readonly class VehiclePricingSettings
             storageToman: (float) Setting::get(Setting::STORAGE_TOMAN),
             scrapCertificatePriceToman: (float) Setting::get(Setting::SCRAP_CERT_PRICE_TOMAN),
             scrapThresholdAed: (float) Setting::get(Setting::SCRAP_THRESHOLD_AED),
+            customsValueDiscountPercent: (float) Setting::get(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT),
             percentages: [
                 'customsFixed' => (float) Setting::get(Setting::CUSTOMS_FIXED_PERCENT),
                 'gasolineLevy' => (float) Setting::get(Setting::GASOLINE_LEVY_PERCENT),
@@ -88,6 +90,7 @@ final readonly class VehiclePricingSettings
             storageToman: $this->storageToman,
             scrapCertificatePriceToman: $this->scrapCertificatePriceToman,
             scrapThresholdAed: $this->scrapThresholdAed,
+            customsValueDiscountPercent: $this->customsValueDiscountPercent,
             percentages: $this->percentages,
             categories: $this->categories,
             scrapCertificateCounts: $this->scrapCertificateCounts,
@@ -105,9 +108,11 @@ final readonly class VehiclePricingSettings
             'storageToman' => $this->storageToman,
             'scrapCertificatePriceToman' => $this->scrapCertificatePriceToman,
             'scrapThresholdAed' => $this->scrapThresholdAed,
+            'customsValueDiscountPercent' => $this->customsValueDiscountPercent,
             'percentages' => $this->percentages,
             'categories' => $this->categories,
             'scrapCertificateCounts' => $this->scrapCertificateCounts,
         ];
     }
 }
+
