@@ -61,8 +61,8 @@
         <div x-show="mode === 'automatic'" x-cloak class="space-y-5">
             <x-card title="ورودی‌های محاسبه خودکار" icon="car" subtitle="نرخ‌ها، درصدها، تعرفه و اسقاط فقط از تنظیمات جاری سرور خوانده می‌شوند.">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت واقعی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="real_price_aed" x-model.number="realPriceAed" @input="onRealPriceChanged" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
-                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="customs_price_aed" x-model.number="customsPriceAed" @input="customsUserEdited" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"><p class="mt-1 text-[11px] leading-5 text-ink-500">مقدار پیشنهادی به‌صورت خودکار ۲۵٪ کمتر از قیمت واقعی محاسبه می‌شود؛ این فقط پیشنهاد است و باید بر اساس اطلاعات واقعی پرونده بررسی و اصلاح شود.</p><button type="button" @click="restoreCustomsSuggestion" class="mt-1 text-xs font-bold text-brand-700">استفاده از مقدار پیشنهادی</button></div>
+                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت واقعی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="real_price_aed" x-model.number="realPriceAed" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
+                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="customs_price_aed" x-model.number="customsPriceAed" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
                     <div><label class="mb-1 block text-xs font-bold text-ink-500">دسته خودرو *</label><select name="category" x-model="category" @change="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5">@foreach($categories as $id => $item)<option value="{{ $id }}">{{ $item['label'] }}</option>@endforeach</select></div>
                 </div>
                 <div class="mt-4 flex items-center gap-3">
@@ -119,7 +119,7 @@
         <x-card title="جمع‌بندی و صدور" icon="check">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div><label class="mb-1 block text-xs font-bold text-ink-500">جمع کل محاسبه‌شده توسط سرور/ردیف‌ها</label><div class="rounded-xl bg-ink-100 px-3.5 py-2.5 font-black num-font dark:bg-white/10" x-text="fmt(displayTotal)"></div></div>
-                <div><label class="mb-1 block text-xs font-bold text-ink-500">تخفیف</label><input name="discount_amount" value="{{ old('discount_amount', $prefill['discount']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
+                <div><label class="mb-1 block text-xs font-bold text-ink-500">تخفیف</label><input data-money-input name="discount_amount" value="{{ old('discount_amount', $prefill['discount']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
                 <div><label class="mb-1 block text-xs font-bold text-ink-500">اعتبار تا</label><input type="date" name="valid_until" value="{{ old('valid_until', $prefill['valid_until']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5"></div>
                 <div class="sm:col-span-3"><label class="mb-1 block text-xs font-bold text-ink-500">شرایط پرداخت</label><textarea name="payment_terms" rows="2" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5">{{ old('payment_terms', $prefill['payment_terms']) }}</textarea></div>
             </div>
@@ -137,8 +137,6 @@
                     mode: prefill.pricing_mode || 'automatic',
                     realPriceAed: Number(prefill.real_price_aed || 0),
                     customsPriceAed: Number(prefill.customs_price_aed || 0),
-                    customsAutoSuggested: !(Number(prefill.customs_price_aed || 0) > 0),
-                    lastSuggestedCustoms: 0,
                     category: prefill.category || 'c2000',
                     adjustmentAmount: Number(prefill.adjustment_amount || 0),
                     adjustmentReason: prefill.adjustment_reason || '',
@@ -152,24 +150,10 @@
 
                     init() {
                         if (!this.rows.length) this.addRow();
-                        if (this.customsAutoSuggested && this.realPriceAed > 0) this.restoreCustomsSuggestion();
                         if (this.mode === 'automatic' && this.realPriceAed > 0 && this.customsPriceAed > 0) this.calculate();
                     },
                     onInvoiceTypeChanged() {
                         if (this.invoiceType !== 'full') this.mode = 'manual';
-                    },
-                    onRealPriceChanged() {
-                        const current = Number(this.customsPriceAed || 0);
-                        if (this.customsAutoSuggested || current === 0 || current === this.lastSuggestedCustoms) this.restoreCustomsSuggestion();
-                    },
-                    customsUserEdited() {
-                        const current = Number(this.customsPriceAed || 0);
-                        if (current !== this.lastSuggestedCustoms) this.customsAutoSuggested = false;
-                    },
-                    restoreCustomsSuggestion() {
-                        this.customsPriceAed = Math.max(0, Number(this.realPriceAed || 0) * 0.75);
-                        this.lastSuggestedCustoms = this.customsPriceAed;
-                        this.customsAutoSuggested = true;
                     },
                     addRow() {
                         this.rows.push({id: this.nextId++, label: '', rate: '', amount: ''});
@@ -191,8 +175,7 @@
                         return Number(this.adjustmentAmount) !== 0;
                     },
                     fmt(value) {
-                        const number = this.numeric(value);
-                        return number.toLocaleString('en-US', {maximumFractionDigits: 2});
+                        return Math.round(this.numeric(value)).toLocaleString('en-US');
                     },
                     async calculate() {
                         if (this.mode !== 'automatic' || this.realPriceAed < 0 || this.customsPriceAed < 0) return;
@@ -218,3 +201,4 @@
         </script>
     @endonce
 </x-layouts.admin>
+
