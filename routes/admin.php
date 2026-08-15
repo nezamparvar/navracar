@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\CalculationLogController;
 use App\Http\Controllers\Admin\CarListingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
+use App\Http\Controllers\Admin\ExtensionPairingController;
 use App\Http\Controllers\Admin\HomeSlideController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\KanbanController;
@@ -119,6 +120,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         });
 
         Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+
+        Route::prefix('extension-pairing')->name('extension-pairing.')->group(function () {
+            Route::get('/', [ExtensionPairingController::class, 'index'])->name('index');
+            Route::get('/create', [ExtensionPairingController::class, 'create'])->name('create');
+            Route::post('/', [ExtensionPairingController::class, 'store'])->name('store');
+            Route::get('/{pairing}', [ExtensionPairingController::class, 'show'])->name('show');
+            Route::post('/{pairing}/revoke', [ExtensionPairingController::class, 'revoke'])->name('revoke');
+        });
 
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
