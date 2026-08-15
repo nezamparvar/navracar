@@ -348,4 +348,177 @@ class BrowserCaptureSecurityTest extends TestCase
         // Note: may be 429 if throttled, or may have other failure reasons
         // depending on implementation
     }
+
+    public function test_rejects_source_spoofing_dubizzle()
+    {
+        $pairing = BrowserExtensionPairing::generatePairingCode($this->admin, 'staging');
+        $result = BrowserExtensionPairing::exchangeCodeForToken(
+            $pairing->pairing_code,
+            'test-device',
+            'test-fingerprint'
+        );
+        $token = $result['token'];
+
+        // Claim dubizzle but use dubicars URL
+        $response = $this->postJson('/api/browser-capture/v1/listings', [
+            'schema_version' => 'navracar.capture.v1',
+            'source' => 'dubizzle',
+            'source_url' => 'https://dubicars.com/car/123',
+            'captured_at' => now()->toIso8601String(),
+            'vehicle' => ['title' => 'Car', 'price_aed' => 50000],
+            'images' => [],
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error', 'Source mismatch');
+    }
+
+    public function test_rejects_source_spoofing_dubicars()
+    {
+        $pairing = BrowserExtensionPairing::generatePairingCode($this->admin, 'staging');
+        $result = BrowserExtensionPairing::exchangeCodeForToken(
+            $pairing->pairing_code,
+            'test-device',
+            'test-fingerprint'
+        );
+        $token = $result['token'];
+
+        // Claim dubicars but use yallamotor URL
+        $response = $this->postJson('/api/browser-capture/v1/listings', [
+            'schema_version' => 'navracar.capture.v1',
+            'source' => 'dubicars',
+            'source_url' => 'https://yallamotor.com/car/123',
+            'captured_at' => now()->toIso8601String(),
+            'vehicle' => ['title' => 'Car', 'price_aed' => 50000],
+            'images' => [],
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response->assertStatus(422);
+    }
+
+    public function test_accepts_source_with_www_url()
+    {
+        $pairing = BrowserExtensionPairing::generatePairingCode($this->admin, 'staging');
+        $result = BrowserExtensionPairing::exchangeCodeForToken(
+            $pairing->pairing_code,
+            'test-device',
+            'test-fingerprint'
+        );
+        $token = $result['token'];
+
+        // www variant should be accepted
+        $response = $this->postJson('/api/browser-capture/v1/listings', [
+            'schema_version' => 'navracar.capture.v1',
+            'source' => 'dubizzle',
+            'source_url' => 'https://www.dubizzle.com/motors/used-cars/1',
+            'captured_at' => now()->toIso8601String(),
+            'vehicle' => ['title' => 'Car', 'price_aed' => 50000],
+            'images' => [],
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_rejects_too_many_images()
+    {
+        $pairing = BrowserExtensionPairing::generatePairingCode($this->admin, 'staging');
+        $result = BrowserExtensionPairing::exchangeCodeForToken(
+            $pairing->pairing_code,
+            'test-device',
+            'test-fingerprint'
+        );
+        $token = $result['token'];
+
+        // Create 51 images (exceeds 50 limit)
+        $images = [];
+        for ($i = 0; $i < 51; $i++) {
+            $images[] = [
+                'url' => "https://example.com/image{$i}.jpg",
+                'confidence' => 'high'
+            ];
+        }
+
+        $response = $this->postJson('/api/browser-capture/v1/listings', [
+            'schema_version' => 'navracar.capture.v1',
+            'source' => 'dubizzle',
+            'source_url' => 'https://dubizzle.com/motors/used-cars/1',
+            'captured_at' => now()->toIso8601String(),
+            'vehicle' => ['title' => 'Car', 'price_aed' => 50000],
+            'images' => $images,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error', 'Too many images');
+    }
+
+    public function test_accepts_exactly_50_images()
+    {
+        $pairing = BrowserExtensionPairing::generatePairingCode($this->admin, 'staging');
+        $result = BrowserExtensionPairing::exchangeCodeForToken(
+            $pairing->pairing_code,
+            'test-device',
+            'test-fingerprint'
+        );
+        $token = $result['token'];
+
+        // Create exactly 50 images (at limit)
+        $images = [];
+        for ($i = 0; $i < 50; $i++) {
+            $images[] = [
+                'url' => "https://example.com/image{$i}.jpg",
+                'confidence' => 'high'
+            ];
+        }
+
+        $response = $this->postJson('/api/browser-capture/v1/listings', [
+            'schema_version' => 'navracar.capture.v1',
+            'source' => 'dubizzle',
+            'source_url' => 'https://dubizzle.com/motors/used-cars/1',
+            'captured_at' => now()->toIso8601String(),
+            'vehicle' => ['title' => 'Car', 'price_aed' => 50000],
+            'images' => $images,
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response->assertStatus(200);
+    }
+
+    public function test_rejects_oversized_image_url()
+    {
+        $pairing = BrowserExtensionPairing::generatePairingCode($this->admin, 'staging');
+        $result = BrowserExtensionPairing::exchangeCodeForToken(
+            $pairing->pairing_code,
+            'test-device',
+            'test-fingerprint'
+        );
+        $token = $result['token'];
+
+        // Create URL that exceeds 2000 char limit
+        $longUrl = 'https://example.com/' . str_repeat('a', 2100);
+
+        $response = $this->postJson('/api/browser-capture/v1/listings', [
+            'schema_version' => 'navracar.capture.v1',
+            'source' => 'dubizzle',
+            'source_url' => 'https://dubizzle.com/motors/used-cars/1',
+            'captured_at' => now()->toIso8601String(),
+            'vehicle' => ['title' => 'Car', 'price_aed' => 50000],
+            'images' => [
+                ['url' => $longUrl, 'confidence' => 'high']
+            ],
+        ], [
+            'Authorization' => "Bearer {$token}",
+        ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error', 'Image URL too long');
+    }
 }
