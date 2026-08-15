@@ -197,3 +197,70 @@ function updateBadge(tab) {
     chrome.action.setBadgeText({ text: '' });
   }
 }
+
+// Keyboard Shortcut: Alt+Shift+N
+chrome.commands.onCommand.addListener((command) => {
+  if (command === 'capture-current-listing') {
+    handleKeyboardCapture();
+  }
+});
+
+async function handleKeyboardCapture() {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+
+    if (!tab) {
+      showNotification('خطا', 'لطفاً یک صفحه فعال را انتخاب کنید');
+      return;
+    }
+
+    // Check if tab is on a supported domain
+    const isSupported = /dubizzle\.com|dubicars\.com|yallamotor\.com/i.test(tab.url);
+    if (!isSupported) {
+      showNotification('صفحه پشتیبانی نشده', 'لطفاً بر روی یک صفحهٔ Dubizzle، DubiCars یا YallaMotor باشید');
+      return;
+    }
+
+    // Send capture request
+    chrome.tabs.sendMessage(tab.id, { action: 'captureCurrentPage' }, (response) => {
+      if (chrome.runtime.lastError) {
+        showNotification('خطا', 'نتوانستم با صفحه ارتباط برقرار کنم');
+        return;
+      }
+
+      // Listen for capture completion
+      const timeoutId = setTimeout(() => {
+        showNotification('خطا', 'زمان انتظار ختم شد');
+      }, 10000);
+
+      const listener = (request) => {
+        if (request.action === 'sendCaptureToNavraCar') {
+          clearTimeout(timeoutId);
+          chrome.runtime.onMessage.removeListener(listener);
+
+          // Send capture
+          handleSendCapture(request.payload)
+            .then((result) => {
+              if (result.status === 'success') {
+                showNotification('موفقیت', 'خودرو با موفقیت ارسال شد');
+              } else {
+                showNotification('خطا', result.error || 'خطا در ارسال');
+              }
+            })
+            .catch((error) => {
+              showNotification('خطا', error.message);
+            });
+        }
+      };
+
+      chrome.runtime.onMessage.addListener(listener);
+    });
+  } catch (error) {
+    showNotification('خطا', error.message);
+  }
+}
+
+function showNotification(title, message) {
+  // Show notification (can be extended with chrome.notifications API if needed)
+  console.log(`[Navra Capture] ${title}: ${message}`);
+}

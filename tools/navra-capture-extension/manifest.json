@@ -6,7 +6,9 @@
   "permissions": [
     "activeTab",
     "scripting",
-    "storage"
+    "storage",
+    "commands",
+    "tabs"
   ],
   "host_permissions": [
     "*://*.dubizzle.com/*",
@@ -30,6 +32,14 @@
   "action": {
     "default_popup": "src/popup/popup.html",
     "default_title": "Navra Capture"
+  },
+  "commands": {
+    "capture-current-listing": {
+      "suggested_key": {
+        "default": "Alt+Shift+N"
+      },
+      "description": "ارسال خودروی کنونی به ناوراکار"
+    }
   },
   "icons": {
     "16": "src/icons/icon-16.png",

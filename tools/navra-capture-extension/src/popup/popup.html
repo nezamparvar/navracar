@@ -36,6 +36,39 @@
         </div>
       </div>
 
+      <!-- Batch Capture State -->
+      <div id="batch-capture-state" style="display: none">
+        <div class="batch-container">
+          <div class="batch-header">
+            <button id="batch-back-btn" class="btn-back">← بازگشت</button>
+            <h3>ارسال خودروهای باز</h3>
+          </div>
+
+          <p class="batch-subtitle">برگزیدن صفحاتی که می‌خواهید ارسال کنید:</p>
+
+          <div id="batch-tabs-list" class="batch-tabs-list">
+            <!-- Tabs will be populated here -->
+          </div>
+
+          <div class="batch-actions">
+            <button id="batch-send-btn" class="btn btn-primary" disabled>ارسال برگزیده‌ها</button>
+            <button id="batch-cancel-btn" class="btn btn-secondary">لغو</button>
+          </div>
+
+          <div id="batch-progress" style="display: none" class="batch-progress">
+            <p id="batch-progress-text">در حال ارسال...</p>
+            <div class="progress-bar">
+              <div id="batch-progress-fill" class="progress-fill"></div>
+            </div>
+          </div>
+
+          <div id="batch-results" style="display: none" class="batch-results">
+            <h4>نتایج:</h4>
+            <ul id="batch-results-list"></ul>
+          </div>
+        </div>
+      </div>
+
       <!-- Vehicle Listing Detected -->
       <div id="listing-detected-state" style="display: none">
         <div class="listing-container">
@@ -92,6 +125,11 @@
           <div class="actions">
             <button id="send-btn" class="btn btn-primary">ارسال به ناوراکار</button>
             <button id="preview-btn" class="btn btn-secondary">باز کردن پیش‌نمایش</button>
+          </div>
+
+          <!-- Batch Action -->
+          <div class="batch-action">
+            <button id="batch-btn" class="btn btn-secondary" title="ارسال چند خودروی باز در یک زمان">📋 ارسال خودروهای باز</button>
           </div>
 
           <!-- Settings -->
