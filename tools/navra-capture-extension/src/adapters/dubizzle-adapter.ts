@@ -5,7 +5,14 @@ export class DubizzleAdapter extends SourceAdapter {
   source: 'dubizzle' = 'dubizzle';
 
   supports(url: string): boolean {
-    return /dubizzle\.com/i.test(url);
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      // Must be dubizzle.com or a subdomain (*.dubizzle.com), not fake-dubizzle.com
+      return hostname === 'dubizzle.com' || hostname.endsWith('.dubizzle.com');
+    } catch {
+      return false;
+    }
   }
 
   detectListingPage(): boolean {

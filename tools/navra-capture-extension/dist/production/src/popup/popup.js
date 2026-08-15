@@ -96,16 +96,24 @@ function showUnsupportedPage() {
 
 async function captureCurrentPage(tab) {
   return new Promise((resolve) => {
+    // Use one-time message listener to prevent listener leak
+    const messageListener = (request, sender, sendResponse) => {
+      if (request.action === 'sendCaptureToNavraCar') {
+        currentCapture = request.payload;
+        displayCapturePreview(request.payload);
+        document.getElementById('listing-detected-state').style.display = 'block';
+        document.getElementById('unsupported-page-state').style.display = 'none';
+        // Remove listener after handling message (exactly once)
+        chrome.runtime.onMessage.removeListener(messageListener);
+        resolve();
+      }
+    };
+    chrome.runtime.onMessage.addListener(messageListener);
     chrome.tabs.sendMessage(tab.id, { action: 'captureCurrentPage' }, (response) => {
-      chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-        if (request.action === 'sendCaptureToNavraCar') {
-          currentCapture = request.payload;
-          displayCapturePreview(request.payload);
-          document.getElementById('listing-detected-state').style.display = 'block';
-          document.getElementById('unsupported-page-state').style.display = 'none';
-          resolve();
-        }
-      });
+      if (!response) {
+        chrome.runtime.onMessage.removeListener(messageListener);
+        resolve();
+      }
     });
   });
 }

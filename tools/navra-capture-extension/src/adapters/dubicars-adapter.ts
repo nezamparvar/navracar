@@ -5,7 +5,14 @@ export class DubiCarsAdapter extends SourceAdapter {
   source: 'dubicars' = 'dubicars';
 
   supports(url: string): boolean {
-    return /dubicars\.com/i.test(url);
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      // Must be dubicars.com or a subdomain (*.dubicars.com), not fake-dubicars.com
+      return hostname === 'dubicars.com' || hostname.endsWith('.dubicars.com');
+    } catch {
+      return false;
+    }
   }
 
   detectListingPage(): boolean {

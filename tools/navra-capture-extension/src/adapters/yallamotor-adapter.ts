@@ -5,7 +5,14 @@ export class YallaMotorAdapter extends SourceAdapter {
   source: 'yallamotor' = 'yallamotor';
 
   supports(url: string): boolean {
-    return /yallamotor\.com/i.test(url);
+    try {
+      const urlObj = new URL(url);
+      const hostname = urlObj.hostname.toLowerCase();
+      // Must be yallamotor.com or a subdomain (*.yallamotor.com), not fake-yallamotor.com
+      return hostname === 'yallamotor.com' || hostname.endsWith('.yallamotor.com');
+    } catch {
+      return false;
+    }
   }
 
   detectListingPage(): boolean {

@@ -261,6 +261,14 @@ async function handleKeyboardCapture() {
 }
 
 function showNotification(title, message) {
-  // Show notification (can be extended with chrome.notifications API if needed)
+  // Use Chrome's notifications API for actual user-visible notification
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('src/icons/icon-128.png'),
+    title: title,
+    message: message,
+    priority: 1,
+  });
+  // Also log for debugging
   console.log(`[Navra Capture] ${title}: ${message}`);
 }

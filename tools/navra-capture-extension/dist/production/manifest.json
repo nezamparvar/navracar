@@ -7,13 +7,14 @@
     "activeTab",
     "scripting",
     "storage",
-    "commands",
-    "tabs"
+    "tabs",
+    "notifications"
   ],
   "host_permissions": [
     "*://*.dubizzle.com/*",
     "*://*.dubicars.com/*",
-    "*://*.yallamotor.com/*"
+    "*://*.yallamotor.com/*",
+    "https://navracar.com/*"
   ],
   "background": {
     "service_worker": "src/background/service-worker.js"
