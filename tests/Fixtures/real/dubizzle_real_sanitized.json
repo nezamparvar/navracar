@@ -1,0 +1,15 @@
+{
+  "source_platform": "dubizzle",
+  "source_url": "https://dubai.dubizzle.com/en/motors/used-cars/mercedes-benz/g-class/2026/7/28/buy-now-pay-2027-the-blackline-standard-20-2-380---35d636cc7bca4f26853eaf8175cd43bd/",
+  "captured_at_utc": "2026-08-15T09:33:24.241528Z",
+  "acquisition_method": "Owner manually copied rendered public-page DOM while signed out",
+  "original_filename": "dubizle.txt",
+  "original_sha256": "499402be0f023b7fa2fba5d255e56209014d7f1dde8421d821742fa3921b0656",
+  "sanitized_sha256": "b8ac96b6755e24a89800e884b6d07e80ae37935f53736b6b6c18a28b128341ff",
+  "sanitized": true,
+  "sanitization_summary": "Removed executable/tracking scripts, styles, forms, contact fields, identifiers, query strings, and unrelated markup; retained parser-relevant metadata, structured data, and bounded listing fields.",
+  "contains_credentials_or_personal_data": false,
+  "representative_individual_listing": true,
+  "eligibility_note": "Representative vehicle listing page",
+  "jsonld_types_retained": []
+}
