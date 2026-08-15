@@ -4,6 +4,7 @@
     $categories = \App\Models\CarListing::categoriesWithLiveRates();
     $config = [
         'priceAed' => (float) $listing->price_aed,
+        'customsPriceAed' => $listing->customs_price_aed !== null ? (float) $listing->customs_price_aed : (float) $listing->price_aed,
         'categoryId' => $listing->category_id,
         'categories' => $categories,
         'freeRate' => $freeRate,
@@ -336,9 +337,9 @@ window.carCalculatorApp = function (config = @js($config)) {
 
     return {
         realPriceAED: config.priceAed,
-        customsPriceAED: Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent || 30) / 100)),
+        customsPriceAED: config.customsPriceAed ?? Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent || 30) / 100)),
         customsValueDiscountPercent: config.customsValueDiscountPercent || 30,
-        customsPriceTouched: false,
+        customsPriceTouched: true,
         usdToAedRate: config.usdToAedRate || 3.6725,
         priceCurrency: 'aed',
         customsPriceCurrency: 'aed',
