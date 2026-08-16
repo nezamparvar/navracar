@@ -16,7 +16,7 @@ class QuoteRequest extends Model
         'name', 'phone', 'email', 'notes', 'car_label', 'category', 'temperature',
         'breakdown_json', 'totals_json', 'total_with_profit', 'email_sent', 'source',
         'budget_range', 'country', 'city', 'assigned_to', 'created_by', 'follow_up_status',
-        'current_stage_id', 'loss_reason', 'next_call_date', 'ip_address',
+        'current_stage_id', 'loss_reason', 'next_call_date', 'ip_address', 'is_archived',
     ];
 
     protected function casts(): array
@@ -25,6 +25,7 @@ class QuoteRequest extends Model
             'created_at' => 'datetime',
             'next_call_date' => 'date',
             'email_sent' => 'boolean',
+            'is_archived' => 'boolean',
         ];
     }
 

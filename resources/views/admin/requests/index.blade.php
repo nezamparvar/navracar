@@ -72,15 +72,19 @@
                             @endforeach
                         </select>
                     </div>
-                    <div class="flex flex-col gap-1.5">
-                        <label class="text-xs font-bold text-ink-500 dark:text-ink-400">&nbsp;</label>
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" name="show_all" value="1" id="show_all" @checked(($filters['show_all'] ?? false))>
-                            <label for="show_all" class="text-sm">نمایش تمام درخواست‌ها</label>
-                        </div>
-                    </div>
                 </div>
             @endif
+
+            <div class="flex flex-wrap items-center gap-3">
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="show_all" value="1" id="show_all" @checked(($filters['show_all'] ?? false))>
+                    <label for="show_all" class="text-sm">نمایش تمام درخواست‌ها</label>
+                </div>
+                <div class="flex items-center gap-2">
+                    <input type="checkbox" name="show_archived" value="1" id="show_archived" @checked(($filters['show_archived'] ?? false))>
+                    <label for="show_archived" class="text-sm">نمایش درخواست‌های بایگانی‌شده</label>
+                </div>
+            </div>
 
             <div class="flex flex-wrap gap-2">
                 <x-button type="submit" size="sm">اعمال فیلتر</x-button>
@@ -126,7 +130,7 @@
                                     </x-badge>
                                 </td>
                                 <td class="px-2.5 py-2.5 text-xs">{{ $r->next_call_date?->format('Y-m-d') ?? '-' }}</td>
-                                <td class="px-2.5 py-2.5 space-x-1">
+                                <td class="px-2.5 py-2.5 flex flex-wrap gap-1">
                                     <x-button :href="route('admin.requests.show', $r)" size="sm" variant="secondary">جزئیات</x-button>
                                     @if (in_array($r->follow_up_status, ['باز', 'در حال پیگیری']))
                                         <div x-data="{ open: false }" class="inline-block">
@@ -139,6 +143,17 @@
                                                 </form>
                                             </div>
                                         </div>
+                                    @endif
+                                    @if (!$r->is_archived)
+                                        <form method="POST" action="{{ route('admin.requests.archive', $r) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="rounded-lg border border-ink-200 bg-ink-50 px-2 py-1 text-xs font-semibold text-ink-700 hover:bg-ink-100 dark:border-white/10 dark:bg-white/5 dark:text-ink-200 dark:hover:bg-white/10">بایگانی</button>
+                                        </form>
+                                    @else
+                                        <form method="POST" action="{{ route('admin.requests.unarchive', $r) }}" class="inline">
+                                            @csrf
+                                            <button type="submit" class="rounded-lg border border-amber-200 bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-900/30 dark:bg-amber-900/10 dark:text-amber-200">خارج</button>
+                                        </form>
                                     @endif
                                 </td>
                             </tr>

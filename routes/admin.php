@@ -37,6 +37,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             Route::post('/{lead}/temperature', [RequestController::class, 'temperature'])->name('temperature');
             Route::post('/{lead}/status', [RequestController::class, 'status'])->name('status');
             Route::post('/{lead}/close', [RequestController::class, 'close'])->name('close');
+            Route::post('/{lead}/archive', [RequestController::class, 'archive'])->name('archive');
+            Route::post('/{lead}/unarchive', [RequestController::class, 'unarchive'])->name('unarchive');
         });
 
         Route::post('/template-use', TemplateUseController::class)->name('template-use');

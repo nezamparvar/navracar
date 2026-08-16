@@ -66,6 +66,11 @@ class RequestController extends Controller
             $query->where('current_stage_id', (int) $stage);
         }
 
+        $showArchived = $request->boolean('show_archived', false);
+        if (! $showArchived) {
+            $query->where('is_archived', false);
+        }
+
         $showAll = $request->boolean('show_all', false);
         if (! $showAll && ! $request->filled('status')) {
             $query->whereIn('follow_up_status', ['باز', 'در حال پیگیری']);
@@ -83,7 +88,7 @@ class RequestController extends Controller
             'staffList' => $staffList,
             'statuses' => self::STATUSES,
             'pipelineStages' => $pipelineStages,
-            'filters' => $request->only(['q', 'name', 'phone', 'email', 'car_label', 'from', 'to', 'status', 'stage', 'assigned', 'show_all']),
+            'filters' => $request->only(['q', 'name', 'phone', 'email', 'car_label', 'from', 'to', 'status', 'stage', 'assigned', 'show_all', 'show_archived']),
         ]);
     }
 
@@ -285,6 +290,34 @@ class RequestController extends Controller
         ]);
 
         return back()->with('success', 'درخواست با موفقیت بسته شد.');
+    }
+
+    public function archive(Request $request, QuoteRequest $lead)
+    {
+        $lead->update(['is_archived' => true]);
+
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $request->user()->id,
+            'activity_type' => 'note',
+            'note' => 'درخواست بایگانی شد',
+        ]);
+
+        return back()->with('success', 'درخواست با موفقیت بایگانی شد.');
+    }
+
+    public function unarchive(Request $request, QuoteRequest $lead)
+    {
+        $lead->update(['is_archived' => false]);
+
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $request->user()->id,
+            'activity_type' => 'note',
+            'note' => 'درخواست از بایگانی خارج شد',
+        ]);
+
+        return back()->with('success', 'درخواست با موفقیت از بایگانی خارج شد.');
     }
 
     public function destroy(Request $request, QuoteRequest $lead)

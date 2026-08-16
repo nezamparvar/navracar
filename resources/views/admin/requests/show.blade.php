@@ -149,6 +149,21 @@
                 </form>
             </x-card>
 
+            <x-card title="{{ $lead->is_archived ? 'درخواست بایگانی شده' : 'بایگانی درخواست' }}" icon="archive" class="border-slate-200 dark:border-slate-900/30">
+                <p class="mb-3 text-sm text-ink-600 dark:text-ink-400">{{ $lead->is_archived ? 'این درخواست بایگانی شده است.' : 'درخواست را بایگانی کنید تا از لیست اصلی پنهان شود.' }}</p>
+                @if ($lead->is_archived)
+                    <form method="POST" action="{{ route('admin.requests.unarchive', $lead) }}">
+                        @csrf
+                        <x-button type="submit" variant="secondary" size="sm">خارج کردن از بایگانی</x-button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('admin.requests.archive', $lead) }}" x-data @submit="!confirm('این درخواست بایگانی شود و از لیست اصلی پنهان خواهد شد.') && $event.preventDefault()">
+                        @csrf
+                        <x-button type="submit" variant="secondary" size="sm">بایگانی درخواست</x-button>
+                    </form>
+                @endif
+            </x-card>
+
             @if (auth()->user()->isAdmin())
                 <x-card title="الحاق به کارشناس (فقط مدیر)" icon="users">
                     <form method="POST" action="{{ route('admin.requests.assign', $lead) }}" class="space-y-3">
