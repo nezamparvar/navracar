@@ -136,7 +136,7 @@
                                         <div x-data="{ open: false }" class="inline-block">
                                             <button @click="open = true" class="min-h-[44px] rounded-lg border border-ink-200 bg-ink-50 px-2 py-1 text-xs font-semibold text-ink-700 hover:bg-ink-100 dark:border-white/10 dark:bg-white/5 dark:text-ink-200 dark:hover:bg-white/10">بستن</button>
                                             <div x-show="open" @click.outside="open = false" class="absolute z-50 mt-2 space-y-2 rounded-xl border border-ink-200 bg-white p-3 shadow-lg dark:border-white/10 dark:bg-ink-900">
-                                                <form method="POST" :action="'{{ route('admin.requests.close', '') }}/' + {{ $r->id }}" class="space-y-2">
+                                                <form method="POST" action="{{ route('admin.requests.close', $r) }}" class="space-y-2">
                                                     @csrf
                                                     <button type="submit" name="status" value="بسته - موفق" class="block w-full min-h-[44px] rounded-lg bg-green-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-green-700">موفق</button>
                                                     <button type="submit" name="status" value="بسته - ناموفق" class="block w-full min-h-[44px] rounded-lg bg-red-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-red-700">ناموفق</button>
