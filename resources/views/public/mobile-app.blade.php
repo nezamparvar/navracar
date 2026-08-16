@@ -110,6 +110,7 @@
 <script>
 const CSRF_TOKEN = '{{ csrf_token() }}';
 const PRICING_URL = '{{ route('api.vehicle-pricing.calculate') }}';
+const CUSTOMS_VALUE_DISCOUNT_PERCENT = {{ (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT) }};
 
 document.addEventListener('alpine:init', () => {
     Alpine.data('mobileApp', () => ({
@@ -156,9 +157,8 @@ document.addEventListener('alpine:init', () => {
                     },
                     body: JSON.stringify({
                         real_price_aed: this.form.priceAED,
-                        customs_price_aed: this.form.priceAED * 0.8,
-                        cc: this.form.cc,
-                        fuel: 'petrol'
+                        customs_price_aed: this.form.priceAED * (1 - CUSTOMS_VALUE_DISCOUNT_PERCENT / 100),
+                        category: 'c2000',
                     })
                 });
 
