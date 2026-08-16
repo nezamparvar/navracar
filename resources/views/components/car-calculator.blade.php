@@ -24,6 +24,7 @@
             ->map(fn ($y) => (int) trim($y))->filter()->values()->all(),
         'loanInterestRatePercent' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_INTEREST_RATE_PERCENT),
         'carLabel' => $listing->title_fa,
+        'location' => $listing->location_text ?: '',
         'quoteUrl' => route('public.quote-requests.store'),
         'pricingUrl' => route('public.vehicle-pricing.calculate'),
         'csrfToken' => csrf_token(),
@@ -36,6 +37,13 @@
         نرخ درهم امروز: <span class="num-font" x-text="fmt(freeRate)"></span> تومان
         <span class="font-normal text-amber-800/70 dark:text-amber-300/70">(به‌روزرسانی زنده از پنل مدیریت ناوراکار)</span>
     </div>
+
+    @if ($listing->location_text)
+        <div class="rounded-2xl border border-ink-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-ink-900">
+            <span class="text-xs font-bold text-ink-500 dark:text-ink-400">موقعیت:</span>
+            <span class="ms-2 font-semibold text-ink-900 dark:text-white">{{ $listing->location_text }}</span>
+        </div>
+    @endif
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
