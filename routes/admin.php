@@ -30,6 +30,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::prefix('requests')->name('requests.')->group(function () {
             Route::get('/', [RequestController::class, 'index'])->name('index');
+            Route::get('/deleted', [RequestController::class, 'deletedIndex'])->name('deleted.index');
             Route::get('/create', [RequestController::class, 'create'])->name('create');
             Route::post('/', [RequestController::class, 'store'])->name('store');
             Route::get('/{lead}', [RequestController::class, 'show'])->name('show');
@@ -40,7 +41,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             Route::post('/{lead}/archive', [RequestController::class, 'archive'])->name('archive');
             Route::post('/{lead}/unarchive', [RequestController::class, 'unarchive'])->name('unarchive');
         });
-        Route::get('/requests/deleted', [RequestController::class, 'deletedIndex'])->name('requests.deleted.index');
 
         Route::post('/template-use', TemplateUseController::class)->name('template-use');
 
