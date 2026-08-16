@@ -560,8 +560,8 @@
     <div class="card">
       <h2><span class="num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9v.01M18 15v.01"/></svg></span> اطلاعات قیمت و ارز</h2>
       <div class="field-grid">
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/></svg>قیمت واقعی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="realPriceAED" value="400,000"><button type="button" class="unit unit-toggle" id="realPriceAEDUnit" onclick="togglePriceCurrency('realPriceAED')">درهم</button></div></div>
-        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M4 10h16"/></svg>قیمت گمرکی خودرو</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsPriceAED" value="400,000"><button type="button" class="unit unit-toggle" id="customsPriceAEDUnit" onclick="togglePriceCurrency('customsPriceAED')">درهم</button></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M3 13l1.5-4.5A2 2 0 0 1 6.4 7h11.2a2 2 0 0 1 1.9 1.5L21 13"/><rect x="2.5" y="13" width="19" height="5" rx="1.5"/></svg>قیمت واقعی خودرو</label><span class="hint" style="font-size:.72rem;color:var(--ink-soft);margin-right:8px;">مثال</span><div class="input-wrap"><input type="text" inputmode="decimal" id="realPriceAED" value="400,000"><button type="button" class="unit unit-toggle" id="realPriceAEDUnit" onclick="togglePriceCurrency('realPriceAED')">درهم</button></div></div>
+        <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 21V10l8-6 8 6v11"/><path d="M4 10h16"/></svg>قیمت گمرکی خودرو <button type="button" class="reset-link" id="resetCustomsPriceBtn" style="display:none;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>استفاده از مقدار پیشنهادی</button></label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsPriceAED"><button type="button" class="unit unit-toggle" id="customsPriceAEDUnit" onclick="togglePriceCurrency('customsPriceAED')">درهم</button></div></div>
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4 4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز آزاد</label><div class="input-wrap"><input type="text" inputmode="decimal" id="freeRate" value="{{ number_format($pricingSettings['freeRate']) }}" readonly><span class="unit">تومان</span></div></div>
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 2l4 4-4 4M3 12v-1a4 4 0 0 1 4-4h14M7 22l-4-4M21 12v1a4 4 0 0 1-4 4H3"/></svg>نرخ ارز گمرک</label><div class="input-wrap"><input type="text" inputmode="decimal" id="customsRate" value="{{ number_format($pricingSettings['customsRate']) }}" readonly><span class="unit">تومان</span></div></div>
         <div class="field"><label><svg class="flbl" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 20c2 1 4 1 6 0s4-1 6 0 4 1 6 0M5 20l1-9 4-6h4l4 6 1 9"/></svg>حمل دریایی</label><div class="input-wrap"><input type="text" inputmode="decimal" id="seaFreightAED" value="{{ number_format($pricingSettings['seaFreightAed']) }}" readonly><span class="unit">درهم</span></div></div>
@@ -778,6 +778,7 @@ const CONTACT_IRAN = @js($contactIran);
 const CONTACT_UAE = @js($contactUae);
 const CONTACT_TEHRAN = @js($contactTehran);
 const USD_TO_AED_RATE = @js($usdToAedRate);
+const CUSTOMS_VALUE_DISCOUNT_PERCENT = @js($customsValueDiscountPercent);
 const priceCurrencyState = { realPriceAED: 'aed', customsPriceAED: 'aed' };
 function getPriceAED(id){
   const raw = num(id);
@@ -1317,6 +1318,61 @@ function formatThousands(el){
   const el = document.getElementById(id);
   el.addEventListener('input', ()=>formatThousands(el));
 });
+
+// Initialize customs price from discount percentage and track if manually touched
+let customsPriceTouched = false;
+function initializeAndWatchCustomsPrice(){
+  const realPriceEl = document.getElementById('realPriceAED');
+  const customsPriceEl = document.getElementById('customsPriceAED');
+  const resetBtn = document.getElementById('resetCustomsPriceBtn');
+  const discountPercent = CUSTOMS_VALUE_DISCOUNT_PERCENT ?? 30;
+
+  function calculateSuggestedCustomsPrice(){
+    const realPrice = num('realPriceAED');
+    return Math.max(0, realPrice * (1 - discountPercent / 100));
+  }
+
+  function restoreCustomsPriceSuggestion(){
+    customsPriceTouched = false;
+    const suggested = calculateSuggestedCustomsPrice();
+    customsPriceEl.value = suggested > 0 ? formatNumberWithCommas(suggested) : '';
+    resetBtn.style.display = 'none';
+    formatThousands(customsPriceEl);
+    scheduleCalc();
+  }
+
+  function formatNumberWithCommas(num){
+    const str = Math.round(num).toString();
+    return str.replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+
+  // Initialize on first load
+  if(!customsPriceEl.value){
+    restoreCustomsPriceSuggestion();
+  }
+
+  // Watch for changes to real price and auto-update customs price if not manually touched
+  realPriceEl.addEventListener('input', function(){
+    formatThousands(this);
+    if(!customsPriceTouched){
+      restoreCustomsPriceSuggestion();
+    }
+  });
+
+  // Track when customs price is manually touched
+  customsPriceEl.addEventListener('input', function(){
+    customsPriceTouched = true;
+    resetBtn.style.display = 'inline-flex';
+    formatThousands(this);
+  });
+
+  // Setup reset button
+  resetBtn.addEventListener('click', function(e){
+    e.preventDefault();
+    restoreCustomsPriceSuggestion();
+  });
+}
+initializeAndWatchCustomsPrice();
 
 function num(id){ const raw=(document.getElementById(id).value||'').replace(/,/g,''); const v = parseFloat(raw); return isNaN(v)||v<0 ? 0 : v; }
 function pct(id){ return num(id)/100; }
