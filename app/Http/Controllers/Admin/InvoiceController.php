@@ -210,10 +210,12 @@ class InvoiceController extends Controller
     public function show(Request $request, Invoice $invoice)
     {
         abort_unless($this->ownsInvoice($invoice, $request->user()), 403);
+        $locale = $request->string('lang')->lower()->value() === 'en' ? 'en' : 'fa';
 
         return view('admin.invoices.show', [
             'pageTitle' => 'پیش‌فاکتور '.$invoice->invoice_number,
             'invoice' => $invoice,
+            'locale' => $locale,
             'breakdown' => $invoice->breakdown(),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
@@ -233,7 +235,7 @@ class InvoiceController extends Controller
     public function downloadPdf(Request $request, Invoice $invoice, ProformaPdfGenerator $pdfGenerator, string $language = 'fa')
     {
         abort_unless($this->ownsInvoice($invoice, $request->user()), 403);
-        $language = $language === 'en' ? 'en' : 'fa';
+        $language = $language === 'en' || $request->string('lang')->lower()->value() === 'en' ? 'en' : 'fa';
         $path = $pdfGenerator->fromInvoice($invoice, $language);
 
         $downloadName = $language === 'fa'
@@ -360,3 +362,4 @@ class InvoiceController extends Controller
         return (float) preg_replace('/[^0-9.\-]/', '', (string) $value);
     }
 }
+

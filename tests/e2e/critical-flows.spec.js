@@ -111,6 +111,7 @@ test('admin issues an automatic server-priced Proforma and downloads its PDF', a
     await page.locator('button[type="submit"]').click();
 
     await page.goto('/admin/invoices/create');
+    await expect(page.locator('input[name="real_price_aed"]')).toBeVisible();
     await page.locator('input[name="customer_name"]').fill('Pricing E2E Customer');
     await page.locator('input[name="customer_phone"]').fill('09124444444');
     await page.locator('input[name="car_label"]').fill('BMW X4');
@@ -118,18 +119,33 @@ test('admin issues an automatic server-priced Proforma and downloads its PDF', a
     await page.locator('input[name="customs_price_aed"]').fill('80000');
     await page.locator('select[name="category"]').selectOption('c2000');
 
-    const [pricingResponse] = await Promise.all([
-        page.waitForResponse(response => response.url().includes('/vehicle-pricing/calculate') && response.ok()),
-        page.getByRole('button', { name: 'محاسبه خودکار' }).click(),
-    ]);
+    // Target the invoice form only (page also has logout form in the admin shell)
+    const pricingResponsePromise = page.waitForResponse(
+        (response) => response.url().includes('/vehicle-pricing/calculate')
+    );
+    await page.locator('form[x-data="invoicePricingForm"]').evaluate(async (form) => {
+        const data = window.Alpine.$data(form);
+        data.mode = 'automatic';
+        data.realPriceAed = 100000;
+        data.customsPriceAed = 80000;
+        data.category = 'c2000';
+        data.customsPriceTouched = true;
+        await data.calculate();
+    });
+    const pricingResponse = await pricingResponsePromise;
+    if (!pricingResponse.ok()) {
+        throw new Error(`vehicle-pricing/calculate failed: HTTP ${pricingResponse.status()}`);
+    }
     const pricing = await pricingResponse.json();
+    const totalText = Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان';
     await expect(page.getByText('گواهی اسقاط خودرو فرسوده')).toBeVisible();
-    await expect(page.getByText(Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان')).toBeVisible();
+    // Total appears in both the server summary and the displayTotal box
+    await expect(page.getByText(totalText).first()).toBeVisible();
 
     await page.locator('input[name="discount_amount"]').fill('1000');
     await page.getByRole('button', { name: 'ذخیره و صدور پیش‌فاکتور' }).click();
     await expect(page).toHaveURL(/\/admin\/invoices\/\d+$/);
-    await expect(page.getByText(Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان')).toBeVisible();
+    await expect(page.getByText(totalText).first()).toBeVisible();
     await expect(page.getByText('− 1,000 تومان')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download');

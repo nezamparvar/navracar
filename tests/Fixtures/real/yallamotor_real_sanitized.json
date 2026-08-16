@@ -1,0 +1,17 @@
+{
+  "source_platform": "yallamotor",
+  "source_url": "https://uae.yallamotor.com/used-cars/hyundai/azera/2014/used-hyundai-azera-2014-dubai-2127210",
+  "captured_at_utc": "2026-08-15T09:35:52.426246Z",
+  "acquisition_method": "Owner manually copied rendered public-page DOM while signed out",
+  "original_filename": "yallahmotor.txt",
+  "original_sha256": "203de1f30f443c35e25d6be76d3c8652618c34b12f97ab16968ce2e7660f66ee",
+  "sanitized_sha256": "e9331d88bfcd0d78d0d2fc594101441e2b721f5eb591305707c83c5536359920",
+  "sanitized": true,
+  "sanitization_summary": "Removed executable/tracking scripts, styles, forms, contact fields, identifiers, query strings, and unrelated markup; retained parser-relevant metadata, structured data, and bounded listing fields.",
+  "contains_credentials_or_personal_data": false,
+  "representative_individual_listing": true,
+  "eligibility_note": "Representative vehicle listing page",
+  "jsonld_types_retained": [
+    "['Product', 'Car']"
+  ]
+}

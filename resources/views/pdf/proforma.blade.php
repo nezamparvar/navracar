@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="fa" dir="rtl">
+<html lang="{{ $locale ?? 'fa' }}" dir="{{ ($locale ?? 'fa') === 'en' ? 'ltr' : 'rtl' }}">
 <head>
 <meta charset="UTF-8">
 <title>{{ $docTitle }} {{ $docNumber }}</title>
@@ -17,8 +17,8 @@
     * { box-sizing: border-box; }
     body {
         font-family: 'Vazir', sans-serif;
-        direction: rtl;
-        text-align: right;
+        direction: {{ ($locale ?? 'fa') === 'en' ? 'ltr' : 'rtl' }};
+        text-align: {{ ($locale ?? 'fa') === 'en' ? 'left' : 'right' }};
         color: #1A1730;
         font-size: 11px;
         line-height: 1.6;
@@ -189,3 +189,4 @@
 
 </body>
 </html>
+

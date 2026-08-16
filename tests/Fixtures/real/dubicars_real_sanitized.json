@@ -1,0 +1,17 @@
+{
+  "source_platform": "dubicars",
+  "source_url": "https://www.dubicars.com/2019-rolls-royce-wraith-std-uaes-very-best-example-aed-18082-per-month-846872.html",
+  "captured_at_utc": "2026-08-15T09:33:10.371390Z",
+  "acquisition_method": "Owner manually copied rendered public-page DOM while signed out",
+  "original_filename": "dubaicar.txt",
+  "original_sha256": "974fff7419f834fddaac676ea71fe78866b5f2d068c25868e7c2d50466e14571",
+  "sanitized_sha256": "28bc0427c09a8dd40f10aade4c7a9f2a22d932a8d78f58a92cc42abaa7a92995",
+  "sanitized": true,
+  "sanitization_summary": "Removed executable/tracking scripts, styles, forms, contact fields, identifiers, query strings, and unrelated markup; retained parser-relevant metadata, structured data, and bounded listing fields.",
+  "contains_credentials_or_personal_data": false,
+  "representative_individual_listing": true,
+  "eligibility_note": "Representative vehicle listing page",
+  "jsonld_types_retained": [
+    ""
+  ]
+}

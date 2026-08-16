@@ -1,4 +1,5 @@
 <x-layouts.admin :page-title="$pageTitle">
+
     @php
         $formConfig = [
             'prefill' => $prefill,
@@ -6,12 +7,14 @@
             'quickRows' => $quickRows,
             'pricingUrl' => $pricingUrl,
             'csrfToken' => csrf_token(),
+            'customsValueDiscountPercent' => (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT),
         ];
     @endphp
 
     <form method="POST" action="{{ route('admin.invoices.store') }}"
           x-data="invoicePricingForm"
           class="mx-auto max-w-5xl space-y-5">
+
         @csrf
         <input type="hidden" name="invoice_id" value="{{ $editId ?: '' }}">
         <input type="hidden" name="request_id" value="{{ $requestId ?: '' }}">
@@ -32,71 +35,79 @@
                 <div><label class="mb-1 block text-xs font-bold text-ink-500">شماره تماس *</label><input name="customer_phone" value="{{ old('customer_phone', $prefill['phone']) }}" required class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5"></div>
                 <div><label class="mb-1 block text-xs font-bold text-ink-500">ایمیل</label><input type="email" name="customer_email" value="{{ old('customer_email', $prefill['email']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5"></div>
                 <div class="sm:col-span-2"><label class="mb-1 block text-xs font-bold text-ink-500">خودرو</label><input name="car_label" value="{{ old('car_label', $prefill['car']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5"></div>
-                <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">نوع پیش‌فاکتور</label>
-                    <select name="invoice_type" x-model="invoiceType" @change="onInvoiceTypeChanged" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
-                        <option value="full">کامل خودرو</option>
-                        <option value="single_item">خدمت مجزا</option>
-                    </select>
-                </div>
                 <div class="sm:col-span-2 lg:col-span-3"><label class="mb-1 block text-xs font-bold text-ink-500">آدرس</label><input name="customer_address" value="{{ old('customer_address', $prefill['address']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5"></div>
             </div>
         </x-card>
 
         <x-card title="روش قیمت‌گذاری" icon="target" subtitle="محاسبه خودکار روش اصلی است؛ ورود دستی فقط با دلیل ثبت‌شده مجاز است.">
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                <label class="cursor-pointer rounded-xl border p-4" :class="mode === 'automatic' ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-ink-200 dark:border-white/10'">
-                    <input type="radio" name="pricing_mode" value="automatic" x-model="mode" :disabled="invoiceType !== 'full'" class="ms-2">
-                    <span class="font-extrabold">محاسبه خودکار</span>
-                    <span class="mt-1 block text-xs text-ink-500">موتور مرکزی، تنظیمات زنده و جمع سرور</span>
+                <label class="flex cursor-pointer items-start rounded-xl border border-ink-200 p-3 dark:border-white/10">
+                    <input type="radio" name="pricing_mode" value="automatic" x-model="mode" class="ms-2">
+                    <div>
+                        <span class="font-extrabold">محاسبه خودکار</span>
+                        <span class="mt-1 block text-xs text-ink-500">موتور مرکزی، تنظیمات زنده و جمع سرور</span>
+                    </div>
                 </label>
-                <label class="cursor-pointer rounded-xl border p-4" :class="mode === 'manual' ? 'border-amber-500 bg-amber-50 dark:bg-amber-500/10' : 'border-ink-200 dark:border-white/10'">
+                <label class="flex cursor-pointer items-start rounded-xl border border-ink-200 p-3 dark:border-white/10">
                     <input type="radio" name="pricing_mode" value="manual" x-model="mode" class="ms-2">
-                    <span class="font-extrabold">ویرایش دستی / خدمت خاص</span>
-                    <span class="mt-1 block text-xs text-ink-500">جمع سرور از روی ردیف‌ها؛ دلیل اجباری</span>
+                    <div>
+                        <span class="font-extrabold">ویرایش دستی / خدمت خاص</span>
+                        <span class="mt-1 block text-xs text-ink-500">جمع سرور از روی ردیف‌ها؛ دلیل اجباری</span>
+                    </div>
                 </label>
             </div>
+            <input type="hidden" name="invoice_type" x-model="invoiceType">
         </x-card>
 
-        <div x-show="mode === 'automatic'" x-cloak class="space-y-5">
+        <div x-show="mode === 'automatic'">
             <x-card title="ورودی‌های محاسبه خودکار" icon="car" subtitle="نرخ‌ها، درصدها، تعرفه و اسقاط فقط از تنظیمات جاری سرور خوانده می‌شوند.">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت واقعی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="real_price_aed" x-model.number="realPriceAed" @input="onRealPriceChanged" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
-                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="customs_price_aed" x-model.number="customsPriceAed" @input="customsUserEdited" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"><p class="mt-1 text-[11px] leading-5 text-ink-500">مقدار پیشنهادی به‌صورت خودکار ۲۵٪ کمتر از قیمت واقعی محاسبه می‌شود؛ این فقط پیشنهاد است و باید بر اساس اطلاعات واقعی پرونده بررسی و اصلاح شود.</p><button type="button" @click="restoreCustomsSuggestion" class="mt-1 text-xs font-bold text-brand-700">استفاده از مقدار پیشنهادی</button></div>
+                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت واقعی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="real_price_aed" x-model.number="realPriceAed" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
+                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="customs_price_aed" x-model.number="customsPriceAed" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"><button type="button" x-show="customsPriceTouched" @click="restoreCustomsSuggestion" class="mt-1 text-xs font-bold text-brand-700">استفاده از مقدار پیشنهادی</button></div>
                     <div><label class="mb-1 block text-xs font-bold text-ink-500">دسته خودرو *</label><select name="category" x-model="category" @change="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5">@foreach($categories as $id => $item)<option value="{{ $id }}">{{ $item['label'] }}</option>@endforeach</select></div>
                 </div>
                 <div class="mt-4 flex items-center gap-3">
-                    <button type="button" @click="calculate" :disabled="loading" class="rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"><span x-text="loading ? 'در حال محاسبه…' : 'محاسبه خودکار'"></span></button>
+                    <button type="button" @click="calculate" :disabled="loading" class="rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+                        <span x-show="!loading">محاسبه خودکار</span>
+                        <span x-show="loading">در حال محاسبه…</span>
+                    </button>
                     <span class="text-xs text-red-600" x-text="error"></span>
                 </div>
             </x-card>
 
-            <x-card title="خلاصه محاسبه سرور" icon="invoice">
+            <x-card title="خلاصه محاسبه سرور" icon="chart" class="mt-5">
+                <template x-if="!result">
+                    <p class="text-sm text-ink-500">برای مشاهده تفکیک، قیمت‌ها را وارد و محاسبه کنید.</p>
+                </template>
                 <template x-if="result">
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                            <div class="rounded-xl bg-ink-50 p-4 dark:bg-white/5"><div class="text-xs text-ink-500">جمع گمرک</div><div class="mt-1 font-extrabold num-font" x-text="fmt(result.customsSubtotalToman) + ' تومان'"></div></div>
-                            <div class="rounded-xl bg-ink-50 p-4 dark:bg-white/5"><div class="text-xs text-ink-500">جمع پلاک و اسقاط</div><div class="mt-1 font-extrabold num-font" x-text="fmt(result.plateSubtotalToman) + ' تومان'"></div></div>
-                            <div class="rounded-xl border-2 border-amber-400 bg-amber-50 p-4 dark:bg-amber-500/10"><div class="text-xs text-amber-800">جمع نهایی موتور مرکزی</div><div class="mt-1 text-lg font-black num-font" x-text="fmt(result.finalTotalToman) + ' تومان'"></div></div>
-                        </div>
-                        <div class="overflow-x-auto rounded-xl border border-ink-200 dark:border-white/10">
-                            <table class="w-full text-xs sm:text-sm"><thead class="bg-ink-50 dark:bg-white/5"><tr><th class="p-2 text-right">شرح</th><th class="p-2 text-right">نرخ / پایه</th><th class="p-2 text-left">مبلغ</th></tr></thead><tbody><template x-for="row in previewRows" :key="row.key"><tr class="border-t border-ink-100 dark:border-white/5"><td class="p-2" x-text="row.label"></td><td class="p-2 text-xs text-ink-500" x-text="row.rate"></td><td class="p-2 text-left num-font font-bold" x-text="fmt(row.value)"></td></tr></template></tbody></table>
+                    <div class="space-y-2">
+                        <template x-for="row in previewRows" :key="row.key">
+                            <div class="flex items-start justify-between gap-3 border-b border-ink-100 py-2 text-sm dark:border-white/10">
+                                <div>
+                                    <div class="font-bold" x-text="row.label"></div>
+                                    <div class="text-xs text-ink-500" x-text="row.rate"></div>
+                                </div>
+                                <div class="num-font font-bold" x-text="fmt(row.value) + ' تومان'"></div>
+                            </div>
+                        </template>
+                        <div class="flex justify-between pt-2 text-sm font-extrabold">
+                            <span>جمع کل نهایی</span>
+                            <span class="num-font" x-text="fmt(result.finalTotalToman) + ' تومان'"></span>
                         </div>
                     </div>
                 </template>
-                <p x-show="!result" class="text-sm text-ink-500">برای مشاهده تفکیک، قیمت‌ها را وارد و محاسبه کنید.</p>
             </x-card>
 
-            <x-card title="تعدیل اختیاری مورد تأیید" icon="target" subtitle="اصل محاسبه حفظ می‌شود؛ مبلغ و دلیل تعدیل جداگانه در سابقه سند ثبت خواهد شد.">
+            <x-card title="تعدیل اختیاری مورد تأیید" icon="edit" class="mt-5" subtitle="اصل محاسبه حفظ می‌شود؛ مبلغ و دلیل تعدیل جداگانه در سابقه سند ثبت خواهد شد.">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div><label class="mb-1 block text-xs font-bold text-ink-500">مبلغ تعدیل (تومان؛ مثبت یا منفی)</label><input type="number" step="0.01" name="adjustment_amount" x-model.number="adjustmentAmount" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
-                    <div><label class="mb-1 block text-xs font-bold text-ink-500">دلیل تعدیل</label><input name="adjustment_reason" x-model="adjustmentReason" :disabled="mode !== 'automatic'" :required="mode === 'automatic' && hasAdjustment" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5"></div>
+                    <div><label class="mb-1 block text-xs font-bold text-ink-500">مبلغ تعدیل (تومان)</label><input type="number" step="1" name="adjustment_amount" x-model.number="adjustmentAmount" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
+                    <div><label class="mb-1 block text-xs font-bold text-ink-500">دلیل تعدیل</label><input name="adjustment_reason" x-model="adjustmentReason" :required="hasAdjustment" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5"></div>
                 </div>
             </x-card>
         </div>
 
-        <div x-show="mode === 'manual'" x-cloak class="space-y-5">
-            <x-card title="ردیف‌های دستی" icon="invoice" subtitle="جمع کل ارسالی مرورگر قابل اعتماد نیست؛ سرور مبلغ ردیف‌ها را دوباره جمع می‌کند.">
+        <div x-show="mode === 'manual'">
+            <x-card title="ردیف‌های دستی" icon="list" subtitle="جمع کل ارسالی مرورگر قابل اعتماد نیست؛ سرور مبلغ ردیف‌ها را دوباره جمع می‌کند.">
                 <div class="space-y-3">
                     <template x-for="(row, index) in rows" :key="row.id">
                         <div class="grid grid-cols-1 gap-2 rounded-xl border border-ink-200 p-3 sm:grid-cols-[2fr_2fr_1fr_auto] dark:border-white/10">
@@ -116,12 +127,12 @@
             </x-card>
         </div>
 
-        <x-card title="جمع‌بندی و صدور" icon="check">
-            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div><label class="mb-1 block text-xs font-bold text-ink-500">جمع کل محاسبه‌شده توسط سرور/ردیف‌ها</label><div class="rounded-xl bg-ink-100 px-3.5 py-2.5 font-black num-font dark:bg-white/10" x-text="fmt(displayTotal)"></div></div>
-                <div><label class="mb-1 block text-xs font-bold text-ink-500">تخفیف</label><input name="discount_amount" value="{{ old('discount_amount', $prefill['discount']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
+        <x-card title="تخفیف و نهایی‌سازی" icon="check">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div><label class="mb-1 block text-xs font-bold text-ink-500">تخفیف</label><input data-money-input name="discount_amount" value="{{ old('discount_amount', $prefill['discount']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
                 <div><label class="mb-1 block text-xs font-bold text-ink-500">اعتبار تا</label><input type="date" name="valid_until" value="{{ old('valid_until', $prefill['valid_until']) }}" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5"></div>
-                <div class="sm:col-span-3"><label class="mb-1 block text-xs font-bold text-ink-500">شرایط پرداخت</label><textarea name="payment_terms" rows="2" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5">{{ old('payment_terms', $prefill['payment_terms']) }}</textarea></div>
+                <div class="sm:col-span-2"><label class="mb-1 block text-xs font-bold text-ink-500">جمع کل محاسبه‌شده توسط سرور/ردیف‌ها</label><div class="rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font font-extrabold dark:border-white/10 dark:bg-white/5" x-text="fmt(displayTotal) + ' تومان'"></div></div>
+                <div class="sm:col-span-2"><label class="mb-1 block text-xs font-bold text-ink-500">شرایط پرداخت</label><textarea name="payment_terms" rows="2" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5">{{ old('payment_terms', $prefill['payment_terms']) }}</textarea></div>
             </div>
             <button type="submit" class="mt-5 w-full rounded-xl bg-emerald-700 px-5 py-3 text-sm font-extrabold text-white">ذخیره و صدور پیش‌فاکتور</button>
         </x-card>
@@ -131,14 +142,18 @@
         <script>
             window.invoicePricingForm = function (config = @js($formConfig)) {
                 const prefill = config.prefill;
+                const discountPercent = config.customsValueDiscountPercent ?? 30;
+                const realPrice = Number(prefill.real_price_aed || 0);
+                const customsPrice = Number(prefill.customs_price_aed || 0);
+                const suggestedCustomsPrice = Math.max(0, realPrice * (1 - discountPercent / 100));
                 return {
                     categories: config.categories,
                     invoiceType: prefill.invoice_type || 'full',
                     mode: prefill.pricing_mode || 'automatic',
-                    realPriceAed: Number(prefill.real_price_aed || 0),
-                    customsPriceAed: Number(prefill.customs_price_aed || 0),
-                    customsAutoSuggested: !(Number(prefill.customs_price_aed || 0) > 0),
-                    lastSuggestedCustoms: 0,
+                    realPriceAed: realPrice,
+                    customsPriceAed: customsPrice || suggestedCustomsPrice,
+                    customsValueDiscountPercent: discountPercent,
+                    customsPriceTouched: customsPrice > 0,
                     category: prefill.category || 'c2000',
                     adjustmentAmount: Number(prefill.adjustment_amount || 0),
                     adjustmentReason: prefill.adjustment_reason || '',
@@ -152,24 +167,28 @@
 
                     init() {
                         if (!this.rows.length) this.addRow();
-                        if (this.customsAutoSuggested && this.realPriceAed > 0) this.restoreCustomsSuggestion();
                         if (this.mode === 'automatic' && this.realPriceAed > 0 && this.customsPriceAed > 0) this.calculate();
+
+                        this.$watch('realPriceAed', (newVal) => {
+                            if (!this.customsPriceTouched && newVal >= 0) {
+                                this.customsPriceAed = Math.max(0, newVal * (1 - this.customsValueDiscountPercent / 100));
+                            }
+                        });
+
+                        this.$watch('customsPriceAed', (newVal) => {
+                            if (newVal !== (this.realPriceAed * (1 - this.customsValueDiscountPercent / 100))) {
+                                this.customsPriceTouched = true;
+                            }
+                        });
                     },
-                    onInvoiceTypeChanged() {
-                        if (this.invoiceType !== 'full') this.mode = 'manual';
-                    },
-                    onRealPriceChanged() {
-                        const current = Number(this.customsPriceAed || 0);
-                        if (this.customsAutoSuggested || current === 0 || current === this.lastSuggestedCustoms) this.restoreCustomsSuggestion();
-                    },
-                    customsUserEdited() {
-                        const current = Number(this.customsPriceAed || 0);
-                        if (current !== this.lastSuggestedCustoms) this.customsAutoSuggested = false;
+
+                    suggestedCustomsPrice() {
+                        return Math.max(0, this.realPriceAed * (1 - this.customsValueDiscountPercent / 100));
                     },
                     restoreCustomsSuggestion() {
-                        this.customsPriceAed = Math.max(0, Number(this.realPriceAed || 0) * 0.75);
-                        this.lastSuggestedCustoms = this.customsPriceAed;
-                        this.customsAutoSuggested = true;
+                        this.customsPriceAed = this.suggestedCustomsPrice();
+                        this.customsPriceTouched = false;
+                        this.calculate();
                     },
                     addRow() {
                         this.rows.push({id: this.nextId++, label: '', rate: '', amount: ''});
@@ -191,8 +210,7 @@
                         return Number(this.adjustmentAmount) !== 0;
                     },
                     fmt(value) {
-                        const number = this.numeric(value);
-                        return number.toLocaleString('en-US', {maximumFractionDigits: 2});
+                        return Math.round(this.numeric(value)).toLocaleString('en-US');
                     },
                     async calculate() {
                         if (this.mode !== 'automatic' || this.realPriceAed < 0 || this.customsPriceAed < 0) return;

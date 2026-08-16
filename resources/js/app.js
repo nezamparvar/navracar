@@ -1,4 +1,5 @@
 import './bootstrap';
+import { installMoneyInputs } from './money';
 
 import Alpine from '@alpinejs/csp';
 
@@ -60,5 +61,7 @@ Alpine.store('theme', {
 });
 
 Alpine.start();
+installMoneyInputs();
 
 window.pushToast = (message, type = 'info') => Alpine.store('toasts').push(message, type);
+

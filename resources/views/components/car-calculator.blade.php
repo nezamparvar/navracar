@@ -4,6 +4,7 @@
     $categories = \App\Models\CarListing::categoriesWithLiveRates();
     $config = [
         'priceAed' => (float) $listing->price_aed,
+        'customsPriceAed' => $listing->customs_price_aed !== null ? (float) $listing->customs_price_aed : (float) $listing->price_aed,
         'categoryId' => $listing->category_id,
         'categories' => $categories,
         'freeRate' => $freeRate,
@@ -13,6 +14,7 @@
         'storageToman' => (float) \App\Models\Setting::get(\App\Models\Setting::STORAGE_TOMAN),
         'scrapCertPriceToman' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_CERT_PRICE_TOMAN),
         'scrapThresholdAed' => (float) \App\Models\Setting::get(\App\Models\Setting::SCRAP_THRESHOLD_AED),
+        'customsValueDiscountPercent' => (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT),
         'usdToAedRate' => (float) \App\Models\Setting::get(\App\Models\Setting::USD_TO_AED_RATE),
         'loanMaxAmountToman' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_MAX_AMOUNT_TOMAN),
         'loanTermYearsOptions' => collect(explode(',', \App\Models\Setting::get(\App\Models\Setting::LOAN_TERM_YEARS)))
@@ -52,6 +54,8 @@
                 </div>
             </div>
             <input type="number" x-model.number="customsPriceDisplay" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
+            <button type="button" x-show="customsPriceTouched" @click="restoreSuggestion" class="mt-1 text-xs font-bold text-brand-700">استفاده از مقدار پیشنهادی</button>
+            <p class="mt-1 text-[11px] text-ink-400" x-text="'پیشنهاد اولیه: ' + fmt(suggestedCustomsPrice()) + ' درهم (' + customsValueDiscountPercent + '% کاهش)'"></p>
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500 dark:text-ink-400">دسته‌بندی خودرو</label>
@@ -333,7 +337,9 @@ window.carCalculatorApp = function (config = @js($config)) {
 
     return {
         realPriceAED: config.priceAed,
-        customsPriceAED: config.priceAed,
+        customsPriceAED: config.customsPriceAed ?? Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent ?? 30) / 100)),
+        customsValueDiscountPercent: config.customsValueDiscountPercent ?? 30,
+        customsPriceTouched: config.customsPriceAed > 0,
         usdToAedRate: config.usdToAedRate || 3.6725,
         priceCurrency: 'aed',
         customsPriceCurrency: 'aed',
@@ -360,7 +366,10 @@ window.carCalculatorApp = function (config = @js($config)) {
         pfName: '', pfPhone: '', pfEmail: '', pfStatus: '', pfOk: false, pfSubmitting: false, pfPdfUrl: '',
 
         init() {
-            this.$watch('realPriceAED', () => this.scheduleRecalc());
+            this.$watch('realPriceAED', () => {
+                if (!this.customsPriceTouched) this.customsPriceAED = this.suggestedCustomsPrice();
+                this.scheduleRecalc();
+            });
             this.$watch('customsPriceAED', () => this.scheduleRecalc());
             this.$watch('categoryId', () => this.scheduleRecalc());
             this.recalc();
@@ -378,7 +387,18 @@ window.carCalculatorApp = function (config = @js($config)) {
         },
         set customsPriceDisplay(v) {
             const n = parseFloat(v) || 0;
+            this.customsPriceTouched = true;
             this.customsPriceAED = this.customsPriceCurrency === 'usd' ? n * this.usdToAedRate : n;
+        },
+
+        suggestedCustomsPrice() {
+            return Math.max(0, (parseFloat(this.realPriceAED) || 0) * (1 - this.customsValueDiscountPercent / 100));
+        },
+
+        restoreSuggestion() {
+            this.customsPriceAED = this.suggestedCustomsPrice();
+            this.customsPriceTouched = false;
+            this.scheduleRecalc();
         },
 
         scheduleRecalc() {
@@ -433,7 +453,7 @@ window.carCalculatorApp = function (config = @js($config)) {
         },
 
         fmt(n) {
-            return Number(n || 0).toLocaleString('en-US', {maximumFractionDigits: 2});
+            return Math.round(n || 0).toLocaleString('en-US');
         },
 
         async submitProforma() {
@@ -547,3 +567,4 @@ window.carCalculatorApp = function (config = @js($config)) {
 };
 </script>
 @endonce
+
