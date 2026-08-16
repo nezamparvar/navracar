@@ -11,43 +11,82 @@
     </div>
 
     <x-card>
-        <form method="GET" class="mb-5 flex flex-wrap items-end gap-3">
-            <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-ink-500 dark:text-ink-400">جستجو (نام، تلفن، خودرو)</label>
-                <input type="text" name="q" value="{{ $filters['q'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-ink-500 dark:text-ink-400">از تاریخ</label>
-                <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-ink-500 dark:text-ink-400">تا تاریخ</label>
-                <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
-            </div>
-            <div class="flex flex-col gap-1.5">
-                <label class="text-xs font-bold text-ink-500 dark:text-ink-400">وضعیت پیگیری</label>
-                <select name="status" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
-                    <option value="">همه</option>
-                    @foreach ($statuses as $s)
-                        <option value="{{ $s }}" @selected(($filters['status'] ?? '') === $s)>{{ $s }}</option>
-                    @endforeach
-                </select>
-            </div>
-            @if (auth()->user()->isAdmin())
+        <form method="GET" class="mb-5 space-y-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                 <div class="flex flex-col gap-1.5">
-                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">الحاق‌شده به</label>
-                    <select name="assigned" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
-                        <option value="all">همه</option>
-                        <option value="unassigned" @selected(($filters['assigned'] ?? '') === 'unassigned')>بدون الحاق</option>
-                        @foreach ($staffList as $s)
-                            <option value="{{ $s->id }}" @selected((string) ($filters['assigned'] ?? '') === (string) $s->id)>{{ $s->displayName() }}</option>
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">نام</label>
+                    <input type="text" name="name" value="{{ $filters['name'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">تلفن</label>
+                    <input type="text" name="phone" value="{{ $filters['phone'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">ایمیل</label>
+                    <input type="text" name="email" value="{{ $filters['email'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">خودرو</label>
+                    <input type="text" name="car_label" value="{{ $filters['car_label'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">از تاریخ</label>
+                    <input type="date" name="from" value="{{ $filters['from'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">تا تاریخ</label>
+                    <input type="date" name="to" value="{{ $filters['to'] ?? '' }}" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">وضعیت پیگیری</label>
+                    <select name="status" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                        <option value="">همه</option>
+                        @foreach ($statuses as $s)
+                            <option value="{{ $s }}" @selected(($filters['status'] ?? '') === $s)>{{ $s }}</option>
                         @endforeach
                     </select>
                 </div>
+                <div class="flex flex-col gap-1.5">
+                    <label class="text-xs font-bold text-ink-500 dark:text-ink-400">مرحله خط لوله</label>
+                    <select name="stage" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                        <option value="">همه</option>
+                        @foreach ($pipelineStages as $ps)
+                            <option value="{{ $ps->id }}" @selected((string) ($filters['stage'] ?? '') === (string) $ps->id)>{{ $ps->name }}</option>
+                        @endforeach
+                    </select>
+                </div>
+            </div>
+
+            @if (auth()->user()->isAdmin())
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-2">
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-ink-500 dark:text-ink-400">الحاق‌شده به</label>
+                        <select name="assigned" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+                            <option value="all">همه</option>
+                            <option value="unassigned" @selected(($filters['assigned'] ?? '') === 'unassigned')>بدون الحاق</option>
+                            @foreach ($staffList as $s)
+                                <option value="{{ $s->id }}" @selected((string) ($filters['assigned'] ?? '') === (string) $s->id)>{{ $s->displayName() }}</option>
+                            @endforeach
+                        </select>
+                    </div>
+                    <div class="flex flex-col gap-1.5">
+                        <label class="text-xs font-bold text-ink-500 dark:text-ink-400">&nbsp;</label>
+                        <div class="flex items-center gap-2">
+                            <input type="checkbox" name="show_all" value="1" id="show_all" @checked(($filters['show_all'] ?? false))>
+                            <label for="show_all" class="text-sm">نمایش تمام درخواست‌ها</label>
+                        </div>
+                    </div>
+                </div>
             @endif
-            <x-button type="submit" size="sm">اعمال فیلتر</x-button>
-            <x-button :href="route('admin.requests.index')" variant="secondary" size="sm">پاک کردن</x-button>
-            <x-button :href="route('admin.export', array_merge(['type' => 'requests'], $filters))" variant="amber" size="sm">خروجی اکسل</x-button>
+
+            <div class="flex flex-wrap gap-2">
+                <x-button type="submit" size="sm">اعمال فیلتر</x-button>
+                <x-button :href="route('admin.requests.index')" variant="secondary" size="sm">پاک کردن</x-button>
+                <x-button :href="route('admin.export', array_merge(['type' => 'requests'], $filters))" variant="amber" size="sm">خروجی اکسل</x-button>
+            </div>
         </form>
 
         @if ($rows->isEmpty())

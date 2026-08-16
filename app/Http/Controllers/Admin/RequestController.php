@@ -14,7 +14,7 @@ use Illuminate\Validation\Rule;
 
 class RequestController extends Controller
 {
-    public const STATUSES = ['باز', 'در حال پیگیری', 'فروخته شد', 'بسته - ناموفق'];
+    public const STATUSES = ['باز', 'در حال پیگیری', 'فروخته شد', 'بسته - موفق', 'بسته - ناموفق'];
 
     public const COUNTRIES = [
         'ایران', 'امارات متحده عربی', 'ترکیه', 'عراق', 'افغانستان', 'آلمان', 'کانادا',
@@ -41,25 +41,49 @@ class RequestController extends Controller
                     ->orWhere('car_label', 'like', "%{$q}%");
             });
         }
+
+        if ($name = (string) $request->string('name', '')) {
+            $query->where('name', 'like', "%{$name}%");
+        }
+        if ($phone = (string) $request->string('phone', '')) {
+            $query->where('phone', 'like', "%{$phone}%");
+        }
+        if ($email = (string) $request->string('email', '')) {
+            $query->where('email', 'like', "%{$email}%");
+        }
+        if ($carLabel = (string) $request->string('car_label', '')) {
+            $query->where('car_label', 'like', "%{$carLabel}%");
+        }
+
         if ($from = (string) $request->string('from', '')) {
             $query->where('created_at', '>=', $from.' 00:00:00');
         }
         if ($to = (string) $request->string('to', '')) {
             $query->where('created_at', '<=', $to.' 23:59:59');
         }
-        if ($status = (string) $request->string('status', '')) {
+
+        if ($stage = (string) $request->string('stage', '')) {
+            $query->where('current_stage_id', (int) $stage);
+        }
+
+        $showAll = $request->boolean('show_all', false);
+        if (! $showAll && ! $request->filled('status')) {
+            $query->whereIn('follow_up_status', ['باز', 'در حال پیگیری']);
+        } elseif ($status = (string) $request->string('status', '')) {
             $query->where('follow_up_status', $status);
         }
 
         $rows = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
         $staffList = $user->isAdmin() ? AdminUser::orderBy('username')->get() : collect();
+        $pipelineStages = PipelineStage::orderBy('order')->get();
 
         return view('admin.requests.index', [
             'pageTitle' => 'درخواست‌های استعلام قیمت (CRM)',
             'rows' => $rows,
             'staffList' => $staffList,
             'statuses' => self::STATUSES,
-            'filters' => $request->only(['q', 'from', 'to', 'status', 'assigned']),
+            'pipelineStages' => $pipelineStages,
+            'filters' => $request->only(['q', 'name', 'phone', 'email', 'car_label', 'from', 'to', 'status', 'stage', 'assigned', 'show_all']),
         ]);
     }
 
