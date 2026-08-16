@@ -18,7 +18,7 @@ class KanbanController extends Controller
         $user = $request->user();
         $stages = PipelineStage::where('is_active', true)->orderBy('sort_order')->get();
 
-        $query = QuoteRequest::query()->with('assignee');
+        $query = QuoteRequest::query()->with('assignee')->where('is_archived', false);
 
         if (! $user->isAdmin()) {
             $query->where('assigned_to', $user->id);
