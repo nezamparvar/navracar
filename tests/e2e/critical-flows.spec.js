@@ -44,7 +44,9 @@ test('listing calculator renders the same authoritative backend result', async (
     const pricing = await pricingResponse.json();
 
     expect(pricing.input.realPriceAed).toBe(100000);
-    expect(pricing.input.customsPriceAed).toBe(100000);
+    // When listing.customs_price_aed is NULL, UI defaults to settings discount (30%):
+    // 100000 * (1 - 30/100) = 70000
+    expect(pricing.input.customsPriceAed).toBe(70000);
     expect(pricing.category.id).toBe('c2000');
     await expect(page.locator('[x-text*="results.totalWithProfit"]')).toHaveText(
         Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان',
