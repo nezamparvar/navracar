@@ -235,6 +235,11 @@ class CarListingController extends Controller
         $translated = $this->translateRaw($raw);
         $translated['category_id'] = $this->mapper->detectCategory($raw['engine_capacity_cc'] ?? null, $raw['fuel_type'] ?? null);
 
+        // Preserve manually set customs_price_aed (non-null values) on refetch
+        if ($carListing->customs_price_aed !== null) {
+            $translated['customs_price_aed'] = $carListing->customs_price_aed;
+        }
+
         $carListing->update($translated);
 
         $this->imageDownloader->deleteAll($carListing->id);
