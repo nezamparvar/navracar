@@ -40,6 +40,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
             Route::post('/{lead}/archive', [RequestController::class, 'archive'])->name('archive');
             Route::post('/{lead}/unarchive', [RequestController::class, 'unarchive'])->name('unarchive');
         });
+        Route::get('/requests/deleted', [RequestController::class, 'deletedIndex'])->name('requests.deleted.index');
 
         Route::post('/template-use', TemplateUseController::class)->name('template-use');
 
@@ -105,6 +106,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // بخش‌های فقط برای مدیر کامل.
     Route::middleware('admin.role')->group(function () {
         Route::delete('/requests/{lead}', [RequestController::class, 'destroy'])->name('requests.destroy');
+        Route::post('/requests/{lead}/restore', [RequestController::class, 'restore'])->name('requests.restore');
+        Route::delete('/requests/{lead}/force', [RequestController::class, 'forceDelete'])->name('requests.force-delete');
         Route::patch('/pipeline-stages/{stage}/name', [KanbanController::class, 'updateStageName'])->name('pipeline-stages.update-name');
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');

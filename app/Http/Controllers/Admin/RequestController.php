@@ -321,6 +321,59 @@ class RequestController extends Controller
         return back()->with('success', 'درخواست با موفقیت حذف شد.');
     }
 
+    public function deletedIndex(Request $request)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $query = QuoteRequest::onlyTrashed();
+
+        if ($q = (string) $request->string('q', '')) {
+            $query->where(function ($w) use ($q) {
+                $w->where('name', 'like', "%{$q}%")
+                    ->orWhere('phone', 'like', "%{$q}%")
+                    ->orWhere('car_label', 'like', "%{$q}%");
+            });
+        }
+
+        $rows = $query->orderByDesc('deleted_at')->paginate(15)->withQueryString();
+
+        return view('admin.requests.deleted', [
+            'pageTitle' => 'درخواست‌های حذف‌شده',
+            'rows' => $rows,
+            'filters' => $request->only(['q']),
+        ]);
+    }
+
+    public function restore(Request $request, QuoteRequest $lead)
+    {
+        $this->authorize('restore', $lead);
+
+        $lead->restore();
+
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $request->user()->id,
+            'activity_type' => 'note',
+            'note' => 'درخواست بازیابی شد',
+        ]);
+
+        ActivityLogger::info('بازیابی درخواست حذف‌شده', ['id' => $lead->id, 'name' => $lead->name]);
+
+        return back()->with('success', 'درخواست با موفقیت بازیابی شد.');
+    }
+
+    public function forceDelete(Request $request, QuoteRequest $lead)
+    {
+        $this->authorize('forceDelete', $lead);
+
+        $leadName = $lead->name;
+        $lead->forceDelete();
+
+        ActivityLogger::warn('حذف دائمی درخواست', ['id' => $lead->id, 'name' => $leadName]);
+
+        return back()->with('success', 'درخواست به‌طور دائمی حذف شد.');
+    }
+
     public const CITIES = [
         'تهران', 'کرج', 'مشهد', 'اصفهان', 'شیراز', 'تبریز', 'اهواز', 'قم', 'کرمانشاه', 'ارومیه',
         'رشت', 'زاهدان', 'کرمان', 'اراک', 'یزد', 'اردبیل', 'بندرعباس', 'قزوین', 'ساری', 'همدان', 'سایر',
