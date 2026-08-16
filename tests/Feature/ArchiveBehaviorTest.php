@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\AdminUser;
 use App\Models\LeadActivity;
+use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -115,12 +116,14 @@ class ArchiveBehaviorTest extends TestCase
     public function test_archived_leads_excluded_from_kanban(): void
     {
         $admin = $this->makeUser('admin', 'admin-kanban-archive');
+        $stage = PipelineStage::create(['name' => 'جدید', 'slug' => 'new', 'sort_order' => 1, 'is_active' => true]);
 
         $activeLead = QuoteRequest::create([
             'name' => 'Active Lead',
             'phone' => '0910',
             'assigned_to' => $admin->id,
             'is_archived' => false,
+            'current_stage_id' => $stage->id,
         ]);
 
         $archivedLead = QuoteRequest::create([
@@ -128,6 +131,7 @@ class ArchiveBehaviorTest extends TestCase
             'phone' => '0911',
             'assigned_to' => $admin->id,
             'is_archived' => true,
+            'current_stage_id' => $stage->id,
         ]);
 
         $response = $this->actingAs($admin)->get(route('admin.kanban'));

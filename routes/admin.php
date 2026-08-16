@@ -19,6 +19,11 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VinCheckController;
 use Illuminate\Support\Facades\Route;
 
+// Model binding for soft-deleted leads in restore/forceDelete routes
+Route::bind('lead', function ($value) {
+    return \App\Models\QuoteRequest::withTrashed()->findOrFail($value);
+});
+
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // بخش‌های فروش: هم مدیر کامل و هم «کارشناس فروش» دسترسی دارند (کارشناس
     // فروش فقط درخواست‌ها/پیش‌فاکتورهای الحاق‌شده به خودش را می‌بیند — کنترل
