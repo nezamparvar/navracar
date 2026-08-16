@@ -38,11 +38,15 @@ final class VehiclePricingService
         $customsPercentageSubtotal = array_sum(array_column($customsRows, 'value'));
         $freightToman = $settings->seaFreightAed * $settings->freeRate;
         $permitsToman = $settings->licenseFeeAed * $settings->freeRate;
+        $otherCostsToman = $settings->otherCostsAed * $settings->freeRate;
 
         $customsRows[] = $this->fixedRow('sea_freight', 'حمل دریایی', 'درهم × نرخ ارز آزاد', $freightToman);
         $customsRows[] = $this->fixedRow('license_fee', 'هزینه صدور مجوز واردات', 'درهم × نرخ ارز آزاد', $permitsToman);
+        if ($otherCostsToman > 0) {
+            $customsRows[] = $this->fixedRow('other_costs', 'هزینه‌های دیگر', 'درهم × نرخ ارز آزاد', $otherCostsToman);
+        }
         $customsRows[] = $this->fixedRow('storage', 'انبارداری، دموراژ و THC', 'مبلغ ثابت تنظیمات', $settings->storageToman);
-        $customsSubtotal = $customsPercentageSubtotal + $freightToman + $permitsToman + $settings->storageToman;
+        $customsSubtotal = $customsPercentageSubtotal + $freightToman + $permitsToman + $otherCostsToman + $settings->storageToman;
 
         $scrapBracket = $input->customsPriceAed > $settings->scrapThresholdAed ? 'above' : 'upto';
         $scrapCertificateCount = $settings->scrapCertificateCounts[$scrapTier][$scrapBracket];
@@ -65,7 +69,7 @@ final class VehiclePricingService
         $preServiceTotal = $customsSubtotal + $plateSubtotal + $realPriceToman;
 
         // Preserve the established Dubizzle base exactly: storage and vehicle price are excluded.
-        $serviceFeeBase = $customsPercentageSubtotal + $plateSubtotal + $freightToman + $permitsToman;
+        $serviceFeeBase = $customsPercentageSubtotal + $plateSubtotal + $freightToman + $permitsToman + $otherCostsToman;
         $serviceFee = $this->percent($percentages['serviceFee'], $serviceFeeBase);
         $finalTotal = $preServiceTotal + $serviceFee;
 
