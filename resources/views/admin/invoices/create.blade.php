@@ -1,4 +1,107 @@
 <x-layouts.admin :page-title="$pageTitle">
+    @once
+        <script>
+            window.invoicePricingForm = function (config = {}) {
+                const prefill = config.prefill;
+                const discountPercent = config.customsValueDiscountPercent ?? 30;
+                const realPrice = Number(prefill.real_price_aed || 0);
+                const customsPrice = Number(prefill.customs_price_aed || 0);
+                const suggestedCustomsPrice = Math.max(0, realPrice * (1 - discountPercent / 100));
+                return {
+                    categories: config.categories,
+                    invoiceType: prefill.invoice_type || 'full',
+                    mode: prefill.pricing_mode || 'automatic',
+                    realPriceAed: realPrice,
+                    customsPriceAed: customsPrice || suggestedCustomsPrice,
+                    customsValueDiscountPercent: discountPercent,
+                    customsPriceTouched: customsPrice > 0,
+                    category: prefill.category || 'c2000',
+                    adjustmentAmount: Number(prefill.adjustment_amount || 0),
+                    adjustmentReason: prefill.adjustment_reason || '',
+                    currency: prefill.currency || 'toman',
+                    exchangeRate: prefill.exchange_rate || '',
+                    rows: (prefill.breakdown || []).map((row, index) => ({id: index + 1, label: row.label || '', rate: row.rate || '', amount: row.amount ?? row.value ?? ''})),
+                    result: null,
+                    loading: false,
+                    error: '',
+                    nextId: 1000,
+
+                    init() {
+                        if (!this.rows.length) this.addRow();
+                        if (this.mode === 'automatic' && this.realPriceAed > 0 && this.customsPriceAed > 0) this.calculate();
+
+                        // Watch for real price changes to auto-update customs price unless manually edited
+                        this.$watch('realPriceAed', (newVal) => {
+                            if (!this.customsPriceTouched && newVal >= 0) {
+                                this.customsPriceAed = Math.max(0, newVal * (1 - this.customsValueDiscountPercent / 100));
+                            }
+                        });
+
+                        // Mark customs price as touched when user edits it
+                        this.$watch('customsPriceAed', (newVal) => {
+                            if (newVal !== (this.realPriceAed * (1 - this.customsValueDiscountPercent / 100))) {
+                                this.customsPriceTouched = true;
+                            }
+                        });
+                    },
+
+                    suggestedCustomsPrice() {
+                        return Math.max(0, this.realPriceAed * (1 - this.customsValueDiscountPercent / 100));
+                    },
+
+                    restoreCustomsSuggestion() {
+                        this.customsPriceAed = this.suggestedCustomsPrice();
+                        this.customsPriceTouched = false;
+                    },
+                    onInvoiceTypeChanged() {
+                        if (this.invoiceType !== 'full') this.mode = 'manual';
+                    },
+                    addRow() {
+                        this.rows.push({id: this.nextId++, label: '', rate: '', amount: ''});
+                    },
+                    numeric(value) {
+                        const normalized = String(value ?? '').replace(/[^0-9.-]/g, '');
+                        const number = Number(normalized);
+                        return Number.isFinite(number) ? number : 0;
+                    },
+                    get displayTotal() {
+                        if (this.mode === 'automatic') return Math.max(0, this.numeric(this.result?.finalTotalToman) + this.numeric(this.adjustmentAmount));
+                        return this.rows.reduce((sum, row) => sum + Math.max(0, this.numeric(row.amount)), 0);
+                    },
+                    get previewRows() {
+                        if (!this.result) return [];
+                        return [...this.result.customsRows, ...this.result.plateRows];
+                    },
+                    get hasAdjustment() {
+                        return Number(this.adjustmentAmount) !== 0;
+                    },
+                    fmt(value) {
+                        return Math.round(this.numeric(value)).toLocaleString('en-US');
+                    },
+                    async calculate() {
+                        if (this.mode !== 'automatic' || this.realPriceAed < 0 || this.customsPriceAed < 0) return;
+                        this.loading = true;
+                        this.error = '';
+                        try {
+                            const response = await fetch(config.pricingUrl, {
+                                method: 'POST',
+                                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken, 'Accept': 'application/json'},
+                                body: JSON.stringify({real_price_aed: this.realPriceAed, customs_price_aed: this.customsPriceAed, category: this.category}),
+                            });
+                            if (!response.ok) throw new Error('محاسبه سرور ناموفق بود.');
+                            this.result = await response.json();
+                        } catch (error) {
+                            this.result = null;
+                            this.error = error.message || 'خطا در محاسبه سرور';
+                        } finally {
+                            this.loading = false;
+                        }
+                    },
+                };
+            };
+        </script>
+    @endonce
+
     @php
         $formConfig = [
             'prefill' => $prefill,
@@ -127,108 +230,5 @@
             <button type="submit" class="mt-5 w-full rounded-xl bg-emerald-700 px-5 py-3 text-sm font-extrabold text-white">ذخیره و صدور پیش‌فاکتور</button>
         </x-card>
     </form>
-
-    @once
-        <script>
-            window.invoicePricingForm = function (config = @js($formConfig + ['customsValueDiscountPercent' => (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT)])) {
-                const prefill = config.prefill;
-                const discountPercent = config.customsValueDiscountPercent ?? 30;
-                const realPrice = Number(prefill.real_price_aed || 0);
-                const customsPrice = Number(prefill.customs_price_aed || 0);
-                const suggestedCustomsPrice = Math.max(0, realPrice * (1 - discountPercent / 100));
-                return {
-                    categories: config.categories,
-                    invoiceType: prefill.invoice_type || 'full',
-                    mode: prefill.pricing_mode || 'automatic',
-                    realPriceAed: realPrice,
-                    customsPriceAed: customsPrice || suggestedCustomsPrice,
-                    customsValueDiscountPercent: discountPercent,
-                    customsPriceTouched: customsPrice > 0,
-                    category: prefill.category || 'c2000',
-                    adjustmentAmount: Number(prefill.adjustment_amount || 0),
-                    adjustmentReason: prefill.adjustment_reason || '',
-                    currency: prefill.currency || 'toman',
-                    exchangeRate: prefill.exchange_rate || '',
-                    rows: (prefill.breakdown || []).map((row, index) => ({id: index + 1, label: row.label || '', rate: row.rate || '', amount: row.amount ?? row.value ?? ''})),
-                    result: null,
-                    loading: false,
-                    error: '',
-                    nextId: 1000,
-
-                    init() {
-                        if (!this.rows.length) this.addRow();
-                        if (this.mode === 'automatic' && this.realPriceAed > 0 && this.customsPriceAed > 0) this.calculate();
-
-                        // Watch for real price changes to auto-update customs price unless manually edited
-                        this.$watch('realPriceAed', (newVal) => {
-                            if (!this.customsPriceTouched && newVal >= 0) {
-                                this.customsPriceAed = Math.max(0, newVal * (1 - this.customsValueDiscountPercent / 100));
-                            }
-                        });
-
-                        // Mark customs price as touched when user edits it
-                        this.$watch('customsPriceAed', (newVal) => {
-                            if (newVal !== (this.realPriceAed * (1 - this.customsValueDiscountPercent / 100))) {
-                                this.customsPriceTouched = true;
-                            }
-                        });
-                    },
-
-                    suggestedCustomsPrice() {
-                        return Math.max(0, this.realPriceAed * (1 - this.customsValueDiscountPercent / 100));
-                    },
-
-                    restoreCustomsSuggestion() {
-                        this.customsPriceAed = this.suggestedCustomsPrice();
-                        this.customsPriceTouched = false;
-                    },
-                    onInvoiceTypeChanged() {
-                        if (this.invoiceType !== 'full') this.mode = 'manual';
-                    },
-                    addRow() {
-                        this.rows.push({id: this.nextId++, label: '', rate: '', amount: ''});
-                    },
-                    numeric(value) {
-                        const normalized = String(value ?? '').replace(/[^0-9.-]/g, '');
-                        const number = Number(normalized);
-                        return Number.isFinite(number) ? number : 0;
-                    },
-                    get displayTotal() {
-                        if (this.mode === 'automatic') return Math.max(0, this.numeric(this.result?.finalTotalToman) + this.numeric(this.adjustmentAmount));
-                        return this.rows.reduce((sum, row) => sum + Math.max(0, this.numeric(row.amount)), 0);
-                    },
-                    get previewRows() {
-                        if (!this.result) return [];
-                        return [...this.result.customsRows, ...this.result.plateRows];
-                    },
-                    get hasAdjustment() {
-                        return Number(this.adjustmentAmount) !== 0;
-                    },
-                    fmt(value) {
-                        return Math.round(this.numeric(value)).toLocaleString('en-US');
-                    },
-                    async calculate() {
-                        if (this.mode !== 'automatic' || this.realPriceAed < 0 || this.customsPriceAed < 0) return;
-                        this.loading = true;
-                        this.error = '';
-                        try {
-                            const response = await fetch(config.pricingUrl, {
-                                method: 'POST',
-                                headers: {'Content-Type': 'application/json', 'X-CSRF-TOKEN': config.csrfToken, 'Accept': 'application/json'},
-                                body: JSON.stringify({real_price_aed: this.realPriceAed, customs_price_aed: this.customsPriceAed, category: this.category}),
-                            });
-                            if (!response.ok) throw new Error('محاسبه سرور ناموفق بود.');
-                            this.result = await response.json();
-                        } catch (error) {
-                            this.result = null;
-                            this.error = error.message || 'خطا در محاسبه سرور';
-                        } finally {
-                            this.loading = false;
-                        }
-                    },
-                };
-            };
-        </script>
-    @endonce
 </x-layouts.admin>
 
