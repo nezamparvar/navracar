@@ -114,21 +114,26 @@ test('admin issues an automatic server-priced Proforma and downloads its PDF', a
     // Wait for Alpine to initialize and the automatic pricing section to become visible
     await expect(page.locator('input[name="real_price_aed"]')).toBeVisible();
 
-    // Fill non-pricing fields first
+    // Fill customer fields
     await page.locator('input[name="customer_name"]').fill('Pricing E2E Customer');
     await page.locator('input[name="customer_phone"]').fill('09124444444');
     await page.locator('input[name="car_label"]').fill('BMW X4');
 
-    // Register response waiter BEFORE filling pricing inputs (which can auto-trigger calculate)
-    const [pricingResponse] = await Promise.all([
-        page.waitForResponse(response => response.url().includes('/vehicle-pricing/calculate') && response.ok()),
-        (async () => {
-            // Fill pricing inputs and select category (these trigger auto-calculate via @input.debounce and @change)
-            await page.locator('input[name="real_price_aed"]').fill('100000');
-            await page.locator('input[name="customs_price_aed"]').fill('80000');
-            await page.locator('select[name="category"]').selectOption('c2000');
-        })(),
-    ]);
+    // Fill pricing fields
+    await page.locator('input[name="real_price_aed"]').fill('100000');
+    await page.locator('input[name="customs_price_aed"]').fill('80000');
+    await page.locator('select[name="category"]').selectOption('c2000');
+
+    // Register response waiter BEFORE clicking calculate button
+    const pricingResponsePromise = page.waitForResponse(
+        (response) => response.url().includes('/vehicle-pricing/calculate') && response.ok()
+    );
+
+    // Explicitly click the calculate button (use regex to match partial accessible name)
+    await page.getByRole('button', { name: /محاسبه خودکار/ }).click();
+
+    // Await the response
+    const pricingResponse = await pricingResponsePromise;
     const pricing = await pricingResponse.json();
     await expect(page.getByText('گواهی اسقاط خودرو فرسوده')).toBeVisible();
     await expect(page.getByText(Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان')).toBeVisible();
