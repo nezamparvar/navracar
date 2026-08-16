@@ -1321,6 +1321,7 @@ function formatThousands(el){
 
 // Initialize customs price from discount percentage and track if manually touched
 let customsPriceTouched = false;
+let calculationTimer = null;
 function initializeAndWatchCustomsPrice(){
   const realPriceEl = document.getElementById('realPriceAED');
   const customsPriceEl = document.getElementById('customsPriceAED');
@@ -1450,7 +1451,6 @@ function logCalcNow(){
 
 let lastPricingResult = null;
 let calculationSequence = 0;
-let calculationTimer = null;
 
 async function calc(){
   const sequence = ++calculationSequence;
