@@ -4,9 +4,12 @@ namespace App\Models;
 
 use App\Services\VehiclePricing\VehiclePricingCatalog;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class QuoteRequest extends Model
 {
+    use SoftDeletes;
+
     public $timestamps = false;
 
     protected $fillable = [

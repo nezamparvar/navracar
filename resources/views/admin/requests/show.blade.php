@@ -135,6 +135,15 @@
                         <x-button type="submit" variant="amber">ثبت الحاق</x-button>
                     </form>
                 </x-card>
+
+                <x-card title="حذف درخواست" icon="trash" class="border-red-200 dark:border-red-900/30">
+                    <p class="mb-3 text-sm text-ink-600 dark:text-ink-400">حذف درخواست از سیستم قابل بازگشت است.</p>
+                    <form method="POST" action="{{ route('admin.requests.destroy', $lead) }}" x-data @submit="!confirm('آیا از حذف این درخواست اطمینان دارید؟') && $event.preventDefault()">
+                        @csrf
+                        @method('DELETE')
+                        <x-button type="submit" variant="danger">حذف درخواست</x-button>
+                    </form>
+                </x-card>
             @else
                 <x-card title="الحاق" icon="users">
                     <p class="text-sm text-ink-500">این درخواست به شما الحاق شده است. برای تغییر الحاق، با مدیر سیستم هماهنگ کنید.</p>

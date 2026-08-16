@@ -23,7 +23,7 @@ class RequestController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $query = QuoteRequest::query()->with(['assignee']);
+        $query = QuoteRequest::query()->withoutTrashed()->with(['assignee']);
 
         if (! $user->isAdmin()) {
             $query->where('assigned_to', $user->id);
@@ -232,6 +232,25 @@ class RequestController extends Controller
         }
 
         return back()->with('success', 'به‌روزرسانی ثبت شد.');
+    }
+
+    public function destroy(Request $request, QuoteRequest $lead)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $leadName = $lead->name;
+        $lead->delete();
+
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $request->user()->id,
+            'activity_type' => 'note',
+            'note' => 'درخواست حذف شد',
+        ]);
+
+        ActivityLogger::warn('حذف درخواست از سیستم', ['id' => $lead->id, 'name' => $leadName]);
+
+        return back()->with('success', 'درخواست با موفقیت حذف شد.');
     }
 
     public const CITIES = [
