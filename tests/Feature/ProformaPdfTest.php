@@ -143,6 +143,30 @@ class ProformaPdfTest extends TestCase
         $response->assertSee('قیمت گمرکی خودرو');
     }
 
+    public function test_customs_value_discount_with_zero_percent_setting(): void
+    {
+        \App\Models\Setting::set(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '0');
+        $admin = $this->admin();
+        $response = $this->actingAs($admin)->get(route('admin.invoices.create'));
+
+        $response->assertOk();
+        // Verify the form renders with 0% discount (not coerced to 30%)
+        $response->assertSee('قیمت واقعی خودرو');
+        $response->assertSee('قیمت گمرکی خودرو');
+    }
+
+    public function test_customs_value_discount_with_custom_percent_setting(): void
+    {
+        \App\Models\Setting::set(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '25.5');
+        $admin = $this->admin();
+        $response = $this->actingAs($admin)->get(route('admin.invoices.create'));
+
+        $response->assertOk();
+        // Verify the form renders with custom decimal discount percentage
+        $response->assertSee('قیمت واقعی خودرو');
+        $response->assertSee('قیمت گمرکی خودرو');
+    }
+
     public function test_pdf_failure_logs_diagnostic_context_without_secret_text(): void
     {
         Storage::fake('public');
