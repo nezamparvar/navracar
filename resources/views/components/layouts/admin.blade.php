@@ -61,8 +61,19 @@
         </div>
 
         <nav class="mt-2 flex-1 space-y-1 overflow-y-auto px-3 pb-4">
+            @if (auth()->user()?->canManageSales())
+                {{-- Dashboard available to both admin and sales --}}
+                @php $active = request()->routeIs('admin.dashboard*'); @endphp
+                <a href="{{ route('admin.dashboard') }}"
+                   class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                   {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
+                    <x-icon name="dashboard" class="w-[18px] h-[18px]" />
+                    داشبورد
+                </a>
+            @endif
+
             @if (auth()->user()?->isAdmin())
-                @foreach ($navItems as $item)
+                @foreach (array_slice($navItems, 1) as $item)
                     @php $active = request()->routeIs($item['route'].'*'); @endphp
                     <a href="{{ route($item['route']) }}"
                        class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors

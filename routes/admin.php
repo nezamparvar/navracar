@@ -24,6 +24,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // فروش فقط درخواست‌ها/پیش‌فاکتورهای الحاق‌شده به خودش را می‌بیند — کنترل
     // دقیق‌تر داخل خود کنترلرهاست).
     Route::middleware('sales.role')->group(function () {
+        Route::get('/', DashboardController::class)->name('dashboard');
         Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban');
         Route::post('/kanban/change-stage', [KanbanController::class, 'updateStage'])->name('kanban.change-stage');
 
@@ -100,7 +101,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // بخش‌های فقط برای مدیر کامل.
     Route::middleware('admin.role')->group(function () {
-        Route::get('/', DashboardController::class)->name('dashboard');
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
         Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');
