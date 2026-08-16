@@ -128,7 +128,7 @@ class ProformaPdfGenerator
         $unitLabel = Invoice::CURRENCIES[$currency] ?? 'Toman';
         $exRate = (float) ($invoice->exchange_rate ?? 0);
         $breakdown = array_map(fn ($row) => [
-            'label' => $row['label'] ?? '',
+            'label' => ProformaBreakdownLocalizer::label($row, 'en'),
             'rate' => $row['rate'] ?? '',
             'amount' => $this->formatAmount($row['amount'] ?? 0).' '.$unitLabel,
         ], $invoice->breakdown());

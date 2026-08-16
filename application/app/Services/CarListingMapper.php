@@ -19,17 +19,33 @@ class CarListingMapper
         }
 
         $normalized = str_replace([',', '–', '—', '−'], ['', '-', '-', '-'], $text);
+
+        // Liters (e.g., "2.0L", "2.5 liter")
         if (preg_match('/(\d+(?:\.\d+)?)\s*(?:l|liter|litre)\b/i', $normalized, $m)) {
             $cc = (int) round((float) $m[1] * 1000);
             return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
         }
+
+        // Ranges with cc (e.g., "1500-2000 cc", "1500 to 1999")
         if (preg_match('/(\d{3,5})\s*(?:cc)?\s*(?:-|to)\s*(\d{3,5})\s*(?:cc)?/i', $normalized, $m)) {
             return ['kind' => 'range', 'min' => (int) $m[1], 'max' => (int) $m[2]];
         }
+
+        // CC with prefix/suffix patterns: "cc 4000", "cc +4000", "+4000 cc", "4000 cc", "4000cc"
+        // Extract largest 3-5 digit number when cc or + is present
+        if (preg_match('/cc\s*[+]?\s*(\d{3,5})/i', $normalized, $m) ||
+            preg_match('/[+]\s*(\d{3,5})\s*cc/i', $normalized, $m)) {
+            $cc = (int) $m[1];
+            return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
+        }
+
+        // Plain cc pattern (word boundary before)
         if (preg_match('/\b(\d{3,5})\s*cc\b/i', $normalized, $m)) {
             $cc = (int) $m[1];
             return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
         }
+
+        // Plain digits only
         if (preg_match('/^\s*(\d{3,5})\s*$/', $normalized, $m)) {
             $cc = (int) $m[1];
             return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
@@ -63,8 +79,16 @@ class CarListingMapper
         }
 
         $cc = $engine['min'];
-        if ($engine['kind'] === 'range' && $cc === 1500 && ($engine['max'] ?? 0) > 1500) {
-            $cc = 1501;
+
+        // For ranges, prefer the upper bound when it is meaningfully higher
+        // (e.g. "2000-2499" or "cc 2499 - 2000" should land in c2500, not c2000)
+        if ($engine['kind'] === 'range' && ($engine['max'] ?? 0) > ($engine['min'] ?? 0)) {
+            $cc = (int) $engine['max'];
+        }
+
+        // Keep the old 1500 special case only if upper is still ≤ 1500
+        if ($engine['kind'] === 'range' && $cc <= 1500) {
+            $cc = 1500;
         }
 
         return match (true) {

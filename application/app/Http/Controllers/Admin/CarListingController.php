@@ -9,6 +9,7 @@ use App\Models\Setting;
 use App\Services\CarImageDownloader;
 use App\Services\CarListingMapper;
 use App\Services\DubizzleParser;
+use App\Services\Capture\MarketplaceHtmlImportService;
 use App\Services\DubizzleTranslator;
 use App\Services\SocialPublisher;
 use App\Services\VehiclePricing\VehiclePricingCatalog;
@@ -25,6 +26,7 @@ class CarListingController extends Controller
         private readonly CarListingMapper $mapper,
         private readonly CarImageDownloader $imageDownloader,
         private readonly SocialPublisher $socialPublisher,
+        private readonly MarketplaceHtmlImportService $marketplaceImports,
     ) {}
 
     public function index()
@@ -41,37 +43,22 @@ class CarListingController extends Controller
     {
         $data = $request->validate([
             'source_url' => ['required', 'url', 'max:1000'],
-            'html_source' => ['nullable', 'string'],
+            'html_source' => ['required', 'string', 'max:5242880'],
         ]);
 
-        if (! $this->parser->isAllowedSourceUrl($data['source_url'])) {
-            throw ValidationException::withMessages(['source_url' => 'Only approved HTTPS Dubizzle listing URLs are allowed.']);
+        try {
+            $result = $this->marketplaceImports->import($data['html_source'], $data['source_url']);
+        } catch (\InvalidArgumentException $exception) {
+            throw ValidationException::withMessages(['html_source' => $exception->getMessage()]);
         }
 
-        $html = $data['html_source'] ?? null;
-
-        if (! $html) {
-            $fetched = $this->parser->fetch($data['source_url']);
-            if ($fetched['error']) {
-                return back()->withInput()->with('error', $fetched['error']);
-            }
-            $html = $fetched['html'];
-        }
-
-        $raw = $this->parser->parse($html, $data['source_url']);
-
+        $raw = $result['data'];
         if (empty($raw['title_en']) && empty($raw['price_aed'])) {
-            $diagnostics = $this->parser->diagnostics($html);
-            $lines = collect($diagnostics)->map(fn ($found, $label) => ($found ? '✅' : '❌').' '.$label)->implode('، ');
-
-            return back()->withInput()->with('error',
-                'استخراج اطلاعات از این HTML ناموفق بود — ساختار صفحهٔ دابیزل ممکن است تغییر کرده باشد. '
-                .'نتیجهٔ بررسی فیلدهای کلیدی: '.$lines.'. '
-                .'اگر این HTML را دستی پیست نکرده بودید، احتمال زیاد صفحه‌ای که دریافت شده یک صفحهٔ مسدودسازی/چالش ضدربات بوده، نه خود آگهی — '
-                .'لطفاً HTML واقعی را از View Page Source مرورگر خودتان کپی و پیست کنید.');
+            return back()->withInput()->with('error', 'استخراج اطلاعات از HTML ناموفق بود؛ این مورد برای بررسی دستی ثبت شد.');
         }
 
-        $listing = $this->createFromRaw($data['source_url'], $raw, $request->user()->id);
+        $raw['source_platform'] = $result['source_platform'];
+        $listing = $this->createFromRaw($data['source_url'], $raw, $request->user()->id, $result['source_platform']);
 
         return redirect()->route('admin.car-listings.edit', $listing)
             ->with('success', 'آگهی با موفقیت دریافت شد. لطفاً قبل از انتشار، فیلدها و دسته‌بندی را بررسی کنید.');
@@ -99,6 +86,7 @@ class CarListingController extends Controller
             'trim_level' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'string', 'max:10'],
             'price_aed' => ['required', 'numeric', 'min:0'],
+            'customs_price_aed' => ['nullable', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
             'category_id' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
             'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
@@ -173,6 +161,7 @@ class CarListingController extends Controller
             'trim_level' => ['nullable', 'string', 'max:255'],
             'model_year' => ['nullable', 'string', 'max:10'],
             'price_aed' => ['required', 'numeric', 'min:0'],
+            'customs_price_aed' => ['nullable', 'numeric', 'min:0'],
             'kilometers' => ['nullable', 'string', 'max:50'],
             'category_id' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
             'delivery_days' => ['required', 'integer', 'min:1', 'max:365'],
@@ -243,14 +232,43 @@ class CarListingController extends Controller
         }
 
         $raw = $this->parser->parse($fetched['html'], $carListing->source_url);
+
+        // Quality gate: refuse to overwrite if extraction failed
+        if (empty($raw['title_en']) && empty($raw['price_aed'])) {
+            return back()->with('error', 'استخراج اطلاعات از دابیزل ناموفق بود (صفحه خالی یا مسدود). هیچ تغییری اعمال نشد. لطفاً از طریق View Page Source و ایمپورت دستی اقدام کنید.');
+        }
+
         $translated = $this->translateRaw($raw);
-        $translated['category_id'] = $this->mapper->detectCategory($raw['engine_capacity_cc'] ?? null, $raw['fuel_type'] ?? null);
+        $translated['category_id'] = $this->mapper->detectCategory(
+            $raw['engine_capacity_cc'] ?? null,
+            $raw['fuel_type'] ?? null
+        );
 
-        $carListing->update($translated);
+        // Preserve manually set customs_price_aed
+        if ($carListing->customs_price_aed !== null) {
+            $translated['customs_price_aed'] = $carListing->customs_price_aed;
+        }
 
-        $this->imageDownloader->deleteAll($carListing->id);
-        $carListing->images()->delete();
-        $this->attachImages($carListing, $raw['images'] ?? []);
+        // Only update fields that actually have new values (do not wipe with null)
+        $updateData = array_filter($translated, fn ($v) => $v !== null && $v !== '');
+
+        // Always update category and price if present
+        if (isset($translated['category_id'])) {
+            $updateData['category_id'] = $translated['category_id'];
+        }
+        if (array_key_exists('price_aed', $translated)) {
+            $updateData['price_aed'] = $translated['price_aed'];
+        }
+
+        $carListing->update($updateData);
+
+        // Only replace images if we actually got some
+        $newImages = $raw['images'] ?? [];
+        if (!empty($newImages)) {
+            $this->imageDownloader->deleteAll($carListing->id);
+            $carListing->images()->delete();
+            $this->attachImages($carListing, $newImages);
+        }
 
         return redirect()->route('admin.car-listings.edit', $carListing)
             ->with('success', 'اطلاعات از دابیزل به‌روزرسانی شد. لطفاً دوباره بررسی کنید.');
@@ -395,7 +413,7 @@ class CarListingController extends Controller
         return response()->json($result, $result['ok'] ? 200 : 422);
     }
 
-    private function createFromRaw(string $sourceUrl, array $raw, int $adminId): CarListing
+    private function createFromRaw(string $sourceUrl, array $raw, int $adminId, string $sourcePlatform = 'dubizzle'): CarListing
     {
         $translated = $this->translateRaw($raw);
         $translated['category_id'] = $this->mapper->detectCategory($raw['engine_capacity_cc'] ?? null, $raw['fuel_type'] ?? null);
@@ -407,7 +425,7 @@ class CarListingController extends Controller
         $listing = CarListing::create([
             ...$translated,
             'source_url' => $sourceUrl,
-            'source_site' => 'dubizzle',
+            'source_site' => $sourcePlatform,
             'status' => 'draft',
             'title_en' => $raw['title_en'] ?? null,
             'make' => $raw['make'] ?? null,
@@ -456,3 +474,4 @@ class CarListingController extends Controller
         }
     }
 }
+

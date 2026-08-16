@@ -36,12 +36,31 @@
 </x-card>
 
 <x-card title="قیمت و دسته‌بندی خودرو" icon="target"
-        subtitle="دسته‌بندی مستقیم روی درصد عوارض گمرکی بر اساس تعرفه در جدول محاسبات اثر می‌گذارد — حتماً بررسی کنید.">
+        subtitle="دسته‌بندی مستقیم روی درصد عوارض گمرکی بر اساس تعرفه در جدول محاسبات اثر می‌گذارد — حتماً بررسی کنید."
+        x-data="carListingPricing"
+        data-discount-percent="{{ (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT) }}"
+        data-real-price="{{ (float) ($l->price_aed ?? 0) }}"
+        data-customs-price="{{ $l->customs_price_aed !== null ? (float) $l->customs_price_aed : '' }}">
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500">قیمت (درهم امارات)</label>
-            <input type="number" step="1" name="price_aed" value="{{ old('price_aed', (float) $l->price_aed) }}" required
+            <input type="number" step="1" name="price_aed" x-model.number="realPrice" value="{{ old('price_aed', (float) $l->price_aed) }}" required
                    class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+        </div>
+        <div>
+            <label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم)</label>
+            <input type="number" step="0.01" min="0" name="customs_price_aed" x-model.number="customsPrice" value="{{ old('customs_price_aed', $l->customs_price_aed ?? '') }}"
+                   class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+            <div class="mt-2 flex items-center justify-between">
+                <p class="text-[11px] text-ink-400">
+                    <span x-show="suggestedCustomsPrice > 0">
+                        پیشنهاد: <span class="font-bold" x-text="Math.round(suggestedCustomsPrice).toLocaleString('en-US')"></span> درهم
+                    </span>
+                    <span x-show="suggestedCustomsPrice === 0">اختیاری؛ خالی = استفاده از تنظیم سرور</span>
+                </p>
+                <button type="button" x-show="customsPriceTouched && suggestedCustomsPrice > 0" @click="restoreSuggestion"
+                        class="text-xs font-bold text-brand-700 hover:underline">استفاده از پیشنهاد</button>
+            </div>
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500">دسته‌بندی خودرو</label>
@@ -97,3 +116,4 @@
         </div>
     </div>
 </x-card>
+
