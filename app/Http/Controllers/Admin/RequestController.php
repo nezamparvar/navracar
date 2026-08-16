@@ -316,7 +316,7 @@ class RequestController extends Controller
             'note' => 'درخواست حذف شد',
         ]);
 
-        ActivityLogger::warn('حذف درخواست از سیستم', ['id' => $lead->id, 'name' => $leadName]);
+        ActivityLogger::error('حذف درخواست از سیستم', ['id' => $lead->id, 'name' => $leadName]);
 
         return back()->with('success', 'درخواست با موفقیت حذف شد.');
     }
@@ -369,7 +369,7 @@ class RequestController extends Controller
         $leadName = $lead->name;
         $lead->forceDelete();
 
-        ActivityLogger::warn('حذف دائمی درخواست', ['id' => $lead->id, 'name' => $leadName]);
+        ActivityLogger::error('حذف دائمی درخواست', ['id' => $lead->id, 'name' => $leadName]);
 
         return back()->with('success', 'درخواست به‌طور دائمی حذف شد.');
     }
