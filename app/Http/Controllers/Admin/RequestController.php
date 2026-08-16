@@ -164,7 +164,7 @@ class RequestController extends Controller
     public function show(Request $request, QuoteRequest $lead)
     {
         $user = $request->user();
-        abort_if(! $user->isAdmin() && $lead->assigned_to !== $user->id, 403, 'این درخواست به شما الحاق نشده است.');
+        $this->authorize('view', $lead);
 
         $staffList = $user->isAdmin() ? AdminUser::orderBy('username')->get() : collect();
         $templates = MessageTemplate::where('is_active', true)->orderBy('category')->orderBy('id')->get();
@@ -182,7 +182,7 @@ class RequestController extends Controller
 
     public function assign(Request $request, QuoteRequest $lead)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        $this->authorize('assign', $lead);
 
         $data = $request->validate(['assigned_to' => ['nullable', 'integer']]);
         $newAssignee = $data['assigned_to'] ?? null;
@@ -206,6 +206,8 @@ class RequestController extends Controller
 
     public function temperature(Request $request, QuoteRequest $lead)
     {
+        $this->authorize('updateTemperature', $lead);
+
         $data = $request->validate(['temperature' => ['required', Rule::in(['hot', 'warm', 'cold'])]]);
         $lead->update(['temperature' => $data['temperature']]);
 
@@ -222,6 +224,8 @@ class RequestController extends Controller
 
     public function status(Request $request, QuoteRequest $lead)
     {
+        $this->authorize('updateStatus', $lead);
+
         $data = $request->validate([
             'follow_up_status' => ['nullable', Rule::in(self::STATUSES)],
             'note' => ['nullable', 'string'],
@@ -276,6 +280,8 @@ class RequestController extends Controller
 
     public function close(Request $request, QuoteRequest $lead)
     {
+        $this->authorize('close', $lead);
+
         $data = $request->validate([
             'status' => ['required', Rule::in(['بسته - موفق', 'بسته - ناموفق'])],
         ]);
@@ -294,6 +300,8 @@ class RequestController extends Controller
 
     public function archive(Request $request, QuoteRequest $lead)
     {
+        $this->authorize('archive', $lead);
+
         $lead->update(['is_archived' => true]);
 
         LeadActivity::create([
@@ -308,6 +316,8 @@ class RequestController extends Controller
 
     public function unarchive(Request $request, QuoteRequest $lead)
     {
+        $this->authorize('unarchive', $lead);
+
         $lead->update(['is_archived' => false]);
 
         LeadActivity::create([
@@ -322,7 +332,7 @@ class RequestController extends Controller
 
     public function destroy(Request $request, QuoteRequest $lead)
     {
-        abort_unless($request->user()->isAdmin(), 403);
+        $this->authorize('delete', $lead);
 
         $leadName = $lead->name;
         $lead->delete();
