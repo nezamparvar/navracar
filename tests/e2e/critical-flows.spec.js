@@ -113,16 +113,21 @@ test('admin issues an automatic server-priced Proforma and downloads its PDF', a
     await page.goto('/admin/invoices/create');
     // Wait for Alpine to initialize and the automatic pricing section to become visible
     await expect(page.locator('input[name="real_price_aed"]')).toBeVisible();
+
+    // Fill non-pricing fields first
     await page.locator('input[name="customer_name"]').fill('Pricing E2E Customer');
     await page.locator('input[name="customer_phone"]').fill('09124444444');
     await page.locator('input[name="car_label"]').fill('BMW X4');
-    await page.locator('input[name="real_price_aed"]').fill('100000');
-    await page.locator('input[name="customs_price_aed"]').fill('80000');
-    await page.locator('select[name="category"]').selectOption('c2000');
 
+    // Register response waiter BEFORE filling pricing inputs (which can auto-trigger calculate)
     const [pricingResponse] = await Promise.all([
         page.waitForResponse(response => response.url().includes('/vehicle-pricing/calculate') && response.ok()),
-        page.getByRole('button', { name: 'محاسبه خودکار' }).click(),
+        (async () => {
+            // Fill pricing inputs and select category (these trigger auto-calculate via @input.debounce and @change)
+            await page.locator('input[name="real_price_aed"]').fill('100000');
+            await page.locator('input[name="customs_price_aed"]').fill('80000');
+            await page.locator('select[name="category"]').selectOption('c2000');
+        })(),
     ]);
     const pricing = await pricingResponse.json();
     await expect(page.getByText('گواهی اسقاط خودرو فرسوده')).toBeVisible();

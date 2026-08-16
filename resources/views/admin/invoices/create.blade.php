@@ -170,7 +170,10 @@
                     <div><label class="mb-1 block text-xs font-bold text-ink-500">دسته خودرو *</label><select name="category" x-model="category" @change="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5">@foreach($categories as $id => $item)<option value="{{ $id }}">{{ $item['label'] }}</option>@endforeach</select></div>
                 </div>
                 <div class="mt-4 flex items-center gap-3">
-                    <button type="button" @click="calculate" :disabled="loading" class="rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60"><span x-text="loading ? 'در حال محاسبه…' : 'محاسبه خودکار'"></span></button>
+                    <button type="button" @click="calculate" :disabled="loading" class="rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-bold text-white disabled:opacity-60">
+                        <span x-show="!loading">محاسبه خودکار</span>
+                        <span x-show="loading">در حال محاسبه…</span>
+                    </button>
                     <span class="text-xs text-red-600" x-text="error"></span>
                 </div>
             </x-card>
