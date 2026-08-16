@@ -66,6 +66,47 @@ final readonly class VehiclePricingResult
         ];
     }
 
+    public function publicDisplaySummary(): array
+    {
+        $carPrice = $this->totals['realPriceToman'];
+        $clearanceTotal = $this->totals['customsSubtotalToman'] + $this->totals['serviceFeeToman'];
+        $plateTotal = $this->totals['plateSubtotalToman'];
+        $grandTotal = $this->totals['finalTotalToman'];
+
+        $freeRate = $this->settingsSnapshot['freeRate'] ?? 1;
+        $usdToAedRate = $this->settingsSnapshot['usdToAedRate'] ?? 1;
+
+        return [
+            'car_price_toman' => $carPrice,
+            'clearance_total_toman' => $clearanceTotal,
+            'plate_total_toman' => $plateTotal,
+            'grand_total_toman' => $grandTotal,
+            'grand_total_aed' => $grandTotal / $freeRate,
+            'grand_total_usd' => ($grandTotal / $freeRate) / $usdToAedRate,
+            'formatted' => [
+                'car_price' => number_format($carPrice).' تومان',
+                'clearance_total' => number_format($clearanceTotal).' تومان',
+                'plate_total' => number_format($plateTotal).' تومان',
+                'grand_total_toman' => number_format($grandTotal).' تومان',
+                'grand_total_aed' => number_format($grandTotal / $freeRate, 2).' درهم',
+                'grand_total_usd' => number_format(($grandTotal / $freeRate) / $usdToAedRate, 2).' دلار',
+            ],
+        ];
+    }
+
+    public function publicCustomsRows(): array
+    {
+        $clearanceTotal = $this->totals['customsSubtotalToman'] + $this->totals['serviceFeeToman'];
+        return [
+            [
+                'key' => 'clearance_total',
+                'label' => 'جمع هزینه ترخیص',
+                'value' => $clearanceTotal,
+                'formatted' => number_format($clearanceTotal).' تومان',
+            ],
+        ];
+    }
+
     private function formatPercent(float $percent): string
     {
         return rtrim(rtrim(number_format($percent, 3, '.', ''), '0'), '.').'٪';

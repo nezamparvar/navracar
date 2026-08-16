@@ -19,6 +19,11 @@ class VehiclePricingController extends Controller
             'category' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
         ]);
 
-        return response()->json($pricing->calculate(VehiclePricingInput::fromArray($data))->toArray());
+        $result = $pricing->calculate(VehiclePricingInput::fromArray($data));
+
+        return response()->json([
+            ...$result->toArray(),
+            'publicSummary' => $result->publicDisplaySummary(),
+        ]);
     }
 }

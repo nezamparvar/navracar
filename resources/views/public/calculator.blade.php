@@ -1481,29 +1481,29 @@ async function calc(){
       <td class="amt num-font" data-label="مبلغ (تومان)">${fmt(row.value)}</td>
     </tr>`;
 
-    document.getElementById('tblCustoms').innerHTML = result.customsRows.map(rowHtml).join('');
-    document.getElementById('sumCustomsCell').textContent = fmt(result.customsSubtotalToman);
+    // Public view: show only clearance summary, hide detailed customs rows
+    const clearanceTotal = result.publicSummary.clearance_total_toman;
+    document.getElementById('tblCustoms').innerHTML = `<tr><td>1</td><td>جمع هزینه ترخیص</td><td>—</td><td class="num-font">${fmt(clearanceTotal)}</td></tr>`;
+    document.getElementById('sumCustomsCell').textContent = fmt(clearanceTotal);
     document.getElementById('tblPlate').innerHTML = result.plateRows.map(rowHtml).join('');
     document.getElementById('sumPlateCell').textContent = fmt(result.plateSubtotalToman);
 
-    document.getElementById('s_noProfit').textContent = fmt(result.preServiceTotalToman);
-    document.getElementById('s_profit').textContent = fmt(result.serviceFeeToman);
-    document.getElementById('s_total').textContent = fmt(result.finalTotalToman);
-    document.getElementById('stampVal').textContent = fmt(result.finalTotalToman);
+    document.getElementById('s_noProfit').textContent = fmt(result.publicSummary.grand_total_toman);
+    document.getElementById('s_profit').textContent = '—';
+    document.getElementById('s_total').textContent = fmt(result.publicSummary.grand_total_toman);
+    document.getElementById('stampVal').textContent = fmt(result.publicSummary.grand_total_toman);
 
+    // Public view: show simplified cost breakdown without separate service fee line
     const palette = ['#2952E0','#FF8A1E','#8B5CF6','#5B6478','#16A34A','#9FB2FF'];
     renderDonut(document.getElementById('donutWrap'), [
-      {label:'عوارض گمرکی بر اساس تعرفه', value:result.tariffDutyToman, color:palette[0]},
-      {label:'سایر هزینه‌های گمرکی (شامل حمل و مجوز)', value:result.customsSubtotalToman-result.tariffDutyToman, color:palette[1]},
+      {label:'هزینه ترخیص و گمرکی', value:clearanceTotal, color:palette[0]},
       {label:'پلاک انتظامی', value:result.plateSubtotalToman, color:palette[2]},
       {label:'قیمت خودرو', value:result.realPriceToman, color:palette[3]},
-      {label:'کارمزد ترخیص‌کار و کارگزار (ناوراکار)', value:result.serviceFeeToman, color:palette[5]},
     ]);
     renderBars(document.getElementById('barRows'), [
-      {label:'ترخیص گمرکی (شامل حمل و مجوز)', value:result.customsSubtotalToman, color:palette[0]},
+      {label:'هزینه ترخیص و گمرکی', value:clearanceTotal, color:palette[0]},
       {label:'پلاک انتظامی', value:result.plateSubtotalToman, color:palette[1]},
       {label:'قیمت خودرو', value:result.realPriceToman, color:palette[3]},
-      {label:'کارمزد ترخیص‌کار', value:result.serviceFeeToman, color:palette[4]},
     ]);
 
     const total = Math.max(Number(result.finalTotalToman) || 0, 1);
