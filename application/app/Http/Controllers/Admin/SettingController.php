@@ -24,6 +24,7 @@ class SettingController extends Controller
             'storageToman' => Setting::get(Setting::STORAGE_TOMAN),
             'scrapCertPriceToman' => Setting::get(Setting::SCRAP_CERT_PRICE_TOMAN),
             'scrapThresholdAed' => Setting::get(Setting::SCRAP_THRESHOLD_AED),
+            'customsValueDiscountPercent' => Setting::get(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT),
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
             'tehranOfficePhone' => Setting::get(Setting::TEHRAN_OFFICE_PHONE),
@@ -68,6 +69,7 @@ class SettingController extends Controller
             'storage_toman' => ['required', 'numeric', 'min:0'],
             'scrap_cert_price_toman' => ['required', 'numeric', 'min:0'],
             'scrap_threshold_aed' => ['required', 'numeric', 'min:0'],
+            'customs_value_discount_percent' => ['required', 'numeric', 'min:0', 'max:100'],
             'whatsapp_uae_number' => ['required', 'string', 'max:32'],
             'whatsapp_iran_number' => ['required', 'string', 'max:32'],
             'tehran_office_phone' => ['required', 'string', 'max:32'],
@@ -111,6 +113,7 @@ class SettingController extends Controller
         Setting::set(Setting::STORAGE_TOMAN, (string) $data['storage_toman']);
         Setting::set(Setting::SCRAP_CERT_PRICE_TOMAN, (string) $data['scrap_cert_price_toman']);
         Setting::set(Setting::SCRAP_THRESHOLD_AED, (string) $data['scrap_threshold_aed']);
+        Setting::set(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, (string) $data['customs_value_discount_percent']);
         Setting::set(Setting::WHATSAPP_UAE, (string) $data['whatsapp_uae_number']);
         Setting::set(Setting::WHATSAPP_IRAN, (string) $data['whatsapp_iran_number']);
         Setting::set(Setting::TEHRAN_OFFICE_PHONE, (string) $data['tehran_office_phone']);
@@ -152,3 +155,4 @@ class SettingController extends Controller
         return back()->with('success', 'تنظیمات به‌روزرسانی شد.');
     }
 }
+

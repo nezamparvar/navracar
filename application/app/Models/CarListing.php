@@ -15,7 +15,7 @@ class CarListing extends Model
         'source_url', 'source_site', 'status', 'slug',
         'title_en', 'title_fa',
         'make', 'model', 'trim_level', 'model_year',
-        'price_aed', 'kilometers',
+        'price_aed', 'customs_price_aed', 'kilometers',
         'body_type', 'fuel_type', 'transmission_type', 'regional_specs', 'steering_side',
         'seller_type', 'warranty', 'exterior_color', 'interior_color', 'horsepower',
         'engine_capacity_cc', 'no_of_cylinders', 'doors', 'seating_capacity',
@@ -35,6 +35,7 @@ class CarListing extends Model
     {
         return [
             'price_aed' => 'decimal:2',
+            'customs_price_aed' => 'decimal:2',
             'delivery_days' => 'integer',
             'published_at' => 'datetime',
         ];
@@ -138,3 +139,4 @@ class CarListing extends Model
         return $categories;
     }
 }
+

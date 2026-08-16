@@ -44,6 +44,12 @@
                    class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
         <div>
+            <label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم)</label>
+            <input type="number" step="0.01" min="0" name="customs_price_aed" value="{{ old('customs_price_aed', $l->customs_price_aed ?? '') }}"
+                   class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+            <p class="mt-1 text-[11px] text-ink-400">اختیاری؛ مقدار خالی یعنی استفاده از پیشنهاد تنظیم‌شده و این مقدار هرگز خودکار بازنویسی نمی‌شود.</p>
+        </div>
+        <div>
             <label class="mb-1 block text-xs font-bold text-ink-500">دسته‌بندی خودرو</label>
             <select name="category_id" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
                 @foreach ($categories as $key => $cat)
@@ -97,3 +103,4 @@
         </div>
     </div>
 </x-card>
+

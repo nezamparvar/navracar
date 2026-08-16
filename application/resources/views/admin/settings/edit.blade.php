@@ -92,6 +92,12 @@
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
                 </div>
                 <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">درصد کاهش پیشنهادی ارزش گمرکی</label>
+                    <input type="number" step="0.1" min="0" max="100" name="customs_value_discount_percent" value="{{ old('customs_value_discount_percent', $customsValueDiscountPercent) }}" required
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                    <p class="mt-1 text-[11px] text-ink-400">فقط برای پیشنهاد اولیه استفاده می‌شود و کاربر می‌تواند ارزش گمرکی را دستی تغییر دهد.</p>
+                </div>
+                <div>
                     <label class="mb-1 block text-xs font-bold text-ink-500">نرخ تبدیل دلار به درهم</label>
                     <input type="number" step="0.0001" name="usd_to_aed_rate" value="{{ old('usd_to_aed_rate', $usdToAedRate) }}" required
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
@@ -254,3 +260,4 @@
         </x-button>
     </form>
 </x-layouts.admin>
+
