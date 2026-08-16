@@ -119,11 +119,11 @@ test('admin issues an automatic server-priced Proforma and downloads its PDF', a
     await page.locator('input[name="customs_price_aed"]').fill('80000');
     await page.locator('select[name="category"]').selectOption('c2000');
 
-    // Drive Alpine state directly, then call calculate() — avoids fill/x-model sync issues
+    // Target the invoice form only (page also has logout form in the admin shell)
     const pricingResponsePromise = page.waitForResponse(
         (response) => response.url().includes('/vehicle-pricing/calculate')
     );
-    await page.locator('form').evaluate(async (form) => {
+    await page.locator('form[x-data="invoicePricingForm"]').evaluate(async (form) => {
         const data = window.Alpine.$data(form);
         data.mode = 'automatic';
         data.realPriceAed = 100000;
