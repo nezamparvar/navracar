@@ -49,7 +49,7 @@ class CarListingFlowTest extends TestCase
         $this->assertSame('bmw', $listing->make);
         $this->assertSame('x4', $listing->model);
         $this->assertSame(113000.0, (float) $listing->price_aed);
-        $this->assertSame('c2000', $listing->category_id); // engine "2000 - 2499 cc" -> lower bound 2000 falls in the c2000 bucket
+        $this->assertSame('c2500', $listing->category_id); // engine "2000 - 2499 cc" -> upper bound 2499 falls in the c2500 bucket
         $this->assertNotEmpty($listing->title_fa);
         $this->assertTrue($listing->images()->count() >= 1);
         foreach ($listing->images as $image) {

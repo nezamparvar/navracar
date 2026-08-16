@@ -79,8 +79,16 @@ class CarListingMapper
         }
 
         $cc = $engine['min'];
-        if ($engine['kind'] === 'range' && $cc === 1500 && ($engine['max'] ?? 0) > 1500) {
-            $cc = 1501;
+
+        // For ranges, prefer the upper bound when it is meaningfully higher
+        // (e.g. "2000-2499" or "cc 2499 - 2000" should land in c2500, not c2000)
+        if ($engine['kind'] === 'range' && ($engine['max'] ?? 0) > ($engine['min'] ?? 0)) {
+            $cc = (int) $engine['max'];
+        }
+
+        // Keep the old 1500 special case only if upper is still ≤ 1500
+        if ($engine['kind'] === 'range' && $cc <= 1500) {
+            $cc = 1500;
         }
 
         return match (true) {

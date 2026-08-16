@@ -232,19 +232,43 @@ class CarListingController extends Controller
         }
 
         $raw = $this->parser->parse($fetched['html'], $carListing->source_url);
-        $translated = $this->translateRaw($raw);
-        $translated['category_id'] = $this->mapper->detectCategory($raw['engine_capacity_cc'] ?? null, $raw['fuel_type'] ?? null);
 
-        // Preserve manually set customs_price_aed (non-null values) on refetch
+        // Quality gate: refuse to overwrite if extraction failed
+        if (empty($raw['title_en']) && empty($raw['price_aed'])) {
+            return back()->with('error', 'استخراج اطلاعات از دابیزل ناموفق بود (صفحه خالی یا مسدود). هیچ تغییری اعمال نشد. لطفاً از طریق View Page Source و ایمپورت دستی اقدام کنید.');
+        }
+
+        $translated = $this->translateRaw($raw);
+        $translated['category_id'] = $this->mapper->detectCategory(
+            $raw['engine_capacity_cc'] ?? null,
+            $raw['fuel_type'] ?? null
+        );
+
+        // Preserve manually set customs_price_aed
         if ($carListing->customs_price_aed !== null) {
             $translated['customs_price_aed'] = $carListing->customs_price_aed;
         }
 
-        $carListing->update($translated);
+        // Only update fields that actually have new values (do not wipe with null)
+        $updateData = array_filter($translated, fn ($v) => $v !== null && $v !== '');
 
-        $this->imageDownloader->deleteAll($carListing->id);
-        $carListing->images()->delete();
-        $this->attachImages($carListing, $raw['images'] ?? []);
+        // Always update category and price if present
+        if (isset($translated['category_id'])) {
+            $updateData['category_id'] = $translated['category_id'];
+        }
+        if (array_key_exists('price_aed', $translated)) {
+            $updateData['price_aed'] = $translated['price_aed'];
+        }
+
+        $carListing->update($updateData);
+
+        // Only replace images if we actually got some
+        $newImages = $raw['images'] ?? [];
+        if (!empty($newImages)) {
+            $this->imageDownloader->deleteAll($carListing->id);
+            $carListing->images()->delete();
+            $this->attachImages($carListing, $newImages);
+        }
 
         return redirect()->route('admin.car-listings.edit', $carListing)
             ->with('success', 'اطلاعات از دابیزل به‌روزرسانی شد. لطفاً دوباره بررسی کنید.');
