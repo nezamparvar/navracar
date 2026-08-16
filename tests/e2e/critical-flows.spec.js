@@ -137,13 +137,15 @@ test('admin issues an automatic server-priced Proforma and downloads its PDF', a
         throw new Error(`vehicle-pricing/calculate failed: HTTP ${pricingResponse.status()}`);
     }
     const pricing = await pricingResponse.json();
+    const totalText = Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان';
     await expect(page.getByText('گواهی اسقاط خودرو فرسوده')).toBeVisible();
-    await expect(page.getByText(Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان')).toBeVisible();
+    // Total appears in both the server summary and the displayTotal box
+    await expect(page.getByText(totalText).first()).toBeVisible();
 
     await page.locator('input[name="discount_amount"]').fill('1000');
     await page.getByRole('button', { name: 'ذخیره و صدور پیش‌فاکتور' }).click();
     await expect(page).toHaveURL(/\/admin\/invoices\/\d+$/);
-    await expect(page.getByText(Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان')).toBeVisible();
+    await expect(page.getByText(totalText).first()).toBeVisible();
     await expect(page.getByText('− 1,000 تومان')).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download');
