@@ -7,13 +7,13 @@ use App\Mail\QuoteRequestReceived;
 use App\Models\AdminUser;
 use App\Models\Invoice;
 use App\Models\QuoteRequest;
+use App\Services\ProformaPdfGenerator;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
-use Barryvdh\DomPDF\Facade\Pdf;
-use App\Services\ProformaPdfGenerator;
 use Tests\TestCase;
 
 class ProformaPdfTest extends TestCase
