@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AdminUser;
 use App\Models\LeadActivity;
 use App\Models\MessageTemplate;
+use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
@@ -209,6 +210,16 @@ class RequestController extends Controller
                 'activity_type' => 'status_change',
                 'note' => 'تغییر وضعیت به «'.$newStatus.'»'.($note ? ' — '.$note : ''),
             ]);
+
+            if ($newStatus === 'بسته - ناموفق') {
+                $lostStage = PipelineStage::where('slug', 'lost')->first();
+                if ($lostStage) {
+                    $lead->update([
+                        'current_stage_id' => $lostStage->id,
+                        'loss_reason' => 'تغییر وضعیت به بسته',
+                    ]);
+                }
+            }
         } elseif ($note !== '') {
             LeadActivity::create([
                 'request_id' => $lead->id,
