@@ -51,7 +51,7 @@ class QuoteController extends Controller
         ]);
 
         $result = $pricing->calculate(VehiclePricingInput::fromArray($data['pricing']));
-        $breakdown = $result->breakdownRows(formatted: true);
+        $breakdown = $result->breakdownRows(formatted: true, excludeServiceFee: true);
         $totals = $result->displayTotals();
         $geoData = $geo->lookup($request->ip());
 

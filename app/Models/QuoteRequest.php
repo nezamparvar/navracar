@@ -58,6 +58,11 @@ class QuoteRequest extends Model
         return json_decode($this->breakdown_json ?? '[]', true) ?: [];
     }
 
+    public function breakdownForDisplay(): array
+    {
+        return array_filter($this->breakdown(), fn (array $row) => ($row['key'] ?? '') !== 'service_fee');
+    }
+
     public function totals(): array
     {
         $decoded = json_decode($this->totals_json ?? '{}', true) ?: [];

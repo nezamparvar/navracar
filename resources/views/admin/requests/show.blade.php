@@ -1,5 +1,5 @@
 @php
-    $breakdown = $lead->breakdown();
+    $breakdown = $lead->breakdownForDisplay();
     $totals = $lead->totals();
 @endphp
 <x-layouts.admin :page-title="$pageTitle">

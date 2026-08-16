@@ -48,6 +48,11 @@ class Invoice extends Model
             : $decoded;
     }
 
+    public function breakdownForDisplay(): array
+    {
+        return array_filter($this->breakdown(), fn (array $row) => ($row['key'] ?? '') !== 'service_fee');
+    }
+
     public function pricingMetadata(): array
     {
         $decoded = json_decode($this->breakdown_json ?? '[]', true) ?: [];

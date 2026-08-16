@@ -37,7 +37,7 @@ class ProformaPdfGenerator
 
     public function fromQuoteRequest(QuoteRequest $lead, ?CarListing $listing = null): string
     {
-        $breakdown = $lead->breakdown();
+        $breakdown = $lead->breakdownForDisplay();
         $totals = $lead->totals();
 
         $totalsSummary = [];
@@ -86,7 +86,7 @@ class ProformaPdfGenerator
             'label' => $row['label'] ?? '',
             'rate' => $row['rate'] ?? '',
             'amount' => $this->formatAmount($row['amount'] ?? '').' '.$unitLabel,
-        ], $invoice->breakdown());
+        ], $invoice->breakdownForDisplay());
 
         $totalsSummary = [
             ['label' => 'جمع کل قبل از تخفیف', 'amount' => $this->formatAmount($grandTotal).' '.$unitLabel],
@@ -131,7 +131,7 @@ class ProformaPdfGenerator
             'label' => ProformaBreakdownLocalizer::label($row, 'en'),
             'rate' => $row['rate'] ?? '',
             'amount' => $this->formatAmount($row['amount'] ?? 0).' '.$unitLabel,
-        ], $invoice->breakdown());
+        ], $invoice->breakdownForDisplay());
         $totalsSummary = [
             ['label' => 'Subtotal before discount', 'amount' => $this->formatAmount($grandTotal).' '.$unitLabel],
         ];

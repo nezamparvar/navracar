@@ -25,7 +25,7 @@ final readonly class VehiclePricingResult
         ];
     }
 
-    public function breakdownRows(bool $formatted = false): array
+    public function breakdownRows(bool $formatted = false, bool $excludeServiceFee = false): array
     {
         $rows = [
             ...$this->customsRows,
@@ -43,6 +43,10 @@ final readonly class VehiclePricingResult
                 'value' => $this->totals['serviceFeeToman'],
             ],
         ];
+
+        if ($excludeServiceFee) {
+            $rows = array_filter($rows, fn (array $row) => ($row['key'] ?? '') !== 'service_fee');
+        }
 
         if (! $formatted) {
             return $rows;
