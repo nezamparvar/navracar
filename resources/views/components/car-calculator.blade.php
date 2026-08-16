@@ -119,19 +119,17 @@
                 </tr>
             </thead>
             <tbody>
-                <template x-for="(row, i) in results.customsRows" :key="i">
-                    <tr class="border-t border-ink-100 dark:border-white/5">
-                        <td class="p-2.5 text-ink-400" x-text="i + 1"></td>
-                        <td class="p-2.5 font-semibold" x-text="row.label"></td>
-                        <td class="p-2.5 text-ink-500 dark:text-ink-400" x-text="row.rate"></td>
-                        <td class="p-2.5 text-left num-font font-bold" x-text="fmt(row.value)"></td>
-                    </tr>
-                </template>
+                <tr class="border-t border-ink-100 dark:border-white/5">
+                    <td class="p-2.5 text-ink-400">۱</td>
+                    <td class="p-2.5 font-semibold">جمع هزینه ترخیص</td>
+                    <td class="p-2.5 text-ink-500 dark:text-ink-400">—</td>
+                    <td class="p-2.5 text-left num-font font-bold" x-text="fmt(results.clearanceTotalPublic)"></td>
+                </tr>
             </tbody>
             <tfoot>
                 <tr class="border-t border-ink-200 bg-ink-50 font-extrabold dark:border-white/10 dark:bg-white/5">
                     <td class="p-2.5" colspan="3">جمع هزینه‌های ترخیص گمرکی</td>
-                    <td class="p-2.5 text-left num-font" x-text="fmt(results.sumCustomsAll)"></td>
+                    <td class="p-2.5 text-left num-font" x-text="fmt(results.clearanceTotalPublic)"></td>
                 </tr>
             </tfoot>
         </table>
@@ -166,14 +164,10 @@
         </table>
     </div>
 
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div class="rounded-2xl border border-ink-200/70 p-4 text-center dark:border-white/10">
-            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">جمع کل بدون کارمزد ترخیص‌کار و کارگزار</div>
-            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(results.totalNoProfit) + ' تومان'"></div>
-        </div>
-        <div class="rounded-2xl border border-ink-200/70 p-4 text-center dark:border-white/10">
-            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">کارمزد ترخیص‌کار و کارگزار (ناوراکار)</div>
-            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(results.serviceProfitAmt) + ' تومان'"></div>
+            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">قیمت خودرو</div>
+            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(source?.realPriceToman || 0) + ' تومان'"></div>
         </div>
         <div class="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-center dark:border-amber-500/40 dark:bg-amber-500/10">
             <div class="text-xs font-bold text-amber-800 dark:text-amber-300">قیمت تمام‌شده نهایی</div>
@@ -553,11 +547,13 @@ window.carCalculatorApp = function (config = @js($config)) {
                 colorClass: stageColors[i],
             }));
 
+            const clearanceTotalPublic = sumCustomsAll + serviceProfitAmt;
             return {
                 customsRows: source.customsRows,
                 plateRows: source.plateRows,
                 sumCustomsAll,
                 sumPlate,
+                clearanceTotalPublic,
                 totalNoProfit: num(source.preServiceTotalToman),
                 serviceProfitAmt,
                 totalWithProfit,
