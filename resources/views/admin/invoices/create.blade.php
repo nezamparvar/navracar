@@ -132,7 +132,7 @@
         <script>
             window.invoicePricingForm = function (config = @js($formConfig + ['customsValueDiscountPercent' => (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT)])) {
                 const prefill = config.prefill;
-                const discountPercent = config.customsValueDiscountPercent || 30;
+                const discountPercent = config.customsValueDiscountPercent ?? 30;
                 const realPrice = Number(prefill.real_price_aed || 0);
                 const customsPrice = Number(prefill.customs_price_aed || 0);
                 const suggestedCustomsPrice = Math.max(0, realPrice * (1 - discountPercent / 100));

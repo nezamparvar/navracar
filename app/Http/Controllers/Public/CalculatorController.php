@@ -29,6 +29,7 @@ class CalculatorController extends Controller
             'carListings' => $listings,
             'menuItems' => MenuItem::active()->get(),
             'usdToAedRate' => (float) Setting::get(Setting::USD_TO_AED_RATE),
+            'customsValueDiscountPercent' => (float) Setting::get(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT),
             'pricingSettings' => $pricingSettings->toArray(),
             'pricingUrl' => route('public.vehicle-pricing.calculate'),
         ]);

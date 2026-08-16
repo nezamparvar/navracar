@@ -337,8 +337,8 @@ window.carCalculatorApp = function (config = @js($config)) {
 
     return {
         realPriceAED: config.priceAed,
-        customsPriceAED: config.customsPriceAed ?? Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent || 30) / 100)),
-        customsValueDiscountPercent: config.customsValueDiscountPercent || 30,
+        customsPriceAED: config.customsPriceAed ?? Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent ?? 30) / 100)),
+        customsValueDiscountPercent: config.customsValueDiscountPercent ?? 30,
         customsPriceTouched: config.customsPriceAed > 0,
         usdToAedRate: config.usdToAedRate || 3.6725,
         priceCurrency: 'aed',
