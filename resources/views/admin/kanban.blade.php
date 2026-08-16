@@ -54,7 +54,19 @@
                 @drop.prevent="drop($event)"
             >
                 <div class="mb-2.5 flex items-center justify-between border-b-2 border-ink-200/70 px-1 pb-2.5 dark:border-white/10">
-                    <h3 class="text-sm font-extrabold text-brand-900 dark:text-white">{{ $stage->name }}</h3>
+                    <div class="flex items-center gap-1.5">
+                        <h3 class="text-sm font-extrabold text-brand-900 dark:text-white">{{ $stage->name }}</h3>
+                        @if (auth()->user()->isAdmin())
+                            <button
+                                type="button"
+                                @click="editStageName('{{ $stage->id }}', '{{ addslashes($stage->name) }}')"
+                                class="rounded p-1 text-xs text-ink-400 hover:bg-brand-100 hover:text-brand-600 dark:hover:bg-brand-500/15"
+                                title="ویرایش نام"
+                            >
+                                ✏️
+                            </button>
+                        @endif
+                    </div>
                     <span class="rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-extrabold text-brand-800 dark:bg-brand-500/15 dark:text-brand-300">{{ $leads->count() }}</span>
                 </div>
                 <div class="flex min-h-[40px] flex-col gap-2.5">
@@ -108,6 +120,19 @@
                 </div>
             </div>
         </div>
+
+        {{-- Stage name edit modal --}}
+        <div x-show="editModalOpen" x-cloak class="fixed inset-0 z-[90] flex items-center justify-center bg-ink-950/60 p-4" @keydown.escape.window="cancelEditStage">
+            <div @click.outside="cancelEditStage" x-show="editModalOpen" x-transition class="w-full max-w-sm rounded-2xl bg-white p-6 shadow-soft-lg dark:bg-ink-900">
+                <h3 class="mb-1 text-base font-extrabold">ویرایش نام مرحله</h3>
+                <p class="mb-4 text-xs text-ink-500">نام مرحله را وارد کنید:</p>
+                <input type="text" x-model="editStageName" @keydown.enter="saveEditStage" class="mb-4 w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                <div class="flex justify-end gap-2">
+                    <button type="button" @click="cancelEditStage" class="rounded-xl px-4 py-2 text-sm font-bold text-ink-500 hover:bg-ink-100 dark:hover:bg-white/10">انصراف</button>
+                    <button type="button" @click="saveEditStage" class="rounded-xl bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700">ذخیره</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -115,6 +140,7 @@
             return {
                 dragging: false, draggedEl: null,
                 modalOpen: false, selectedReason: '', pendingCol: null,
+                editModalOpen: false, editStageId: null, editStageName: '',
                 lossReasons,
                 dragStart(e) { this.dragging = true; this.draggedEl = e.currentTarget; e.currentTarget.classList.add('opacity-40'); },
                 dragEnd(e) { e.currentTarget.classList.remove('opacity-40'); setTimeout(() => { this.dragging = false; }, 50); },
@@ -155,6 +181,37 @@
                             window.pushToast(data.message || 'خطا در به‌روزرسانی.', 'error');
                         }
                     } catch (e) { window.pushToast('خطا در ارتباط با سرور.', 'error'); }
+                },
+                editStageName(stageId, currentName) {
+                    this.editStageId = stageId;
+                    this.editStageName = currentName;
+                    this.editModalOpen = true;
+                },
+                cancelEditStage() {
+                    this.editModalOpen = false;
+                    this.editStageId = null;
+                    this.editStageName = '';
+                },
+                async saveEditStage() {
+                    if (!this.editStageName.trim()) {
+                        window.pushToast('نام مرحله نمی‌تواند خالی باشد.', 'error');
+                        return;
+                    }
+                    try {
+                        const res = await fetch(`{{ route('admin.pipeline-stages.update-name', ['stage' => 'STAGE_ID']) }}`.replace('STAGE_ID', this.editStageId), {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content },
+                            body: JSON.stringify({ name: this.editStageName.trim() }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            window.pushToast('نام مرحله به‌روزرسانی شد.', 'success');
+                            setTimeout(() => location.reload(), 500);
+                        } else {
+                            window.pushToast(data.message || 'خطا در به‌روزرسانی.', 'error');
+                        }
+                    } catch (e) { window.pushToast('خطا در ارتباط با سرور.', 'error'); }
+                    this.cancelEditStage();
                 },
             };
         }

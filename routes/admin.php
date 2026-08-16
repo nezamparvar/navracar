@@ -102,6 +102,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // بخش‌های فقط برای مدیر کامل.
     Route::middleware('admin.role')->group(function () {
         Route::delete('/requests/{lead}', [RequestController::class, 'destroy'])->name('requests.destroy');
+        Route::patch('/pipeline-stages/{stage}/name', [KanbanController::class, 'updateStageName'])->name('pipeline-stages.update-name');
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
         Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');

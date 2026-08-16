@@ -101,4 +101,20 @@ class KanbanController extends Controller
 
         return response()->json(['success' => true]);
     }
+
+    public function updateStageName(Request $request, PipelineStage $stage)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $oldName = $stage->name;
+        $stage->update(['name' => $data['name']]);
+
+        ActivityLogger::info('تغییر نام مرحله پایپ‌لاین', ['stage_id' => $stage->id, 'old_name' => $oldName, 'new_name' => $data['name']]);
+
+        return response()->json(['success' => true, 'message' => 'نام مرحله به‌روزرسانی شد.']);
+    }
 }
