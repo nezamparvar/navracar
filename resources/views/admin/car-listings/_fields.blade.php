@@ -36,18 +36,32 @@
 </x-card>
 
 <x-card title="قیمت و دسته‌بندی خودرو" icon="target"
-        subtitle="دسته‌بندی مستقیم روی درصد عوارض گمرکی بر اساس تعرفه در جدول محاسبات اثر می‌گذارد — حتماً بررسی کنید.">
+        subtitle="دسته‌بندی مستقیم روی درصد عوارض گمرکی بر اساس تعرفه در جدول محاسبات اثر می‌گذارد — حتماً بررسی کنید."
+        x-data="carListingPricing({{ json_encode([
+            'discountPercent' => (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT),
+            'realPrice' => (float) ($l->price_aed ?? 0),
+            'customsPrice' => (float) ($l->customs_price_aed ?? 0),
+        ]) }})">
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500">قیمت (درهم امارات)</label>
-            <input type="number" step="1" name="price_aed" value="{{ old('price_aed', (float) $l->price_aed) }}" required
+            <input type="number" step="1" name="price_aed" x-model.number="realPrice" value="{{ old('price_aed', (float) $l->price_aed) }}" required
                    class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم)</label>
-            <input type="number" step="0.01" min="0" name="customs_price_aed" value="{{ old('customs_price_aed', $l->customs_price_aed ?? '') }}"
+            <input type="number" step="0.01" min="0" name="customs_price_aed" x-model.number="customsPrice" value="{{ old('customs_price_aed', $l->customs_price_aed ?? '') }}"
                    class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-            <p class="mt-1 text-[11px] text-ink-400">اختیاری؛ مقدار خالی یعنی استفاده از پیشنهاد تنظیم‌شده و این مقدار هرگز خودکار بازنویسی نمی‌شود.</p>
+            <div class="mt-2 flex items-center justify-between">
+                <p class="text-[11px] text-ink-400">
+                    <span x-show="suggestedCustomsPrice > 0">
+                        پیشنهاد: <span class="font-bold" x-text="Math.round(suggestedCustomsPrice).toLocaleString('en-US')"></span> درهم
+                    </span>
+                    <span x-show="suggestedCustomsPrice === 0">اختیاری؛ خالی = استفاده از تنظیم سرور</span>
+                </p>
+                <button type="button" x-show="customsPriceTouched && suggestedCustomsPrice > 0" @click="restoreSuggestion"
+                        class="text-xs font-bold text-brand-700 hover:underline">استفاده از پیشنهاد</button>
+            </div>
         </div>
         <div>
             <label class="mb-1 block text-xs font-bold text-ink-500">دسته‌بندی خودرو</label>
@@ -103,4 +117,47 @@
         </div>
     </div>
 </x-card>
+
+@once
+<script>
+    window.carListingPricing = function (config = {}) {
+        const discountPercent = config.discountPercent ?? 30;
+        const initialRealPrice = config.realPrice ?? 0;
+        const initialCustomsPrice = config.customsPrice ?? 0;
+        const suggestedOnLoad = Math.max(0, initialRealPrice * (1 - discountPercent / 100));
+
+        return {
+            realPrice: initialRealPrice,
+            customsPrice: initialCustomsPrice,
+            discountPercent,
+            customsPriceTouched: initialCustomsPrice > 0 && initialCustomsPrice !== suggestedOnLoad,
+
+            get suggestedCustomsPrice() {
+                return Math.max(0, this.realPrice * (1 - this.discountPercent / 100));
+            },
+
+            init() {
+                this.$watch('realPrice', (newVal) => {
+                    if (!this.customsPriceTouched && newVal >= 0) {
+                        this.customsPrice = this.suggestedCustomsPrice;
+                    }
+                });
+
+                this.$watch('customsPrice', (newVal) => {
+                    if (newVal !== this.suggestedCustomsPrice) {
+                        this.customsPriceTouched = true;
+                    } else {
+                        this.customsPriceTouched = false;
+                    }
+                });
+            },
+
+            restoreSuggestion() {
+                this.customsPrice = this.suggestedCustomsPrice;
+                this.customsPriceTouched = false;
+            },
+        };
+    };
+</script>
+@endonce
 

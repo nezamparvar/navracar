@@ -39,4 +39,82 @@ class CarListingMapperCategoryTest extends TestCase
         $this->assertSame('c2000', $mapper->detectCategory('1500 to 1999', 'Petrol'));
         $this->assertSame('c2500', $mapper->detectCategory('2001 cc', 'Petrol'));
     }
+
+    public function test_engine_parser_handles_messy_patterns_with_cc_prefix_or_plus(): void
+    {
+        $mapper = new CarListingMapper;
+
+        // cc before number with or without space/plus
+        $this->assertSame(['kind' => 'exact', 'min' => 4000, 'max' => 4000], $mapper->parseEngineCapacity('cc 4000'), 'cc 4000');
+        $this->assertSame(['kind' => 'exact', 'min' => 4000, 'max' => 4000], $mapper->parseEngineCapacity('cc +4000'), 'cc +4000');
+        $this->assertSame(['kind' => 'exact', 'min' => 4000, 'max' => 4000], $mapper->parseEngineCapacity('cc+ 4000'), 'cc+ 4000');
+
+        // plus before number with cc after
+        $this->assertSame(['kind' => 'exact', 'min' => 4000, 'max' => 4000], $mapper->parseEngineCapacity('+4000 cc'), '+4000 cc');
+        $this->assertSame(['kind' => 'exact', 'min' => 4000, 'max' => 4000], $mapper->parseEngineCapacity('+ 4000cc'), '+ 4000cc');
+
+        // Standard formats still work
+        $this->assertSame(['kind' => 'exact', 'min' => 4000, 'max' => 4000], $mapper->parseEngineCapacity('4000cc'), '4000cc');
+        $this->assertSame(['kind' => 'exact', 'min' => 4000, 'max' => 4000], $mapper->parseEngineCapacity('4000 cc'), '4000 cc');
+    }
+
+    public function test_detectCategory_with_all_engine_sizes(): void
+    {
+        $mapper = new CarListingMapper;
+
+        // Test boundary values for all categories
+        $testCases = [
+            // c1500 boundary
+            1499 => 'c1500',
+            1500 => 'c1500',
+
+            // c2000 boundary
+            1501 => 'c2000',
+            1999 => 'c2000',
+            2000 => 'c2000',
+
+            // c2500 boundary
+            2001 => 'c2500',
+            2499 => 'c2500',
+            2500 => 'c2500',
+
+            // c3000 boundary
+            2501 => 'c3000',
+            2999 => 'c3000',
+            3000 => 'c3000',
+
+            // c3001 (everything above 3000)
+            3001 => 'c3001',
+            4000 => 'c3001',
+            5700 => 'c3001',
+        ];
+
+        foreach ($testCases as $cc => $expected) {
+            $this->assertSame($expected, $mapper->detectCategory((string) $cc, 'Petrol'), "cc={$cc}");
+        }
+    }
+
+    public function test_detectCategory_classifies_messy_strings_correctly(): void
+    {
+        $mapper = new CarListingMapper;
+
+        // Messy strings that previously failed
+        $this->assertSame('c3001', $mapper->detectCategory('cc +4000', 'Petrol'), 'cc +4000 → 4000cc → c3001');
+        $this->assertSame('c3001', $mapper->detectCategory('+4000 cc', 'Petrol'), '+4000 cc → 4000cc → c3001');
+        $this->assertSame('c3001', $mapper->detectCategory('cc 4000', 'Petrol'), 'cc 4000 → 4000cc → c3001');
+
+        // Other engine sizes with messy patterns
+        $this->assertSame('c2000', $mapper->detectCategory('cc 1800', 'Petrol'), 'cc 1800 → c2000');
+        $this->assertSame('c2500', $mapper->detectCategory('+2500 cc', 'Petrol'), '+2500 cc → c2500');
+        $this->assertSame('c3000', $mapper->detectCategory('cc +3000', 'Petrol'), 'cc +3000 → c3000');
+    }
+
+    public function test_fuel_type_overrides_engine_size(): void
+    {
+        $mapper = new CarListingMapper;
+
+        $this->assertSame('ev', $mapper->detectCategory('any cc value', 'Electric'), 'Electric overrides cc');
+        $this->assertSame('phev', $mapper->detectCategory('2000 cc', 'Plug-in Hybrid'), 'PHEV overrides cc');
+        $this->assertSame('hybrid', $mapper->detectCategory('5000 cc', 'Hybrid'), 'Hybrid overrides cc');
+    }
 }
