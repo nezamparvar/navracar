@@ -8,6 +8,7 @@ use App\Models\LeadActivity;
 use App\Models\MessageTemplate;
 use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
+use App\Services\LeadLifecycleService;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -234,25 +235,10 @@ class RequestController extends Controller
 
         $newStatus = $data['follow_up_status'] ?? null;
         $note = trim($data['note'] ?? '');
+        $lifecycle = new LeadLifecycleService();
 
         if ($newStatus) {
-            $lead->update(['follow_up_status' => $newStatus]);
-            LeadActivity::create([
-                'request_id' => $lead->id,
-                'admin_user_id' => $request->user()->id,
-                'activity_type' => 'status_change',
-                'note' => 'تغییر وضعیت به «'.$newStatus.'»'.($note ? ' — '.$note : ''),
-            ]);
-
-            if ($newStatus === 'بسته - ناموفق') {
-                $lostStage = PipelineStage::where('slug', 'lost')->first();
-                if ($lostStage) {
-                    $lead->update([
-                        'current_stage_id' => $lostStage->id,
-                        'loss_reason' => 'تغییر وضعیت به بسته',
-                    ]);
-                }
-            }
+            $lifecycle->updateStatus($lead, $newStatus, $request->user()->id, $note ?: null);
         } elseif ($note !== '') {
             LeadActivity::create([
                 'request_id' => $lead->id,
@@ -286,14 +272,12 @@ class RequestController extends Controller
             'status' => ['required', Rule::in(['بسته - موفق', 'بسته - ناموفق'])],
         ]);
 
-        $lead->update(['follow_up_status' => $data['status']]);
-
-        LeadActivity::create([
-            'request_id' => $lead->id,
-            'admin_user_id' => $request->user()->id,
-            'activity_type' => 'status_change',
-            'note' => 'درخواست بسته شد — '.$data['status'],
-        ]);
+        $lifecycle = new LeadLifecycleService();
+        if ($data['status'] === 'بسته - موفق') {
+            $lifecycle->closeSuccessfully($lead, $request->user()->id);
+        } else {
+            $lifecycle->closeUnsuccessfully($lead, $request->user()->id);
+        }
 
         return back()->with('success', 'درخواست با موفقیت بسته شد.');
     }
@@ -302,14 +286,8 @@ class RequestController extends Controller
     {
         $this->authorize('archive', $lead);
 
-        $lead->update(['is_archived' => true]);
-
-        LeadActivity::create([
-            'request_id' => $lead->id,
-            'admin_user_id' => $request->user()->id,
-            'activity_type' => 'note',
-            'note' => 'درخواست بایگانی شد',
-        ]);
+        $lifecycle = new LeadLifecycleService();
+        $lifecycle->archive($lead, $request->user()->id);
 
         return back()->with('success', 'درخواست با موفقیت بایگانی شد.');
     }
@@ -318,14 +296,8 @@ class RequestController extends Controller
     {
         $this->authorize('unarchive', $lead);
 
-        $lead->update(['is_archived' => false]);
-
-        LeadActivity::create([
-            'request_id' => $lead->id,
-            'admin_user_id' => $request->user()->id,
-            'activity_type' => 'note',
-            'note' => 'درخواست از بایگانی خارج شد',
-        ]);
+        $lifecycle = new LeadLifecycleService();
+        $lifecycle->unarchive($lead, $request->user()->id);
 
         return back()->with('success', 'درخواست با موفقیت از بایگانی خارج شد.');
     }
