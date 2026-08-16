@@ -111,6 +111,8 @@ test('admin issues an automatic server-priced Proforma and downloads its PDF', a
     await page.locator('button[type="submit"]').click();
 
     await page.goto('/admin/invoices/create');
+    // Wait for Alpine to initialize and the automatic pricing section to become visible
+    await expect(page.locator('input[name="real_price_aed"]')).toBeVisible();
     await page.locator('input[name="customer_name"]').fill('Pricing E2E Customer');
     await page.locator('input[name="customer_phone"]').fill('09124444444');
     await page.locator('input[name="car_label"]').fill('BMW X4');
