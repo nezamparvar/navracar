@@ -108,10 +108,12 @@ class SoftDeleteAndRestoreTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
+        $leadId = $lead->id;
         $this->actingAs($admin)->delete(route('admin.requests.destroy', $lead));
         $this->assertSoftDeleted($lead);
 
-        $this->actingAs($admin)->post(route('admin.requests.restore', $lead->withTrashed()))->assertRedirect();
+        $deletedLead = QuoteRequest::withTrashed()->find($leadId);
+        $this->actingAs($admin)->post(route('admin.requests.restore', $deletedLead))->assertRedirect();
 
         $lead->refresh();
         $this->assertNotSoftDeleted($lead);
@@ -128,12 +130,14 @@ class SoftDeleteAndRestoreTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
+        $leadId = $lead->id;
         $this->actingAs($admin)->delete(route('admin.requests.destroy', $lead));
         $this->assertSoftDeleted($lead);
 
-        $this->actingAs($admin)->delete(route('admin.requests.force-delete', $lead->withTrashed()))->assertRedirect();
+        $deletedLead = QuoteRequest::withTrashed()->find($leadId);
+        $this->actingAs($admin)->delete(route('admin.requests.force-delete', $deletedLead))->assertRedirect();
 
-        $this->assertNull(QuoteRequest::withTrashed()->find($lead->id));
+        $this->assertNull(QuoteRequest::withTrashed()->find($leadId));
     }
 
     public function test_sales_cannot_restore_or_force_delete(): void
@@ -147,9 +151,10 @@ class SoftDeleteAndRestoreTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
+        $leadId = $lead->id;
         $this->actingAs($admin)->delete(route('admin.requests.destroy', $lead));
 
-        $deletedLead = $lead->withTrashed()->first();
+        $deletedLead = QuoteRequest::withTrashed()->find($leadId);
 
         $this->actingAs($sales)->post(route('admin.requests.restore', $deletedLead))->assertForbidden();
         $this->actingAs($sales)->delete(route('admin.requests.force-delete', $deletedLead))->assertForbidden();
