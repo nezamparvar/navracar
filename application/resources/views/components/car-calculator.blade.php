@@ -2,9 +2,12 @@
 
 @php
     $categories = \App\Models\CarListing::categoriesWithLiveRates();
+    $discountPercent = (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT);
+    $defaultCustoms = (float) $listing->price_aed * (1 - $discountPercent / 100);
+
     $config = [
         'priceAed' => (float) $listing->price_aed,
-        'customsPriceAed' => $listing->customs_price_aed !== null ? (float) $listing->customs_price_aed : (float) $listing->price_aed,
+        'customsPriceAed' => $listing->customs_price_aed !== null ? (float) $listing->customs_price_aed : $defaultCustoms,
         'categoryId' => $listing->category_id,
         'categories' => $categories,
         'freeRate' => $freeRate,
