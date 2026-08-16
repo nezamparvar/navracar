@@ -126,7 +126,21 @@
                                     </x-badge>
                                 </td>
                                 <td class="px-2.5 py-2.5 text-xs">{{ $r->next_call_date?->format('Y-m-d') ?? '-' }}</td>
-                                <td class="px-2.5 py-2.5"><x-button :href="route('admin.requests.show', $r)" size="sm" variant="secondary">جزئیات</x-button></td>
+                                <td class="px-2.5 py-2.5 space-x-1">
+                                    <x-button :href="route('admin.requests.show', $r)" size="sm" variant="secondary">جزئیات</x-button>
+                                    @if (in_array($r->follow_up_status, ['باز', 'در حال پیگیری']))
+                                        <div x-data="{ open: false }" class="inline-block">
+                                            <button @click="open = true" class="rounded-lg border border-ink-200 bg-ink-50 px-2 py-1 text-xs font-semibold text-ink-700 hover:bg-ink-100 dark:border-white/10 dark:bg-white/5 dark:text-ink-200 dark:hover:bg-white/10">بستن</button>
+                                            <div x-show="open" @click.outside="open = false" class="absolute z-50 mt-2 space-y-2 rounded-xl border border-ink-200 bg-white p-3 shadow-lg dark:border-white/10 dark:bg-ink-900">
+                                                <form method="POST" :action="'{{ route('admin.requests.close', '') }}/' + {{ $r->id }}" class="space-y-2">
+                                                    @csrf
+                                                    <button type="submit" name="status" value="بسته - موفق" class="block w-full rounded-lg bg-green-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-green-700">موفق</button>
+                                                    <button type="submit" name="status" value="بسته - ناموفق" class="block w-full rounded-lg bg-red-600 px-2 py-1.5 text-xs font-semibold text-white hover:bg-red-700">ناموفق</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @endif
+                                </td>
                             </tr>
                         @endforeach
                     </tbody>

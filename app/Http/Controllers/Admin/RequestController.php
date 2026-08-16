@@ -269,6 +269,24 @@ class RequestController extends Controller
         return back()->with('success', 'به‌روزرسانی ثبت شد.');
     }
 
+    public function close(Request $request, QuoteRequest $lead)
+    {
+        $data = $request->validate([
+            'status' => ['required', Rule::in(['بسته - موفق', 'بسته - ناموفق'])],
+        ]);
+
+        $lead->update(['follow_up_status' => $data['status']]);
+
+        LeadActivity::create([
+            'request_id' => $lead->id,
+            'admin_user_id' => $request->user()->id,
+            'activity_type' => 'status_change',
+            'note' => 'درخواست بسته شد — '.$data['status'],
+        ]);
+
+        return back()->with('success', 'درخواست با موفقیت بسته شد.');
+    }
+
     public function destroy(Request $request, QuoteRequest $lead)
     {
         abort_unless($request->user()->isAdmin(), 403);

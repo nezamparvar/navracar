@@ -139,6 +139,16 @@
                 @endif
             </x-card>
 
+            <x-card title="بستن درخواست" icon="x-circle" class="border-amber-200 dark:border-amber-900/30">
+                <p class="mb-3 text-sm text-ink-600 dark:text-ink-400">درخواست را به عنوان موفق یا ناموفق بسته کنید.</p>
+                <form method="POST" action="{{ route('admin.requests.close', $lead) }}" class="flex flex-wrap gap-2">
+                    @csrf
+                    <input type="hidden" name="status" id="close-status" value="">
+                    <x-button type="submit" onclick="document.getElementById('close-status').value = 'بسته - موفق'" variant="success" size="sm">✓ بسته - موفق</x-button>
+                    <x-button type="submit" onclick="document.getElementById('close-status').value = 'بسته - ناموفق'" variant="danger" size="sm">✕ بسته - ناموفق</x-button>
+                </form>
+            </x-card>
+
             @if (auth()->user()->isAdmin())
                 <x-card title="الحاق به کارشناس (فقط مدیر)" icon="users">
                     <form method="POST" action="{{ route('admin.requests.assign', $lead) }}" class="space-y-3">
