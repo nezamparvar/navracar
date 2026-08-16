@@ -117,4 +117,27 @@ class CarListingMapperCategoryTest extends TestCase
         $this->assertSame('phev', $mapper->detectCategory('2000 cc', 'Plug-in Hybrid'), 'PHEV overrides cc');
         $this->assertSame('hybrid', $mapper->detectCategory('5000 cc', 'Hybrid'), 'Hybrid overrides cc');
     }
+
+    public function test_range_classification_uses_upper_bound(): void
+    {
+        $mapper = new CarListingMapper;
+
+        // Ranges should use upper bound for safer/higher classification
+        $this->assertSame('c2500', $mapper->detectCategory('2000-2499 cc', 'Petrol'), '2000-2499 cc → c2500');
+        $this->assertSame('c2500', $mapper->detectCategory('cc 2499 - 2000', 'Petrol'), 'cc 2499 - 2000 → c2500');
+        $this->assertSame('c2000', $mapper->detectCategory('1500-2000 cc', 'Petrol'), '1500-2000 cc → c2000');
+        $this->assertSame('c3001', $mapper->detectCategory('3000-3500 cc', 'Petrol'), '3000-3500 cc → c3001');
+
+        // Verify parser extracts ranges correctly
+        $this->assertSame(['kind' => 'range', 'min' => 2000, 'max' => 2499], $mapper->parseEngineCapacity('2000-2499 cc'));
+        $this->assertSame(['kind' => 'range', 'min' => 2499, 'max' => 2000], $mapper->parseEngineCapacity('cc 2499 - 2000'));
+    }
+
+    public function test_liters_converted_to_cc(): void
+    {
+        $mapper = new CarListingMapper;
+
+        $this->assertSame('c2500', $mapper->detectCategory('2.5L', 'Petrol'), '2.5L → 2500cc → c2500');
+        $this->assertSame('c2000', $mapper->detectCategory('2.0 liter', 'Petrol'), '2.0 liter → 2000cc → c2000');
+    }
 }

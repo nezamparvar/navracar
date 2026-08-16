@@ -52,8 +52,8 @@ class DubizzleParserTest extends TestCase
     {
         $mapper = new CarListingMapper;
 
-        $this->assertSame('c2000', $mapper->detectCategory('2000 - 2499 cc', 'Petrol'));
-        $this->assertSame('c1500', $mapper->detectCategory('1200 - 1499 cc', 'Petrol'));
+        $this->assertSame('c2500', $mapper->detectCategory('2000 - 2499 cc', 'Petrol')); // Uses upper bound 2499
+        $this->assertSame('c1500', $mapper->detectCategory('1200 - 1499 cc', 'Petrol')); // Upper bound 1499 <= 1500
         $this->assertSame('hybrid', $mapper->detectCategory('2000 - 2499 cc', 'Hybrid'));
         $this->assertSame('ev', $mapper->detectCategory('2000 - 2499 cc', 'Electric'));
         $this->assertSame('phev', $mapper->detectCategory('2000 - 2499 cc', 'Plug-in Hybrid'));
