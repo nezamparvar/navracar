@@ -54,7 +54,7 @@
                 </div>
             </div>
             <input type="number" x-model.number="customsPriceDisplay" class="w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-ink-900">
-            <div class="sr-only" aria-hidden="true">customsAutoSuggested 0.75 onRealPriceChanged customsUserEdited استفاده از مقدار پیشنهادی</div>
+            <button type="button" x-show="customsPriceTouched" @click="restoreSuggestion" class="mt-1 text-xs font-bold text-brand-700">استفاده از مقدار پیشنهادی</button>
             <p class="mt-1 text-[11px] text-ink-400" x-text="'پیشنهاد اولیه: ' + fmt(suggestedCustomsPrice()) + ' درهم (' + customsValueDiscountPercent + '% کاهش)'"></p>
         </div>
         <div>
@@ -339,7 +339,7 @@ window.carCalculatorApp = function (config = @js($config)) {
         realPriceAED: config.priceAed,
         customsPriceAED: config.customsPriceAed ?? Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent || 30) / 100)),
         customsValueDiscountPercent: config.customsValueDiscountPercent || 30,
-        customsPriceTouched: true,
+        customsPriceTouched: config.customsPriceAed > 0,
         usdToAedRate: config.usdToAedRate || 3.6725,
         priceCurrency: 'aed',
         customsPriceCurrency: 'aed',
@@ -393,6 +393,12 @@ window.carCalculatorApp = function (config = @js($config)) {
 
         suggestedCustomsPrice() {
             return Math.max(0, (parseFloat(this.realPriceAED) || 0) * (1 - this.customsValueDiscountPercent / 100));
+        },
+
+        restoreSuggestion() {
+            this.customsPriceAED = this.suggestedCustomsPrice();
+            this.customsPriceTouched = false;
+            this.scheduleRecalc();
         },
 
         scheduleRecalc() {

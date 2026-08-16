@@ -10,9 +10,8 @@
     @endphp
 
     <form method="POST" action="{{ route('admin.invoices.store') }}"
-          x-data="invoicePricingForm"
+          x-data="invoicePricingForm(@js($formConfig + ['customsValueDiscountPercent' => (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT)]))"
           class="mx-auto max-w-5xl space-y-5">
-        <div class="sr-only" aria-hidden="true">customsAutoSuggested 0.75 onRealPriceChanged customsUserEdited استفاده از مقدار پیشنهادی</div>
 
         @csrf
         <input type="hidden" name="invoice_id" value="{{ $editId ?: '' }}">
@@ -64,7 +63,7 @@
             <x-card title="ورودی‌های محاسبه خودکار" icon="car" subtitle="نرخ‌ها، درصدها، تعرفه و اسقاط فقط از تنظیمات جاری سرور خوانده می‌شوند.">
                 <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                     <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت واقعی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="real_price_aed" x-model.number="realPriceAed" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
-                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="customs_price_aed" x-model.number="customsPriceAed" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"></div>
+                    <div><label class="mb-1 block text-xs font-bold text-ink-500">قیمت گمرکی خودرو (درهم) *</label><input type="number" min="0" step="0.01" name="customs_price_aed" x-model.number="customsPriceAed" @input.debounce.500ms="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 num-font dark:border-white/10 dark:bg-white/5"><button type="button" x-show="customsPriceTouched" @click="restoreCustomsSuggestion" class="mt-1 text-xs font-bold text-brand-700">استفاده از مقدار پیشنهادی</button></div>
                     <div><label class="mb-1 block text-xs font-bold text-ink-500">دسته خودرو *</label><select name="category" x-model="category" @change="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 dark:border-white/10 dark:bg-white/5">@foreach($categories as $id => $item)<option value="{{ $id }}">{{ $item['label'] }}</option>@endforeach</select></div>
                 </div>
                 <div class="mt-4 flex items-center gap-3">
@@ -131,14 +130,20 @@
 
     @once
         <script>
-            window.invoicePricingForm = function (config = @js($formConfig)) {
+            window.invoicePricingForm = function (config = @js($formConfig + ['customsValueDiscountPercent' => (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT)])) {
                 const prefill = config.prefill;
+                const discountPercent = config.customsValueDiscountPercent || 30;
+                const realPrice = Number(prefill.real_price_aed || 0);
+                const customsPrice = Number(prefill.customs_price_aed || 0);
+                const suggestedCustomsPrice = Math.max(0, realPrice * (1 - discountPercent / 100));
                 return {
                     categories: config.categories,
                     invoiceType: prefill.invoice_type || 'full',
                     mode: prefill.pricing_mode || 'automatic',
-                    realPriceAed: Number(prefill.real_price_aed || 0),
-                    customsPriceAed: Number(prefill.customs_price_aed || 0),
+                    realPriceAed: realPrice,
+                    customsPriceAed: customsPrice || suggestedCustomsPrice,
+                    customsValueDiscountPercent: discountPercent,
+                    customsPriceTouched: customsPrice > 0,
                     category: prefill.category || 'c2000',
                     adjustmentAmount: Number(prefill.adjustment_amount || 0),
                     adjustmentReason: prefill.adjustment_reason || '',
@@ -153,6 +158,29 @@
                     init() {
                         if (!this.rows.length) this.addRow();
                         if (this.mode === 'automatic' && this.realPriceAed > 0 && this.customsPriceAed > 0) this.calculate();
+
+                        // Watch for real price changes to auto-update customs price unless manually edited
+                        this.$watch('realPriceAed', (newVal) => {
+                            if (!this.customsPriceTouched && newVal >= 0) {
+                                this.customsPriceAed = Math.max(0, newVal * (1 - this.customsValueDiscountPercent / 100));
+                            }
+                        });
+
+                        // Mark customs price as touched when user edits it
+                        this.$watch('customsPriceAed', (newVal) => {
+                            if (newVal !== (this.realPriceAed * (1 - this.customsValueDiscountPercent / 100))) {
+                                this.customsPriceTouched = true;
+                            }
+                        });
+                    },
+
+                    suggestedCustomsPrice() {
+                        return Math.max(0, this.realPriceAed * (1 - this.customsValueDiscountPercent / 100));
+                    },
+
+                    restoreCustomsSuggestion() {
+                        this.customsPriceAed = this.suggestedCustomsPrice();
+                        this.customsPriceTouched = false;
                     },
                     onInvoiceTypeChanged() {
                         if (this.invoiceType !== 'full') this.mode = 'manual';
