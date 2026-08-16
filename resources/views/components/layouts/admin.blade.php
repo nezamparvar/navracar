@@ -65,7 +65,7 @@
                 {{-- Dashboard available to both admin and sales --}}
                 @php $active = request()->routeIs('admin.dashboard*'); @endphp
                 <a href="{{ route('admin.dashboard') }}"
-                   class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                   class="flex items-center gap-3 min-h-[44px] rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
                    {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
                     <x-icon name="dashboard" class="w-[18px] h-[18px]" />
                     داشبورد
@@ -76,7 +76,7 @@
                 @foreach (array_slice($navItems, 1) as $item)
                     @php $active = request()->routeIs($item['route'].'*'); @endphp
                     <a href="{{ route($item['route']) }}"
-                       class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                       class="flex items-center gap-3 min-h-[44px] rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
                        {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
                         <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
                         {{ $item['label'] }}
@@ -91,7 +91,7 @@
                 @foreach ($salesNavItems as $item)
                     @php $active = request()->routeIs($item['route'].'*'); @endphp
                     <a href="{{ route($item['route']) }}"
-                       class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                       class="flex items-center gap-3 min-h-[44px] rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
                        {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
                         <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
                         {{ $item['label'] }}
@@ -104,7 +104,7 @@
                 @foreach ($contentNavItems as $item)
                     @php $active = request()->routeIs($item['route'].'*'); @endphp
                     <a href="{{ route($item['route']) }}"
-                       class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                       class="flex items-center gap-3 min-h-[44px] rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
                        {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
                         <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
                         {{ $item['label'] }}
@@ -117,7 +117,7 @@
                 @foreach ($adminNavItems as $item)
                     @php $active = request()->routeIs($item['route'].'*'); @endphp
                     <a href="{{ route($item['route']) }}"
-                       class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                       class="flex items-center gap-3 min-h-[44px] rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
                        {{ $active ? 'bg-amber-500 text-ink-950 shadow-glow-amber' : 'text-brand-100/80 hover:bg-white/10 hover:text-white' }}">
                         <x-icon :name="$item['icon']" class="w-[18px] h-[18px]" />
                         {{ $item['label'] }}
@@ -128,13 +128,13 @@
 
         <div class="border-t border-white/10 p-4">
             <a href="{{ route('public.lead-form') }}" target="_blank"
-               class="flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-emerald-300 hover:bg-white/10">
+               class="flex items-center gap-3 min-h-[44px] rounded-xl px-3.5 py-2.5 text-sm font-bold text-emerald-300 hover:bg-white/10">
                 <x-icon name="external-link" class="w-[18px] h-[18px]" />
                 فرم عمومی فروش ↗
             </a>
             <form method="POST" action="{{ route('logout') }}">
                 @csrf
-                <button type="submit" class="flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-rose-300 hover:bg-white/10">
+                <button type="submit" class="flex w-full min-h-[44px] items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-bold text-rose-300 hover:bg-white/10">
                     <x-icon name="logout" class="w-[18px] h-[18px]" />
                     خروج
                 </button>
@@ -146,7 +146,7 @@
     <div class="flex min-w-0 flex-1 flex-col">
         <header class="sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-ink-200/70 bg-white/80 px-4 py-3.5 backdrop-blur-md dark:border-white/10 dark:bg-ink-900/70 sm:px-6">
             <div class="flex items-center gap-3">
-                <button @click="sidebarOpen = true" aria-label="باز کردن منوی مدیریت" class="rounded-lg p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/10 lg:hidden">
+                <button @click="sidebarOpen = true" aria-label="باز کردن منوی مدیریت" class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg p-2 text-ink-500 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/10 lg:hidden">
                     <x-icon name="menu" class="w-5 h-5" />
                 </button>
                 <div>
@@ -158,7 +158,7 @@
             </div>
 
             <div class="flex items-center gap-2">
-                <button @click="$store.theme.toggle()" class="rounded-full p-2.5 text-ink-500 hover:bg-ink-100 dark:text-amber-300 dark:hover:bg-white/10" title="حالت تاریک/روشن">
+                <button @click="$store.theme.toggle()" class="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full p-2.5 text-ink-500 hover:bg-ink-100 dark:text-amber-300 dark:hover:bg-white/10" title="حالت تاریک/روشن">
                     <x-icon name="moon" x-show="!$store.theme.dark" class="w-[18px] h-[18px]" />
                     <x-icon name="sun" x-show="$store.theme.dark" class="w-[18px] h-[18px]" x-cloak />
                 </button>
