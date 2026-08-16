@@ -147,10 +147,14 @@ class ProformaPdfTest extends TestCase
     {
         \App\Models\Setting::set(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '0');
         $admin = $this->admin();
-        $response = $this->actingAs($admin)->get(route('admin.invoices.create'));
 
+        // Verify the setting was saved correctly
+        $this->assertSame(0.0, (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT));
+
+        // When customs price is 0, it should equal the real price (0% discount = 100% of real price)
+        $response = $this->actingAs($admin)->get(route('admin.invoices.create'));
         $response->assertOk();
-        // Verify the form renders with 0% discount (not coerced to 30%)
+        // Verify the form renders
         $response->assertSee('قیمت واقعی خودرو');
         $response->assertSee('قیمت گمرکی خودرو');
     }
@@ -159,10 +163,14 @@ class ProformaPdfTest extends TestCase
     {
         \App\Models\Setting::set(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '25.5');
         $admin = $this->admin();
-        $response = $this->actingAs($admin)->get(route('admin.invoices.create'));
 
+        // Verify the setting was saved correctly
+        $this->assertSame(25.5, (float) \App\Models\Setting::get(\App\Models\Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT));
+
+        // Verify decimal discount values are supported
+        $response = $this->actingAs($admin)->get(route('admin.invoices.create'));
         $response->assertOk();
-        // Verify the form renders with custom decimal discount percentage
+        // Verify the form renders
         $response->assertSee('قیمت واقعی خودرو');
         $response->assertSee('قیمت گمرکی خودرو');
     }
