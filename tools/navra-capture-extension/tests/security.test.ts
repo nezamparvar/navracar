@@ -237,16 +237,16 @@ describe('Payload Size Validation', () => {
 });
 
 describe('Environment Isolation', () => {
-  const STAGING_URL = 'https://navracar.com/staging';
+  const STAGING_URL = 'https://staging.nezamparvar.com';
   const PRODUCTION_URL = 'https://navracar.com';
 
   it('should isolate staging environment', () => {
-    expect(STAGING_URL).toContain('/staging');
+    expect(STAGING_URL).toContain('staging.nezamparvar.com');
     expect(STAGING_URL).not.toEqual(PRODUCTION_URL);
   });
 
   it('should isolate production environment', () => {
-    expect(PRODUCTION_URL).not.toContain('/staging');
+    expect(PRODUCTION_URL).not.toContain('staging.nezamparvar.com');
     expect(PRODUCTION_URL).not.toEqual(STAGING_URL);
   });
 
@@ -254,8 +254,8 @@ describe('Environment Isolation', () => {
     const stagingApi = `${STAGING_URL}/api/browser-capture/v1/listings`;
     const productionApi = `${PRODUCTION_URL}/api/browser-capture/v1/listings`;
     expect(stagingApi).not.toEqual(productionApi);
-    expect(stagingApi).toContain('/staging');
-    expect(productionApi).not.toContain('/staging');
+    expect(stagingApi).toContain('staging.nezamparvar.com');
+    expect(productionApi).not.toContain('staging.nezamparvar.com');
   });
 
   it('should enforce build-time lock', () => {
