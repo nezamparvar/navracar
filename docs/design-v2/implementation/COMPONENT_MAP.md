@@ -38,9 +38,19 @@ Orange/purple are intentionally not part of this palette (DESIGN_SPEC.md §2). S
 
 `x-field` covers the common `<input>` case directly; for `<select>`/`<textarea>` pass them as the slot and set a matching `id`/`aria-describedby` yourself (documented in the component's own comment) since Blade cannot inject attributes into arbitrary slot HTML.
 
+## Phase 3 — shells migrated to V2 tokens
+
+| Shell | File | What changed | What didn't |
+|---|---|---|---|
+| Admin shell | `resources/views/components/layouts/admin.blade.php` | Sidebar/header/body fully on `v2-*` tokens; active nav state uses `v2-primary` instead of amber; dark-mode toggle removed (see `GAP_REPORT.md` §5 — V2 has one approved dark language, no light reference exists to toggle to) | Nav structure, role grouping (عمومی/فروش/مدیریت محتوا/فقط مدیر), all routes/permissions — byte-for-byte identical logic, only classes changed |
+| Public shell | `resources/views/components/layouts/public.blade.php` | Header/footer/mobile-bottom-nav on `v2-*` tokens; nav links only to real routes (خودروها/محاسبه هزینه/ثبت درخواست/وبلاگ + dynamic `MenuItem`s); phone icon is a real `tel:` link; "تماس با ما" is a real `#contact` anchor into the footer; added a skip-link and `id="main-content"` landmark; added a 4-item mobile bottom nav (`خانه`/`خودروها`/`محاسبه`/`ثبت درخواست` — no `درخواست‌ها`/`حساب` items, see `GAP_REPORT.md` §1) | **Body background** — deliberately stayed on the original light gradient (see note below), page content itself, all routes |
+
+**Why the public `<body>` didn't move to `bg-v2-bg` yet:** the first attempt did, and a visual check (screenshots + manual read) showed public page headings (`text-ink-900`/`text-ink-500`, no card wrapper) go near-invisible directly on the dark background — a real contrast regression, not an acceptable "still migrating" state. The admin shell doesn't have this problem because virtually all admin content is wrapped in `x-card`/`x-stat-card`, which carry their own explicit light background. The public body will move to `v2-bg` in Phase 4 together with the page content that needs to be legible on it, not before. This is recorded so nobody "fixes" the public body back to `v2-bg` without also doing the Phase 4 content pass.
+
 ## Consumers so far
 
-None yet — Phase 2 only prepares tokens/components. Phases 3–9 will migrate actual pages (public shell, admin shell, then each page family) onto these tokens/components and this table will list each page as it migrates.
+- **Admin shell** (`x-layouts.admin`): every admin page (all of section C–F in `PAGE_INVENTORY.md`) — inherits the V2 sidebar/header automatically; page-level content (cards, tables) is unmigrated until its own phase.
+- **Public shell** (`x-layouts.public`): every public page (section A in `PAGE_INVENTORY.md`) — inherits the V2 header/footer/bottom-nav; page body content is unmigrated until Phase 4.
 
 ## Remaining legacy (pre-V2) components
 
