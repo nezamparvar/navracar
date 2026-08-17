@@ -38,6 +38,8 @@ class PdfAcceptanceArtifactTest extends TestCase
 
                 $this->assertStringStartsWith('%PDF-', $contents);
                 $this->assertGreaterThan(10_000, strlen($contents));
+                preg_match_all('/\/Type\s*\/Page\b/', $contents, $pageObjects);
+                $this->assertCount(1, $pageObjects[0], "{$variant}-{$language} must fit on one A4 page");
                 Storage::disk('public')->put($artifactPath, $contents);
                 Storage::disk('public')->assertExists($artifactPath);
             }
