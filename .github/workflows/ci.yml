@@ -130,3 +130,31 @@ jobs:
           name: navracar-android-debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 14
+
+  extension:
+    name: Browser extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/navra-capture-extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/navra-capture-extension/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm test -- --runInBand
+      - run: npm run build
+      - run: cd dist && sha256sum -c navra-capture-staging.zip.sha256 navra-capture-production.zip.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: navra-capture-extension
+          path: |
+            tools/navra-capture-extension/dist/navra-capture-staging.zip
+            tools/navra-capture-extension/dist/navra-capture-staging.zip.sha256
+            tools/navra-capture-extension/dist/navra-capture-production.zip
+            tools/navra-capture-extension/dist/navra-capture-production.zip.sha256
+          retention-days: 14

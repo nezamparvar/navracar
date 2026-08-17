@@ -5,8 +5,10 @@ use App\Http\Controllers\Admin\CalculationLogController;
 use App\Http\Controllers\Admin\CarListingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
+use App\Http\Controllers\Admin\ExtensionPairingController;
 use App\Http\Controllers\Admin\HomeSlideController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\ImportQueueController;
 use App\Http\Controllers\Admin\KanbanController;
 use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\MessageTemplateController;
@@ -134,6 +136,20 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         });
 
         Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
+
+        Route::prefix('extension-pairing')->name('extension-pairing.')->group(function () {
+            Route::get('/', [ExtensionPairingController::class, 'index'])->name('index');
+            Route::post('/', [ExtensionPairingController::class, 'store'])->name('store');
+            Route::post('/{pairing}/revoke', [ExtensionPairingController::class, 'revoke'])->name('revoke');
+        });
+
+        Route::prefix('import-queue')->name('import-queue.')->group(function () {
+            Route::get('/', [ImportQueueController::class, 'index'])->name('index');
+            Route::get('/{importQueue}', [ImportQueueController::class, 'show'])->name('show');
+            Route::put('/{importQueue}', [ImportQueueController::class, 'update'])->name('update');
+            Route::post('/{importQueue}/publish', [ImportQueueController::class, 'publish'])->name('publish');
+            Route::post('/{importQueue}/cancel', [ImportQueueController::class, 'cancel'])->name('cancel');
+        });
 
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');

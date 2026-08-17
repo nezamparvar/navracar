@@ -30,4 +30,22 @@ class MarketplaceImportTest extends TestCase
         $this->expectException(\InvalidArgumentException::class);
         $service->import('<html><body>dubizzle dubicars</body></html>', 'https://example.test/listing');
     }
+
+    public function test_all_three_real_sanitized_marketplace_fixtures_parse_without_credentials(): void
+    {
+        $service = app(MarketplaceHtmlImportService::class);
+
+        foreach (['dubizzle', 'dubicars', 'yallamotor'] as $platform) {
+            $base = base_path("tests/Fixtures/real/{$platform}_real_sanitized");
+            $metadata = json_decode(file_get_contents($base.'.json'), true, flags: JSON_THROW_ON_ERROR);
+            $this->assertTrue($metadata['sanitized']);
+            $this->assertFalse($metadata['contains_credentials_or_personal_data']);
+
+            $result = $service->import(file_get_contents($base.'.html'), $metadata['source_url']);
+            $this->assertSame('parsed', $result['status'], $platform);
+            $this->assertSame($platform, $result['source_platform']);
+            $this->assertNotEmpty($result['data']['title_en'] ?? $result['data']['title'] ?? null, $platform);
+            $this->assertGreaterThan(0, (float) ($result['data']['price_aed'] ?? 0), $platform);
+        }
+    }
 }

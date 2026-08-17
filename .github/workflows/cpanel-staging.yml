@@ -52,7 +52,7 @@ jobs:
           SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
         with:
           script: |
-            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA', 'Android build'];
+            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA', 'Android build', 'Browser extension'];
             const runs = await github.paginate(github.rest.checks.listForRef, {
               owner: context.repo.owner, repo: context.repo.repo,
               ref: process.env.SOURCE_COMMIT, per_page: 100,

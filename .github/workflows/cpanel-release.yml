@@ -55,7 +55,7 @@ jobs:
           script: |
             const tag = process.env.EVENT_TAG || process.env.INPUT_TAG;
             const source = (await github.rest.repos.getCommit({owner: context.repo.owner, repo: context.repo.repo, ref: tag})).data.sha;
-            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA', 'Android build'];
+            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA', 'Android build', 'Browser extension'];
             const runs = await github.paginate(github.rest.checks.listForRef, {owner: context.repo.owner, repo: context.repo.repo, ref: source, per_page: 100});
             const missing = required.filter((name) => !runs.some((run) => run.name === name && run.conclusion === 'success'));
             if (missing.length) core.setFailed(`Protected CI is not green: ${missing.join(', ')}`);

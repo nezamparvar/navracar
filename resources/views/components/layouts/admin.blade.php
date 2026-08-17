@@ -32,6 +32,8 @@
         ['route' => 'admin.menu-items.index', 'label' => 'منوی سایت', 'icon' => 'menu'],
     ];
     $adminNavItems = [
+        ['route' => 'admin.import-queue.index', 'label' => 'صف ایمپورت', 'icon' => 'inbox'],
+        ['route' => 'admin.extension-pairing.index', 'label' => 'اتصال افزونه', 'icon' => 'link'],
         ['route' => 'admin.settings.edit', 'label' => 'تنظیمات نرخ ارز', 'icon' => 'target'],
         ['route' => 'admin.templates.index', 'label' => 'قالب‌های پیام', 'icon' => 'message'],
         ['route' => 'admin.users.index', 'label' => 'کاربران', 'icon' => 'users'],
