@@ -13,9 +13,19 @@ class BrowserExtensionFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    private function makeUser(string $role): AdminUser
+    {
+        return AdminUser::create([
+            'username' => $role.'-extension-test',
+            'password_hash' => bcrypt('secret'),
+            'full_name' => ucfirst($role).' Extension Test',
+            'role' => $role,
+        ]);
+    }
+
     public function test_pairing_secrets_are_hashed_and_code_is_single_use(): void
     {
-        $admin = AdminUser::factory()->create(['role' => 'admin']);
+        $admin = $this->makeUser('admin');
         $issued = BrowserExtensionPairing::issue($admin, 'staging', 24);
         $code = $issued['pairing_code'];
         $pairing = $issued['pairing']->fresh();
@@ -45,7 +55,7 @@ class BrowserExtensionFlowTest extends TestCase
 
     public function test_capture_requires_token_matching_marketplace_host_and_rejects_credentials(): void
     {
-        $admin = AdminUser::factory()->create(['role' => 'admin']);
+        $admin = $this->makeUser('admin');
         $issued = BrowserExtensionPairing::issue($admin, 'staging', 24);
         $token = BrowserExtensionPairing::exchange($issued['pairing_code'], 'staging', 'Test')['token'];
 
@@ -74,7 +84,7 @@ class BrowserExtensionFlowTest extends TestCase
 
     public function test_capture_enters_review_queue_detects_duplicate_and_builds_draft_listing(): void
     {
-        $admin = AdminUser::factory()->create(['role' => 'admin']);
+        $admin = $this->makeUser('admin');
         $issued = BrowserExtensionPairing::issue($admin, 'staging', 24);
         $token = BrowserExtensionPairing::exchange($issued['pairing_code'], 'staging', 'Test')['token'];
         $payload = [
@@ -115,7 +125,7 @@ class BrowserExtensionFlowTest extends TestCase
 
     public function test_sales_user_cannot_manage_pairings_or_import_queue(): void
     {
-        $sales = AdminUser::factory()->create(['role' => 'sales']);
+        $sales = $this->makeUser('sales');
         $this->actingAs($sales)->get(route('admin.extension-pairing.index'))->assertForbidden();
         $this->actingAs($sales)->get(route('admin.import-queue.index'))->assertForbidden();
     }
