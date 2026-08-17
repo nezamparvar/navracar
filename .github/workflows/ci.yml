@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+  COMPOSER_MAX_PARALLEL_HTTP: 4
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
