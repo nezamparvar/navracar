@@ -57,4 +57,3 @@ CI همین مسیر را در check مستقل `Android build` اجرا و APK 
 ## انتشار
 
 امضا، ساخت AAB، ثبت در Google Play و هرگونه Deploy تنها پس از پذیرش Staging و تأیید صریح Mostafa انجام می‌شود. keystore و رمزهای امضا نباید وارد Git شوند.
-
