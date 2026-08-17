@@ -8,6 +8,8 @@ import { DubizzleAdapter } from '../src/adapters/dubizzle-adapter';
 import { DubiCarsAdapter } from '../src/adapters/dubicars-adapter';
 import { YallaMotorAdapter } from '../src/adapters/yallamotor-adapter';
 import { AdapterRegistry } from '../src/adapters/adapter-registry';
+import manifest from '../manifest.json';
+import packageJson from '../package.json';
 
 /**
  * Adapter Registry: Production Usage
@@ -371,6 +373,11 @@ describe('Service Worker Error Handling', () => {
  * Ensures extension can be packaged and is self-consistent
  */
 describe('Extension Build Validation', () => {
+  it('keeps the manifest and package release versions aligned', () => {
+    expect(manifest.version).toBe(packageJson.version);
+    expect(packageJson.version).toBe('1.0.1');
+  });
+
   it('manifest.json should be valid JSON', () => {
     // Already validated by Jest during import
     expect(true).toBe(true);

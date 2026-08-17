@@ -8,8 +8,8 @@ const EXTENSION_ENVIRONMENT = 'production'; // Will be replaced by build script
 
 const CONFIG = {
   staging: {
-    baseUrl: 'https://navracar.com/staging',
-    apiUrl: 'https://navracar.com/staging/api',
+    baseUrl: 'https://staging.nezamparvar.com',
+    apiUrl: 'https://staging.nezamparvar.com/api',
   },
   production: {
     baseUrl: 'https://navracar.com',
@@ -77,7 +77,7 @@ async function handlePairingExchange(pairingCode) {
       }),
     });
 
-    const data = await response.json();
+    const data = await parseApiResponse(response);
 
     if (!response.ok) {
       return { status: 'error', error: apiError(data, 'Failed to exchange pairing code') };
@@ -119,7 +119,7 @@ async function handleSendCapture(payload) {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = await parseApiResponse(response);
 
     if (!response.ok) {
       if (response.status === 401) await clearAuthToken();
@@ -160,6 +160,20 @@ function clearAuthToken() {
 function apiError(data, fallback) {
   const validation = data && data.errors ? Object.values(data.errors).flat()[0] : null;
   return validation || data?.message || data?.error || fallback;
+}
+
+async function parseApiResponse(response) {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+
+  await response.text();
+  return {
+    message: response.status === 401
+      ? 'Navracar staging API is blocked by HTTP authentication.'
+      : `Navracar API returned HTTP ${response.status}.`,
+  };
 }
 
 function marketplaceFromUrl(rawUrl) {

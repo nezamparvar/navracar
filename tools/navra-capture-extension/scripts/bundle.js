@@ -5,6 +5,7 @@ const path = require('path');
 
 const ROOT = path.dirname(path.dirname(__dirname)) + '/navra-capture-extension';
 const DIST = path.join(ROOT, 'dist');
+const PACKAGE_VERSION = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version;
 const API_HOST_PERMISSIONS = {
   staging: 'https://staging.nezamparvar.com/*',
   production: 'https://navracar.com/*',
@@ -24,7 +25,7 @@ function createEnvironmentBuild(environment) {
   // Copy manifest
   let manifest = fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8');
   const manifestObj = JSON.parse(manifest);
-  manifestObj.version = '1.0.0';
+  manifestObj.version = PACKAGE_VERSION;
   const apiHostPermissions = new Set(Object.values(API_HOST_PERMISSIONS));
   manifestObj.host_permissions = manifestObj.host_permissions.filter(
     (permission) => !apiHostPermissions.has(permission),

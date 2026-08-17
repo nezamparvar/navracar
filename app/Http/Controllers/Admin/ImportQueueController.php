@@ -91,8 +91,9 @@ class ImportQueueController extends Controller
         if (empty($data['title']) || ! isset($data['price_aed'])) {
             return back()->with('error', 'عنوان و قیمت برای ساخت پیش‌نویس الزامی است.');
         }
+        $meta = $this->mapper->resolveMeta($data, $data['title']);
 
-        $listing = DB::transaction(function () use ($importQueue, $data) {
+        $listing = DB::transaction(function () use ($importQueue, $data, $meta) {
             $slugData = $data;
             $slugData['model_year'] = $data['year'] ?? null;
             $listing = CarListing::create([
@@ -127,6 +128,8 @@ class ImportQueueController extends Controller
                 'delivery_days' => (int) Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
                 'description_en' => $data['description'] ?? null,
                 'posted_on_dubizzle' => $data['posted_on'] ?? null,
+                'meta_title' => $meta['meta_title'],
+                'meta_description' => $meta['meta_description'],
                 'created_by' => $importQueue->user_id,
             ]);
             $importQueue->update(['status' => 'published', 'published_listing_id' => $listing->id]);

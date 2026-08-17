@@ -121,6 +121,11 @@ class BrowserExtensionFlowTest extends TestCase
         $this->assertSame('draft', $listing->status);
         $this->assertNull($listing->customs_price_aed);
         $this->assertSame(50000.0, (float) $listing->price_aed);
+        $this->assertSame('Toyota Camry 2020 | ناوراکار', $listing->meta_title);
+        $this->assertSame(
+            'Toyota Camry 2020 — قیمت 50,000 درهم — به همراه جدول کامل هزینه ترخیص، عوارض گمرکی و پلاک برای واردات به ایران.',
+            $listing->meta_description,
+        );
     }
 
     public function test_sales_user_cannot_manage_pairings_or_import_queue(): void
