@@ -4,7 +4,7 @@ Last updated: 2026-08-17
 
 ## Current release state
 
-**STAGING REJECTED — SECOND REMEDIATION MERGED; NEW CANDIDATE PENDING**
+**STAGING REJECTED — THIRD REMEDIATION IN REVIEW**
 
 - PR #27 was merged to `main` as `0a73ff0e29093ab47b863d7427bdc7c7c4788b1c` after Mostafa's explicit approval.
 - Candidate `rc-v1.3.0-1` was built successfully and published to `cpanel-staging` as `ebd36599e41af80ad7e1c3fb250a2a28bc37a0e3` (artifact `9279049851`).
@@ -14,7 +14,9 @@ Last updated: 2026-08-17
 - Live retesting of `rc-v1.3.0-2` found a subdirectory-root HTTP 405, a request-list HTTP 500 caused by the nonexistent `pipeline_stages.order` column, a post-delete redirect to the deleted detail URL, and missing pipeline-column create/delete operations.
 - PR #29 fixed those four defects. Protected [PR CI run #118](https://github.com/nezamparvar/navracar/actions/runs/32007681683) and [main CI run #119](https://github.com/nezamparvar/navracar/actions/runs/32007837193) both passed all six jobs.
 - PR #29 merged to `main` as `3bb23c084eb52b205ae0dc850c01dae8e18cbc72`. Production deployment files and Production runtime remain unchanged.
-- Staging acceptance remains rejected until a new immutable candidate is built from the current documented `main`, deployed with **Update from Remote** and **Deploy HEAD Commit**, and the acceptance checklist is repeated.
+- Candidate `rc-v1.3.0-3` was published successfully, but a live route probe still returned 404 for the new pipeline-stage endpoint. This proves the cPanel working copy had not activated that candidate, so the previously reported 405/delete/pipeline symptoms were still from the older deployed code.
+- The next remediation also separates clearance/payment/timeline presentation per owner acceptance, exposes all three marketplace import paths, normalizes read permissions only inside Staging public media, and emits candidate/source response headers so the active deployment can be verified remotely.
+- Staging acceptance remains rejected until the next immutable candidate is built, its exact commit is activated through both **Update from Remote** and **Deploy HEAD Commit**, and the response headers plus full acceptance checklist are verified.
 
 ## Staging incident evidence — 2026-08-17
 
@@ -38,6 +40,16 @@ Last updated: 2026-08-17
 | Pipeline columns | FAIL — only rename existed; admin-only create and safe delete are now implemented. Occupied columns must be emptied before deletion. |
 | Performance probe | HOST/CDN CONCERN — uncached and cached static files plus `/up` showed roughly 3–4 seconds TTFB, so the remaining latency is not isolated to Laravel or database queries. |
 | PR #29 / main validation | PASS — all six protected jobs passed on both the PR head and merge commit. |
+
+## Third Staging acceptance findings — 2026-08-17
+
+| Check | Result |
+|---|---|
+| Candidate activation | FAIL — live `POST /staging/admin/pipeline-stages` returned 404 after `rc-v1.3.0-3` publication, proving the new route was not active on cPanel. |
+| Vehicle media | FAIL — all 20 persisted image URLs returned HTTP 403 and rendered with zero natural dimensions. The Staging deployment now normalizes public-media directories to 0755 and files to 0644 without touching Production or private storage. |
+| Clearance/payment presentation | OWNER CHANGE — customs clearance moved out of payment conditions into the clearance-cost table; broker fee remains in payment conditions but its two-day timeline segment is removed. |
+| Marketplace import discoverability | OWNER CHANGE — Admin now shows explicit Dubizzle, DubiCars, and YallaMotor links plus Extension Pairing and Import Queue entry points. |
+| Release observability | ADDED — Staging responses expose validated `X-Navracar-Candidate` and `X-Navracar-Source` headers from the deployed release metadata. |
 
 The original source candidate passed its automated gates, but live Staging
 acceptance correctly found deployment-runtime defects that CI did not model.
@@ -70,7 +82,7 @@ The remediation must pass a new protected CI run before merge.
 | 8. Security/privacy | Complete | Composer/npm audits and Gitleaks pass; no leak found. |
 | 9. Full automated gate | Complete | Dependencies, Backend tests, Frontend build, Browser QA, Browser extension, and Android build all pass on the exact SHA. |
 | 10. Docs/release preparation | Complete | Runbooks, protected checks, artifact links, SHA, and promotion guardrails recorded. |
-| 11. Staging/Production gates | Staging rejected; second remediation merged | `rc-v1.3.0-2` exposed root-routing and CRM defects. PR #29 is merged and fully green; a new immutable candidate and live acceptance are pending. Production remains unchanged. |
+| 11. Staging/Production gates | Staging rejected; third remediation in review | `rc-v1.3.0-3` was published but not activated on cPanel; media permissions and additional owner acceptance changes are included in the next candidate. Production remains unchanged. |
 
 ## Validation log — CI run #112
 
