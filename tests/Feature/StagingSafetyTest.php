@@ -21,6 +21,8 @@ class StagingSafetyTest extends TestCase
         $this->assertStringContainsString('artisan config:cache --no-interaction', $deployScript);
         $this->assertStringContainsString('artisan route:cache --no-interaction', $deployScript);
         $this->assertStringContainsString('artisan view:cache --no-interaction', $deployScript);
+        $this->assertStringContainsString('find "$public_disk_root" -type d -exec chmod 0755', $runtimeHelper);
+        $this->assertStringContainsString('find "$public_disk_root" -type f -exec chmod 0644', $runtimeHelper);
         $this->assertStringNotContainsString('/home/navrac/navracar-app/.env', $deployScript);
     }
 
@@ -46,6 +48,26 @@ class StagingSafetyTest extends TestCase
         $response->assertOk();
         $response->assertHeader('X-Robots-Tag', 'noindex, nofollow, noarchive');
         $this->assertStringContainsString('STAGING', view('components.staging-banner')->render());
+    }
+
+    public function test_staging_response_exposes_deployed_candidate_identity(): void
+    {
+        $metadataPath = base_path('.cpanel-release.json');
+        $this->assertFileDoesNotExist($metadataPath);
+        file_put_contents($metadataPath, json_encode([
+            'release_candidate' => 'rc-v1.3.0-4',
+            'source_commit' => str_repeat('a', 40),
+        ], JSON_THROW_ON_ERROR));
+
+        try {
+            $this->app->detectEnvironment(fn () => 'staging');
+            $response = $this->get(route('login'));
+
+            $response->assertHeader('X-Navracar-Candidate', 'rc-v1.3.0-4');
+            $response->assertHeader('X-Navracar-Source', str_repeat('a', 40));
+        } finally {
+            @unlink($metadataPath);
+        }
     }
 
     public function test_staging_subdirectory_configuration_is_isolated(): void
