@@ -10,4 +10,3 @@ Refresh is a separate, deliberate operation; it is not part of code deployment.
 6. Run the acceptance checklist.
 
 Monthly or before a major release is usually sufficient; refresh more often only when the test plan requires realistic data. Keep an encrypted local backup of the previous staging snapshot if rollback of test data matters.
-
