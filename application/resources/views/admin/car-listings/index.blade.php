@@ -1,15 +1,23 @@
-<x-layouts.admin :page-title="$pageTitle" page-subtitle="لینک آگهی دابیزل را وارد کنید تا اطلاعات و عکس‌ها خودکار دریافت و برای انتشار در سایت آماده شود.">
+<x-layouts.admin :page-title="$pageTitle" page-subtitle="آگهی عمومی Dubizzle، DubiCars یا YallaMotor را با افزونه Chrome یا HTML ذخیره‌شده وارد کنید.">
 
-    <x-card title="افزودن آگهی از دابیزل" icon="link" class="mb-5">
+    <x-card title="ایمپورت از سایت‌های خودرو" icon="link" class="mb-5">
+        <div class="mb-4 grid gap-3 sm:grid-cols-3">
+            <a href="https://dubai.dubizzle.com/motors/used-cars/" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-ink-200 p-3 text-center text-sm font-extrabold hover:border-brand-400 hover:text-brand-700 dark:border-white/10">باز کردن Dubizzle</a>
+            <a href="https://www.dubicars.com/" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-ink-200 p-3 text-center text-sm font-extrabold hover:border-brand-400 hover:text-brand-700 dark:border-white/10">باز کردن DubiCars</a>
+            <a href="https://uae.yallamotor.com/used-cars" target="_blank" rel="noopener noreferrer" class="rounded-xl border border-ink-200 p-3 text-center text-sm font-extrabold hover:border-brand-400 hover:text-brand-700 dark:border-white/10">باز کردن YallaMotor</a>
+        </div>
+        <p class="mb-3 rounded-xl bg-brand-50 p-3 text-xs leading-6 text-brand-800 dark:bg-brand-500/10 dark:text-brand-200">
+            روش پیشنهادی: افزونه Navra Capture را نصب کنید و روی صفحه آگهی بزنید؛ اطلاعات وارد «صف ایمپورت» می‌شود. روش جایگزین: آدرس آگهی و View Page Source کامل آن را در فرم زیر قرار دهید.
+        </p>
         <form method="POST" action="{{ route('admin.car-listings.store') }}" class="space-y-3">
             @csrf
-            <input type="url" name="source_url" placeholder="https://dubai.dubizzle.com/motors/used-cars/..." required
+            <input type="url" name="source_url" placeholder="لینک آگهی Dubizzle، DubiCars یا YallaMotor" required
                    value="{{ old('source_url') }}"
                    class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm ltr text-left dark:border-white/10 dark:bg-white/5">
 
             <details class="rounded-xl border border-ink-200/70 p-3.5 text-xs dark:border-white/10">
-                <summary class="cursor-pointer font-bold text-ink-600 dark:text-ink-300">اگر دریافت خودکار خطا داد، HTML صفحه را اینجا پیست کنید (اختیاری)</summary>
-                <textarea name="html_source" rows="5" placeholder="کل HTML صفحه (View Page Source) را اینجا پیست کنید..."
+                <summary class="cursor-pointer font-bold text-ink-600 dark:text-ink-300">HTML صفحه را اینجا پیست کنید (الزامی)</summary>
+                <textarea name="html_source" rows="5" required placeholder="کل HTML صفحه (View Page Source) را اینجا پیست کنید..."
                           class="mt-3 w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 font-mono text-[11px] ltr text-left dark:border-white/10 dark:bg-white/5">{{ old('html_source') }}</textarea>
             </details>
 
@@ -17,6 +25,14 @@
                 <x-button type="submit" variant="amber">
                     <x-icon name="download" class="w-4 h-4" /> دریافت اطلاعات و ساخت پیش‌نویس
                 </x-button>
+                @if(auth()->user()->isAdmin())
+                    <x-button :href="route('admin.extension-pairing.index')" variant="secondary">
+                        <x-icon name="link" class="w-4 h-4" /> اتصال افزونه Chrome
+                    </x-button>
+                    <x-button :href="route('admin.import-queue.index')" variant="secondary">
+                        <x-icon name="inbox" class="w-4 h-4" /> مشاهده صف ایمپورت
+                    </x-button>
+                @endif
                 <x-button :href="route('admin.car-listings.create')" variant="secondary">
                     <x-icon name="plus" class="w-4 h-4" /> افزودن آگهی دستی (بدون دابیزل)
                 </x-button>
