@@ -107,6 +107,7 @@ jobs:
         run: |
           composer install --no-dev --prefer-source --optimize-autoloader --no-interaction --no-progress
           find vendor -type d -name .git -prune -exec rm -rf -- {} +
+          find vendor -type f \( -name .gitattributes -o -name .gitignore \) -delete
           find vendor -type f \( -name '*.sqlite' -o -name '*.log' -o -name '.env' \) -delete
           npm run build
       - name: Build explicit staging deployment tree
