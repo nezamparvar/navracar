@@ -99,4 +99,16 @@ Legend for **Status**: `not started` / `in progress` / `implemented` / `blocked 
 
 ---
 
-**Baseline status as of this inventory:** `composer install` / `npm ci` were run in this session; `npm ci` completed successfully. `composer install` was still resolving dependencies via git-mirror fallback at the time this file was written — baseline `php artisan test --compact` / `npm run build` / `npm run test:e2e` results will be appended once install completes (see `QA_REPORT.md`, Phase 13/14). No production build or test run has occurred yet on this branch, so no visual or functional change has shipped.
+## Baseline (locked commit `1cdab11`, before any V2 change)
+
+Run in this session, on this exact commit, before any page/component was modified:
+
+- `composer install` — completed (slow git-mirror fallback in this sandbox's network, no errors).
+- `composer audit` — **no security advisories found**.
+- `npm ci` — completed cleanly.
+- `npm audit` — **0 vulnerabilities**.
+- `npm run build` — **passes**, 58 modules, no errors/warnings.
+- `php artisan test --compact` — **144 passed, 2 pre-existing failures** (773 assertions), both in `tests/Feature/SalesDashboardScopingTest.php` (`sales dashboard only shows own data`, `admin sees all dashboard data`): both fail on `assertViewHas('todayRequests', …)` — `DashboardController`'s `whereDate('created_at', today())` returns 0 instead of the expected count, which looks like a timezone mismatch between `today()` and how `created_at` is stored under the `testing` PHPUnit environment (`APP_TIMEZONE` is not pinned in `phpunit.xml`). **Pre-existing on the locked commit — not caused by this branch.** Full failure output preserved for `QA_REPORT.md`.
+- `npm run test:e2e` — in progress at the time of this checkpoint commit; results to be appended.
+
+Any test failure that appears later in this branch will be diffed against this baseline before being reported as a regression.
