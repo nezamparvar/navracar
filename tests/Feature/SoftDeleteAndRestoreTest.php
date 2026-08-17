@@ -32,7 +32,8 @@ class SoftDeleteAndRestoreTest extends TestCase
             'assigned_to' => $sales->id,
         ]);
 
-        $this->actingAs($admin)->delete(route('admin.requests.destroy', $lead))->assertRedirect();
+        $this->actingAs($admin)->delete(route('admin.requests.destroy', $lead))
+            ->assertRedirect(route('admin.requests.index'));
 
         $this->assertSoftDeleted($lead);
         $this->assertNull(QuoteRequest::find($lead->id));
