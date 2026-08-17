@@ -4,16 +4,31 @@ Last updated: 2026-08-17
 
 ## Current release state
 
-**READY FOR REVIEW — MERGE/DEPLOY NOT PERFORMED**
+**STAGING REJECTED — REMEDIATION READY FOR REVIEW**
 
-- Candidate branch: `claude/navracar-pr26-review-l2w2mz`
-- Draft pull request: [#27 — Complete and harden Navracar candidate](https://github.com/nezamparvar/navracar/pull/27)
-- Latest fully tested implementation SHA: `2720f0a02efe0a339e71b30eaa101b7ad5097ec3`
-- Authoritative CI: [run #112](https://github.com/nezamparvar/navracar/actions/runs/32002027262), all six protected jobs successful
-- PR is open, draft, mergeable, and targets `main`.
-- No merge, Staging deployment, Production deployment, branch deletion, or PR closure was performed.
+- PR #27 was merged to `main` as `0a73ff0e29093ab47b863d7427bdc7c7c4788b1c` after Mostafa's explicit approval.
+- Candidate `rc-v1.3.0-1` was built successfully and published to `cpanel-staging` as `ebd36599e41af80ad7e1c3fb250a2a28bc37a0e3` (artifact `9279049851`).
+- The candidate was deployed to the isolated cPanel Staging environment. Production was not promoted or deployed.
+- Owner acceptance found reproducible HTTP 500 failures. The Staging log proves the imported database had not applied the candidate migrations (`quote_requests.deleted_at`, `car_listings.customs_price_aed`, and `import_queue` were missing). PDF generation also failed because persistent `storage/fonts` was absent.
+- Remediation implementation SHA: `37fee5bcc5ca214cfeebe8ce02e6b4650f452f3d` on `agent/staging-runtime-migrations`.
+- The remediation makes Staging **Deploy HEAD Commit** locate cPanel PHP 8.3+, apply outstanding migrations to the isolated Staging database, create the PDF font runtime, and rebuild Laravel caches without SSH or Terminal. Production deployment logic is unchanged.
+- Staging acceptance remains rejected until the remediation is merged, rebuilt as a new immutable candidate, deployed, and retested.
 
-The source candidate and its automated acceptance evidence are complete. The remaining actions are release approvals and environment-specific owner acceptance; they are intentionally outside this candidate and require Mostafa's explicit approval.
+## Staging incident evidence — 2026-08-17
+
+| Check | Result |
+|---|---|
+| WCDN / admin browsing | FAIL — intermittent upstream HTTP 500 observed by owner. |
+| Laravel database schema | FAIL — SQLSTATE 42S22/42S02 for missing `deleted_at`, `customs_price_aed`, and `import_queue`. |
+| Persian/English PDF | FAIL — Dompdf could not create/read metrics under missing `storage/fonts`. |
+| cPanel web-server errors | No matching application fault; visible `wp-login.php`/`xmlrpc.php` entries were unrelated bot scans. |
+| cPanel Resource Usage | Unavailable on this hosting plan; host directs the owner to support. |
+| Local remediation validation | PASS — `bash -n`, `git diff --check`, PHP resolver simulation, and runtime-directory creation including `storage/fonts`. |
+| Local PHP test suite | BLOCKED in this workspace because no PHP executable is installed; protected GitHub CI must run before merge. |
+
+The original source candidate passed its automated gates, but live Staging
+acceptance correctly found deployment-runtime defects that CI did not model.
+The remediation must pass a new protected CI run before merge.
 
 ## Completed implementation
 
@@ -31,7 +46,7 @@ The source candidate and its automated acceptance evidence are complete. The rem
 
 | Phase | Status | Evidence |
 |---|---|---|
-| 0. Reconcile PR and candidate | Complete | Candidate published without force-push; replacement draft PR #27 targets `main`. |
+| 0. Reconcile PR and candidate | Complete | PR #27 merged with owner approval; immutable `rc-v1.3.0-1` identity recorded. |
 | 1. Pricing and customs value | Complete | Central service and Settings-backed discount covered by PHP and Browser QA. |
 | 2. CRM/auth/lifecycle/archive | Complete | Policy and soft-delete regression tests pass. |
 | 3. Public UX/calculator/catalog/responsive | Complete | Browser QA: 79 passed, 11 intentionally project-scoped skips, 0 failures. |
@@ -42,7 +57,7 @@ The source candidate and its automated acceptance evidence are complete. The rem
 | 8. Security/privacy | Complete | Composer/npm audits and Gitleaks pass; no leak found. |
 | 9. Full automated gate | Complete | Dependencies, Backend tests, Frontend build, Browser QA, Browser extension, and Android build all pass on the exact SHA. |
 | 10. Docs/release preparation | Complete | Runbooks, protected checks, artifact links, SHA, and promotion guardrails recorded. |
-| 11. Staging/Production gates | Awaiting explicit owner approval | No deployment was performed. Follow the release path below only after approval. |
+| 11. Staging/Production gates | Staging rejected; remediation ready | `rc-v1.3.0-1` exposed stale-schema and PDF-runtime defects. Production remains unchanged. |
 
 ## Validation log — CI run #112
 
@@ -74,14 +89,13 @@ Artifacts were generated from SHA `2720f0a02efe0a339e71b30eaa101b7ad5097ec3` and
 - [Browser extension staging/production bundles](https://github.com/nezamparvar/navracar/actions/runs/32002027262/artifacts/9278718860) — artifact `9278718860`, SHA-256 `61a104be145ef4257b95ddd463dbe5b6ffe84136edcccd289588e9dc7f04749e`
 - [Gitleaks SARIF](https://github.com/nezamparvar/navracar/actions/runs/32002027262/artifacts/9278723633) — artifact `9278723633`, SHA-256 `afde940558f1a2852a89f59069f6c80865cb38e919b59c01e349ccf02519a3ed`
 
-## Approval-only release path
+## Remediation release path
 
-These are not unresolved source defects. They require protected environments, live accounts, or an owner decision:
+1. Run protected CI on the remediation PR and merge only after every required check passes.
+2. Build a new immutable candidate from the remediation merge commit; never reuse or mutate `rc-v1.3.0-1`.
+3. In the Staging cPanel clone, use **Update from Remote** and **Deploy HEAD Commit**. The deployment must report successful migrations and cache generation.
+4. Repeat the full Staging acceptance checklist, including the formerly failing admin, import queue, customs-price persistence, and four PDF variants.
+5. Test the extension and Android client against the accepted Staging candidate.
+6. Mostafa signs off Staging. Only then may the exact accepted artifact be promoted to Production without rebuilding it.
 
-1. Mostafa reviews PR #27 and explicitly approves merge and Staging deployment.
-2. Deploy the exact accepted candidate artifact to Staging and record source SHA, candidate SHA, artifact IDs, and checksums.
-3. On Staging, load the staging extension against authenticated Dubizzle, DubiCars, and YallaMotor pages; confirm the generated listing remains a draft in admin review.
-4. Install the debug APK on a physical/emulated Android device and complete the documented online/offline/CORS acceptance checks against Staging.
-5. Mostafa signs off Staging. Only then promote the exact accepted artifact to Production without rebuilding it.
-
-Until those approvals are given: **READY FOR REVIEW — MERGE/DEPLOY NOT PERFORMED**.
+Current gate: **STAGING REJECTED — PRODUCTION UNCHANGED**.
