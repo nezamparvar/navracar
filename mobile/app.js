@@ -1,4 +1,9 @@
 const apiBase = document.querySelector('meta[name="navracar-api-base"]').content.replace(/\/$/, '');
+const appEnvironment = document.querySelector('meta[name="navracar-environment"]')?.content || 'production';
+const environmentLabel = document.getElementById('environment-label');
+environmentLabel.textContent = appEnvironment === 'staging'
+  ? 'نسخه آزمایشی Staging'
+  : 'محاسبه هزینه واردات خودرو';
 const form = document.getElementById('pricing-form');
 const submit = document.getElementById('submit');
 const message = document.getElementById('message');

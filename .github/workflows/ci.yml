@@ -36,6 +36,8 @@ jobs:
         run: bash tools/test-cpanel-staging-runtime.sh
       - name: Test production deployment controls
         run: bash tools/test-cpanel-production-controls.sh
+      - name: Validate Android variant builder
+        run: bash -n tools/build-android-variants.sh
       - uses: gitleaks/gitleaks-action@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -138,13 +140,13 @@ jobs:
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm run build
-      - run: npx cap sync android
-      - run: ./gradlew assembleDebug
-        working-directory: android
+      - run: bash tools/build-android-variants.sh
       - uses: actions/upload-artifact@v4
         with:
           name: navracar-android-debug
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          path: |
+            android/app/build/outputs/navracar-staging-debug.apk
+            android/app/build/outputs/navracar-production-debug.apk
           retention-days: 14
 
   extension:
