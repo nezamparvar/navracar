@@ -87,6 +87,12 @@ fi
 # in-place before any managed release item is swapped, preserving all files.
 ensure_staging_runtime_dirs "$APP_ROOT" "$EXPECTED_PUBLIC_ROOT/storage" || exit 26
 
+PHP_BIN="$(resolve_staging_php_bin)" || {
+    echo 'Refusing staging deployment: no executable PHP 8.3+ CLI was found for Laravel release tasks.' >&2
+    exit 27
+}
+readonly PHP_BIN
+
 rm -rf -- "$APP_STAGE" "$PUBLIC_STAGE" "$APP_BACKUP" "$PUBLIC_BACKUP"
 mkdir -p -- "$APP_STAGE" "$PUBLIC_STAGE" "$APP_BACKUP" "$PUBLIC_BACKUP"
 
@@ -126,6 +132,19 @@ for item in "${PUBLIC_ITEMS[@]}"; do
     mv -- "$PUBLIC_STAGE/$item" "$PUBLIC_ROOT/$item"
 done
 
+# The owner has cPanel Git only: bring the isolated staging schema up to the
+# exact deployed code and build writable runtime caches as part of Deploy HEAD.
+# A failure keeps the deployment red and rolls the managed code/public files
+# back; persistent staging data is never deleted or replaced.
+(
+    cd "$APP_ROOT"
+    "$PHP_BIN" artisan migrate --force --no-interaction
+    "$PHP_BIN" artisan optimize:clear --no-interaction
+    "$PHP_BIN" artisan config:cache --no-interaction
+    "$PHP_BIN" artisan route:cache --no-interaction
+    "$PHP_BIN" artisan view:cache --no-interaction
+)
+
 trap - ERR
 rmdir -- "$APP_STAGE" "$PUBLIC_STAGE"
-echo 'Staging deployment completed. Staging .env, storage/, uploads, and public storage were preserved.'
+echo 'Staging deployment completed. Schema, caches, and PDF runtime are ready; persistent staging data was preserved.'

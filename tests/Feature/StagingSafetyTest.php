@@ -7,6 +7,23 @@ use Tests\TestCase;
 
 class StagingSafetyTest extends TestCase
 {
+    public function test_cpanel_staging_deployment_repairs_schema_and_pdf_runtime_without_terminal(): void
+    {
+        $runtimeHelper = file_get_contents(base_path('deployment/cpanel-staging/ensure-runtime.sh'));
+        $deployScript = file_get_contents(base_path('deployment/cpanel-staging/deploy.sh'));
+
+        $this->assertStringContainsString("'storage/fonts'", $runtimeHelper);
+        $this->assertStringContainsString('resolve_staging_php_bin()', $runtimeHelper);
+        $this->assertStringContainsString('PHP_VERSION_ID >= 80300', $runtimeHelper);
+        $this->assertStringContainsString('PHP_BIN="$(resolve_staging_php_bin)"', $deployScript);
+        $this->assertStringContainsString('artisan migrate --force --no-interaction', $deployScript);
+        $this->assertStringContainsString('artisan optimize:clear --no-interaction', $deployScript);
+        $this->assertStringContainsString('artisan config:cache --no-interaction', $deployScript);
+        $this->assertStringContainsString('artisan route:cache --no-interaction', $deployScript);
+        $this->assertStringContainsString('artisan view:cache --no-interaction', $deployScript);
+        $this->assertStringNotContainsString('/home/navrac/navracar-app/.env', $deployScript);
+    }
+
     public function test_staging_responses_are_marked_noindex_and_show_environment_indicator(): void
     {
         $this->app->detectEnvironment(fn () => 'staging');

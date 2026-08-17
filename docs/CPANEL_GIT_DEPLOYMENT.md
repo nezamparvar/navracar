@@ -63,7 +63,7 @@ The generated public entry point references:
 ../navracar-app/bootstrap/app.php
 ```
 
-No Laravel application directories are copied into the web root. The artifact excludes `.env`, databases, uploads, logs, sessions, runtime caches, `node_modules`, tests, and `.git` metadata. Git does not track empty Laravel runtime directories, so the staging deployment script creates only missing runtime directories (`storage/app/public`, `storage/framework/cache/data`, `storage/framework/sessions`, `storage/framework/views`, and `storage/logs`) and verifies they are writable before swapping code. It never copies or replaces their contents. `SHA256SUMS.txt` covers every deployable file except itself.
+No Laravel application directories are copied into the web root. The artifact excludes `.env`, databases, uploads, logs, sessions, runtime caches, `node_modules`, tests, and `.git` metadata. Git does not track empty Laravel runtime directories, so the staging deployment script creates only missing runtime directories (`storage/app/public`, `storage/fonts`, `storage/framework/cache/data`, `storage/framework/sessions`, `storage/framework/views`, and `storage/logs`) and verifies they are writable before swapping code. It never copies or replaces their contents. `SHA256SUMS.txt` covers every deployable file except itself.
 
 ## cPanel deployment task safety
 
@@ -115,6 +115,12 @@ Follow `docs/STAGING_SETUP_CPANEL.md`. Staging uses a separate Git clone, Larave
 3. Verify the workflow summary, artifact, `DEPLOYMENT-METADATA.json`, and `cpanel-staging` HEAD.
 4. In the staging cPanel clone, click **Update from Remote**, verify the candidate commit, then click **Deploy HEAD Commit**.
 5. Complete `docs/STAGING_ACCEPTANCE_CHECKLIST.md`.
+
+The staging-only deployment task automatically locates an available cPanel PHP
+8.3+ CLI, runs outstanding migrations against the staging `.env` database, and
+rebuilds Laravel's configuration, route, and view caches. This makes the flow
+operable on hosting plans without SSH or Terminal. These Artisan commands are
+not added to the production deployment task by this staging recovery change.
 
 ## Production promotion workflow
 
