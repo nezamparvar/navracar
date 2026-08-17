@@ -46,4 +46,3 @@ The staging `robots.txt`, HTML metadata, and `X-Robots-Tag` header all request n
 
 The CloudPanel vhost for `staging.nezamparvar.com` must not contain `auth_basic` or `auth_basic_user_file`. After changing that vhost, run `nginx -t`, reload Nginx, and verify that `GET /` returns `200` without `WWW-Authenticate` and that `POST /api/vehicle-pricing/calculate` reaches Laravel validation. This policy is staging-only and does not change the production vhost.
 The staging URL is `https://navracar.com/staging`. It is a same-domain subdirectory, not a subdomain. Staging uses its own `.env`, database/schema, cache prefix, session cookie (`SESSION_COOKIE=navracar_staging_session`) and cookie path (`SESSION_PATH=/staging`). Set `APP_URL=https://navracar.com/staging` and `ASSET_URL=https://navracar.com/staging` in the staging-only environment so generated links, public uploads, and Vite assets remain under `/staging`.
-
