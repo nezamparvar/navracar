@@ -116,7 +116,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::delete('/requests/{lead}', [RequestController::class, 'destroy'])->name('requests.destroy');
         Route::post('/requests/{deletedLead}/restore', [RequestController::class, 'restore'])->name('requests.restore');
         Route::delete('/requests/{deletedLead}/force', [RequestController::class, 'forceDelete'])->name('requests.force-delete');
+        Route::post('/pipeline-stages', [KanbanController::class, 'storeStage'])->name('pipeline-stages.store');
         Route::patch('/pipeline-stages/{stage}/name', [KanbanController::class, 'updateStageName'])->name('pipeline-stages.update-name');
+        Route::delete('/pipeline-stages/{stage}', [KanbanController::class, 'destroyStage'])->name('pipeline-stages.destroy');
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
         Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');
