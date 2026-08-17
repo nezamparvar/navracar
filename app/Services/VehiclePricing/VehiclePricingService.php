@@ -4,6 +4,35 @@ namespace App\Services\VehiclePricing;
 
 final class VehiclePricingService
 {
+    public function inputFromArray(
+        array $data,
+        ?VehiclePricingSettings $settings = null,
+    ): VehiclePricingInput {
+        $settings ??= VehiclePricingSettings::current();
+        $realPriceAed = max(0, (float) ($data['real_price_aed'] ?? 0));
+        $hasCustomsPrice = array_key_exists('customs_price_aed', $data)
+            && $data['customs_price_aed'] !== null
+            && $data['customs_price_aed'] !== '';
+
+        return new VehiclePricingInput(
+            realPriceAed: $realPriceAed,
+            customsPriceAed: $hasCustomsPrice
+                ? max(0, (float) $data['customs_price_aed'])
+                : $this->suggestCustomsPrice($realPriceAed, $settings),
+            categoryId: (string) ($data['category'] ?? VehiclePricingCatalog::FALLBACK_CATEGORY),
+        );
+    }
+
+    public function suggestCustomsPrice(
+        float $realPriceAed,
+        ?VehiclePricingSettings $settings = null,
+    ): float {
+        $settings ??= VehiclePricingSettings::current();
+        $discountPercent = min(100, max(0, $settings->customsValueDiscountPercent));
+
+        return max(0, $realPriceAed) * (1 - $discountPercent / 100);
+    }
+
     public function calculate(
         VehiclePricingInput $input,
         ?VehiclePricingSettings $settings = null,

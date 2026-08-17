@@ -163,19 +163,17 @@ document.addEventListener('alpine:init', () => {
                 });
 
                 const data = await response.json();
-                if (data.success) {
-                    const result = data.result;
-                    document.getElementById('resultTotal').textContent =
-                        new Intl.NumberFormat('fa-IR').format(Math.round(result.finalTotalToman)) + ' تومان';
+                if (!response.ok) throw new Error(data.message || 'Calculation failed');
+                document.getElementById('resultTotal').textContent =
+                    new Intl.NumberFormat('fa-IR').format(Math.round(data.finalTotalToman)) + ' تومان';
 
-                    this.history.unshift({
-                        car: this.form.carLabel,
-                        year: this.form.year,
-                        total: result.finalTotalToman,
-                        timestamp: new Date().toLocaleTimeString('fa-IR')
-                    });
-                    localStorage.setItem('calculationHistory', JSON.stringify(this.history.slice(0, 10)));
-                }
+                this.history.unshift({
+                    car: this.form.carLabel,
+                    year: this.form.year,
+                    total: data.finalTotalToman,
+                    timestamp: new Date().toLocaleTimeString('fa-IR')
+                });
+                localStorage.setItem('calculationHistory', JSON.stringify(this.history.slice(0, 10)));
             } catch (error) {
                 console.error('Calculation error:', error);
                 document.getElementById('resultTotal').textContent = 'خطا در محاسبه';

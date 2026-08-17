@@ -144,16 +144,17 @@
                 const prefill = config.prefill;
                 const discountPercent = config.customsValueDiscountPercent ?? 30;
                 const realPrice = Number(prefill.real_price_aed || 0);
-                const customsPrice = Number(prefill.customs_price_aed || 0);
+                const hasCustomsPrice = prefill.has_customs_price === true;
+                const customsPrice = Number(prefill.customs_price_aed ?? 0);
                 const suggestedCustomsPrice = Math.max(0, realPrice * (1 - discountPercent / 100));
                 return {
                     categories: config.categories,
                     invoiceType: prefill.invoice_type || 'full',
                     mode: prefill.pricing_mode || 'automatic',
                     realPriceAed: realPrice,
-                    customsPriceAed: customsPrice || suggestedCustomsPrice,
+                    customsPriceAed: hasCustomsPrice ? customsPrice : suggestedCustomsPrice,
                     customsValueDiscountPercent: discountPercent,
-                    customsPriceTouched: customsPrice > 0,
+                    customsPriceTouched: hasCustomsPrice && customsPrice !== suggestedCustomsPrice,
                     category: prefill.category || 'c2000',
                     adjustmentAmount: Number(prefill.adjustment_amount || 0),
                     adjustmentReason: prefill.adjustment_reason || '',

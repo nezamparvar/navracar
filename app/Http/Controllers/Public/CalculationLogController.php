@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\CalculationLog;
 use App\Services\GeoLookupService;
 use App\Services\VehiclePricing\VehiclePricingCatalog;
-use App\Services\VehiclePricing\VehiclePricingInput;
 use App\Services\VehiclePricing\VehiclePricingService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -19,11 +18,11 @@ class CalculationLogController extends Controller
             'car' => ['nullable', 'string', 'max:255'],
             'pricing' => ['required', 'array'],
             'pricing.real_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
-            'pricing.customs_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+            'pricing.customs_price_aed' => ['nullable', 'numeric', 'min:0', 'max:1000000000'],
             'pricing.category' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
         ]);
 
-        $result = $pricing->calculate(VehiclePricingInput::fromArray($data['pricing']));
+        $result = $pricing->calculate($pricing->inputFromArray($data['pricing']));
         $snapshot = $result->settingsSnapshot;
         $geoData = $geo->lookup($request->ip());
 

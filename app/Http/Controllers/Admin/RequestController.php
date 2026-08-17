@@ -344,32 +344,33 @@ class RequestController extends Controller
         ]);
     }
 
-    public function restore(Request $request, QuoteRequest $lead)
+    public function restore(Request $request, QuoteRequest $deletedLead)
     {
-        $this->authorize('restore', $lead);
+        $this->authorize('restore', $deletedLead);
 
-        $lead->restore();
+        $deletedLead->restore();
 
         LeadActivity::create([
-            'request_id' => $lead->id,
+            'request_id' => $deletedLead->id,
             'admin_user_id' => $request->user()->id,
             'activity_type' => 'note',
             'note' => 'درخواست بازیابی شد',
         ]);
 
-        ActivityLogger::info('بازیابی درخواست حذف‌شده', ['id' => $lead->id, 'name' => $lead->name]);
+        ActivityLogger::info('بازیابی درخواست حذف‌شده', ['id' => $deletedLead->id, 'name' => $deletedLead->name]);
 
         return back()->with('success', 'درخواست با موفقیت بازیابی شد.');
     }
 
-    public function forceDelete(Request $request, QuoteRequest $lead)
+    public function forceDelete(Request $request, QuoteRequest $deletedLead)
     {
-        $this->authorize('forceDelete', $lead);
+        $this->authorize('forceDelete', $deletedLead);
 
-        $leadName = $lead->name;
-        $lead->forceDelete();
+        $leadId = $deletedLead->id;
+        $leadName = $deletedLead->name;
+        $deletedLead->forceDelete();
 
-        ActivityLogger::error('حذف دائمی درخواست', ['id' => $lead->id, 'name' => $leadName]);
+        ActivityLogger::error('حذف دائمی درخواست', ['id' => $leadId, 'name' => $leadName]);
 
         return back()->with('success', 'درخواست به‌طور دائمی حذف شد.');
     }

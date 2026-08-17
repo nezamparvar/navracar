@@ -8,7 +8,6 @@ use App\Models\QuoteRequest;
 use App\Models\Setting;
 use App\Services\ProformaPdfGenerator;
 use App\Services\VehiclePricing\VehiclePricingCatalog;
-use App\Services\VehiclePricing\VehiclePricingInput;
 use App\Services\VehiclePricing\VehiclePricingService;
 use App\Services\VehiclePricing\VehiclePricingSettings;
 use Illuminate\Http\Request;
@@ -88,6 +87,7 @@ class InvoiceController extends Controller
                 'pricing_mode' => $metadata['pricing_mode'] ?? 'manual',
                 'real_price_aed' => $pricingInput['realPriceAed'] ?? 0,
                 'customs_price_aed' => $pricingInput['customsPriceAed'] ?? 0,
+                'has_customs_price' => array_key_exists('customsPriceAed', $pricingInput),
                 'adjustment_amount' => $metadata['adjustment_amount'] ?? 0,
                 'adjustment_reason' => $metadata['adjustment_reason'] ?? '',
             ];
@@ -107,6 +107,7 @@ class InvoiceController extends Controller
                 'pricing_mode' => empty($metadata) ? 'manual' : 'automatic',
                 'real_price_aed' => $pricingInput['realPriceAed'] ?? 0,
                 'customs_price_aed' => $pricingInput['customsPriceAed'] ?? 0,
+                'has_customs_price' => array_key_exists('customsPriceAed', $pricingInput),
             ]);
         }
 
@@ -247,13 +248,13 @@ class InvoiceController extends Controller
 
     private function automaticCalculation(array $data, VehiclePricingService $pricing): array
     {
-        foreach (['real_price_aed', 'customs_price_aed', 'category'] as $key) {
+        foreach (['real_price_aed', 'category'] as $key) {
             if (! isset($data[$key]) || $data[$key] === '') {
                 throw ValidationException::withMessages([$key => 'این فیلد برای محاسبه خودکار الزامی است.']);
             }
         }
 
-        $result = $pricing->calculate(VehiclePricingInput::fromArray($data));
+        $result = $pricing->calculate($pricing->inputFromArray($data));
         $adjustment = (float) ($data['adjustment_amount'] ?? 0);
         $reason = trim((string) ($data['adjustment_reason'] ?? ''));
         if ($adjustment !== 0.0 && $reason === '') {
@@ -353,6 +354,7 @@ class InvoiceController extends Controller
             'breakdown' => [], 'total' => 0, 'discount' => 0, 'currency' => 'toman', 'exchange_rate' => '',
             'valid_until' => '', 'payment_terms' => '', 'invoice_type' => 'full',
             'pricing_mode' => 'automatic', 'real_price_aed' => 0, 'customs_price_aed' => 0,
+            'has_customs_price' => false,
             'adjustment_amount' => 0, 'adjustment_reason' => '',
         ];
     }

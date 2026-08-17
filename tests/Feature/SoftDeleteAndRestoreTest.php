@@ -119,6 +119,23 @@ class SoftDeleteAndRestoreTest extends TestCase
         $this->assertNotSoftDeleted($lead);
     }
 
+    public function test_soft_deleted_request_is_not_resolved_by_normal_crm_routes(): void
+    {
+        $admin = $this->makeUser('admin', 'admin-deleted-route-boundary');
+        $lead = QuoteRequest::create([
+            'name' => 'Deleted route boundary',
+            'phone' => '09120000001',
+            'assigned_to' => $admin->id,
+        ]);
+
+        $lead->delete();
+
+        $this->actingAs($admin)->get(route('admin.requests.show', $lead->id))->assertNotFound();
+        $this->actingAs($admin)->post(route('admin.requests.archive', $lead->id))->assertNotFound();
+        $this->actingAs($admin)->post(route('admin.requests.restore', $lead->id))->assertRedirect();
+        $this->assertNotNull(QuoteRequest::find($lead->id));
+    }
+
     public function test_admin_can_force_delete_deleted_request(): void
     {
         $admin = $this->makeUser('admin', 'admin-force-delete');

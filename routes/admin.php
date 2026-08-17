@@ -19,8 +19,9 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VinCheckController;
 use Illuminate\Support\Facades\Route;
 
-// Model binding for soft-deleted leads in restore/forceDelete routes
-Route::bind('lead', function ($value) {
+// Only recovery routes may resolve soft-deleted leads. Normal CRM routes keep
+// Laravel's default binding so deleted records remain inaccessible.
+Route::bind('deletedLead', function ($value) {
     return \App\Models\QuoteRequest::withTrashed()->findOrFail($value);
 });
 
@@ -111,8 +112,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // بخش‌های فقط برای مدیر کامل.
     Route::middleware('admin.role')->group(function () {
         Route::delete('/requests/{lead}', [RequestController::class, 'destroy'])->name('requests.destroy');
-        Route::post('/requests/{lead}/restore', [RequestController::class, 'restore'])->name('requests.restore');
-        Route::delete('/requests/{lead}/force', [RequestController::class, 'forceDelete'])->name('requests.force-delete');
+        Route::post('/requests/{deletedLead}/restore', [RequestController::class, 'restore'])->name('requests.restore');
+        Route::delete('/requests/{deletedLead}/force', [RequestController::class, 'forceDelete'])->name('requests.force-delete');
         Route::patch('/pipeline-stages/{stage}/name', [KanbanController::class, 'updateStageName'])->name('pipeline-stages.update-name');
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
@@ -139,4 +140,3 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/imports/browser-capture', BrowserCaptureController::class)->name('imports.browser-capture');
     });
 });
-

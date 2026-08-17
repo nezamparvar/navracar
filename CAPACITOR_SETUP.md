@@ -1,177 +1,59 @@
-# ناوراکار Android App - Capacitor Setup
+# ناوراکار Android — Capacitor 8
 
-This is the Capacitor configuration for the ناوراکار Android mobile app MVP.
+## معماری
 
-## Overview
+- کد رابط بسته‌بندی‌شده در `mobile/` قرار دارد و `mobile/index.html` نقطه شروع اپ است.
+- پروژه native قابل بازتولید در `android/` داخل Git نگهداری می‌شود.
+- اپ هیچ فرمول یا نرخ تجاری را داخل APK نگهداری نمی‌کند؛ درخواست بدون `customs_price_aed` به `POST /api/vehicle-pricing/calculate` ارسال می‌شود و `VehiclePricingService` قیمت گمرکی پیشنهادی و جمع‌ها را از تنظیمات جاری محاسبه می‌کند.
+- API عمومی stateless است، CSRF وب را استفاده نمی‌کند، rate limit دارد و CORS فقط originهای Capacitor محلی را می‌پذیرد.
+- نسخه فعلی برای محاسبه به اینترنت نیاز دارد. Offline calculation، استخراج خودکار از Marketplace و انتشار Google Play جزو قابلیت‌های تکمیل‌شده ادعا نمی‌شوند.
 
-The app provides a mobile-optimized interface for the vehicle pricing calculator with:
-- Floating action button for quick access
-- Auto-extraction of car details from product pages
-- Local calculation history stored in device storage
-- Offline-capable interface with online calculation sync
+## نیازمندی‌ها
 
-## Setup Instructions
+- Node.js 22 یا جدیدتر
+- JDK 21
+- Android SDK / compile SDK 36
+- Android Studio سازگار با SDK 36
 
-### Prerequisites
-- Node.js 16+ and npm
-- Android Studio (for building Android APK)
-- Java Development Kit (JDK) 11+
-- Gradle
+## ساخت و همگام‌سازی
 
-### Installation
-
-1. **Install Capacitor globally:**
 ```bash
-npm install -g @capacitor/cli
-```
-
-2. **Install project dependencies:**
-```bash
-npm install
-```
-
-3. **Initialize Capacitor (if not already done):**
-```bash
-npx cap init --web-dir public
-```
-
-4. **Add Android platform:**
-```bash
-npx cap add android
-```
-
-### Building for Android
-
-1. **Build web assets:**
-```bash
+npm ci
+npm audit --audit-level=high
 npm run build
-```
-
-2. **Copy assets to native project:**
-```bash
 npx cap sync android
+cd android
+./gradlew assembleDebug
 ```
 
-3. **Open Android Studio:**
-```bash
-npx cap open android
+خروجی debug:
+
+```text
+android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-4. **Build and run:**
-- Select your device/emulator
-- Click "Run" in Android Studio or use:
-```bash
-npx cap run android
+CI همین مسیر را در check مستقل `Android build` اجرا و APK آزمایشی را به‌عنوان artifact ذخیره می‌کند.
+
+## تنظیم endpoint
+
+آدرس پایه API در این meta tag قرار دارد:
+
+```html
+<meta name="navracar-api-base" content="https://navracar.com">
 ```
 
-## Mobile App Features
+برای آزمون Staging، فقط در artifact آزمایشی آدرس را به endpoint تأییدشده Staging تغییر دهید، `npx cap sync android` و build را دوباره اجرا کنید. APK پذیرفته‌شده باید با SHA و hash ثبت شود. هیچ credential یا token را در فایل‌های `mobile/` یا `capacitor.config.json` قرار ندهید.
 
-### Floating Action Button (FAB)
-- Located at bottom-right of screen
-- Tap to open the pricing calculator
-- Accesses local calculation history
+## آزمون پذیرش
 
-### Auto-Extraction
-The app attempts to auto-extract car details from:
-- Dubizzle product pages
-- YallaMotor listings
-- Other vehicle listing sites
+1. اپ بدون crash باز شود و صفحه محاسبه‌گر محلی را نمایش دهد.
+2. قیمت واقعی و دسته‌بندی ارسال شوند؛ قیمت گمرکی و جمع کل از پاسخ server-authoritative نمایش داده شوند.
+3. درصدهای 0، 30، اعشاری و 100 تنظیمات سرور نتیجه درست بدهند.
+4. قطع اینترنت پیام روشن نشان دهد و داده جعلی/قدیمی را نتیجه موفق معرفی نکند.
+5. تاریخچه فقط شامل نام خودرو، جمع، و زمان باشد و حداکثر ده مورد محلی نگه دارد.
+6. CORS درخواست از `https://localhost` را بپذیرد و originهای تصادفی را رد کند.
+7. `npm audit`, `cap sync`, و `assembleDebug` سبز باشند.
 
-Extracted data includes:
-- Car make/model
-- Year
-- Engine size
-- Approximate pricing
+## انتشار
 
-### Local History
-Calculation results are stored locally using browser storage:
-- Last 10 calculations cached
-- Persistent across app restarts
-- Synced with server when online
-
-### Offline Support
-- Core calculator functions work offline
-- Results cached for recently calculated vehicles
-- Online sync when connection available
-
-## API Endpoints
-
-The app uses the following endpoints:
-- `POST /api/vehicle-pricing/calculate` - Calculate pricing (JSON response)
-- `GET /app` - Mobile app interface
-
-## Configuration
-
-### App Settings
-Edit `capacitor.config.json` to modify:
-- App ID: `com.navracar.mobile`
-- App name: `ناوراکار`
-- Web directory: `public`
-
-### URL Rewriting
-The app uses HTML5 routing. Ensure your server routes requests to `index.html` for the `/app` path.
-
-## Deployment
-
-### Create Release Build
-```bash
-npx cap build android --keystorePath [path] --keystoreAlias [alias]
-```
-
-### Google Play Store
-1. Build signed APK in Android Studio
-2. Create app listing in Google Play Console
-3. Upload APK and configure store listing
-4. Submit for review
-
-## Troubleshooting
-
-### App crashes on launch
-- Check browser console for errors
-- Verify API endpoints are accessible
-- Ensure CSRF token is properly set
-
-### Calculations not working
-- Verify server is accessible from device
-- Check network proxy settings
-- Ensure rate limiting is not triggered
-
-### History not persisting
-- Check browser storage permissions in Android manifest
-- Clear app data and retry
-
-## Development
-
-### Local Testing
-```bash
-npx cap run android --livereload
-```
-
-This enables live reload during development.
-
-### Debugging
-1. Use Chrome DevTools: `chrome://inspect`
-2. Connect device via USB with debugging enabled
-3. View console logs and debug JavaScript
-
-## Performance Optimization
-
-- Lazy load heavy components
-- Minimize API calls with local caching
-- Use service workers for offline support
-- Optimize images for mobile screens
-
-## Security Considerations
-
-- HTTPS only for all API calls
-- CSRF token validation on forms
-- Local storage encryption for sensitive data
-- Never store authentication tokens in localStorage
-
-## Future Enhancements
-
-- [ ] Push notifications for pricing updates
-- [ ] Barcode scanning for VIN lookup
-- [ ] Camera integration for vehicle photos
-- [ ] Share calculation results via messaging
-- [ ] Offline PDF report generation
+امضا، ساخت AAB، ثبت در Google Play و هرگونه Deploy تنها پس از پذیرش Staging و تأیید صریح Mostafa انجام می‌شود. keystore و رمزهای امضا نباید وارد Git شوند.

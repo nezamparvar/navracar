@@ -26,7 +26,7 @@ class OtherCostsConsistencyTest extends TestCase
         $result = $service->calculate(VehiclePricingInput::fromArray([
             'real_price_aed' => 50000,
             'customs_price_aed' => 30000,
-            'category_id' => 'c2000',
+            'category' => 'c2000',
         ]), $settings);
 
         $expectedOtherCostsToman = 1000 * 50000;
@@ -46,7 +46,7 @@ class OtherCostsConsistencyTest extends TestCase
         $result = $service->calculate(VehiclePricingInput::fromArray([
             'real_price_aed' => 50000,
             'customs_price_aed' => 30000,
-            'category_id' => 'c2000',
+            'category' => 'c2000',
         ]), $settings);
 
         $customsRowKeys = array_map(fn (array $row) => $row['key'] ?? null, $result->customsRows);
@@ -61,7 +61,7 @@ class OtherCostsConsistencyTest extends TestCase
         $result = $service->calculate(VehiclePricingInput::fromArray([
             'real_price_aed' => 50000,
             'customs_price_aed' => 30000,
-            'category_id' => 'c2000',
+            'category' => 'c2000',
         ]), VehiclePricingSettings::current());
 
         $customsRowKeys = array_map(fn (array $row) => $row['key'] ?? null, $result->customsRows);

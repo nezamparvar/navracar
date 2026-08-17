@@ -1,7 +1,8 @@
 {
   "appId": "com.navracar.mobile",
   "appName": "ناوراکار",
-  "webDir": "public",
+  "webDir": "mobile",
+  "loggingBehavior": "debug",
   "server": {
     "androidScheme": "https"
   },

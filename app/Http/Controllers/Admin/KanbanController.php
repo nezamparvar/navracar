@@ -70,9 +70,7 @@ class KanbanController extends Controller
         if (! $lead) {
             return response()->json(['success' => false, 'message' => 'سرنخ یافت نشد.'], 404);
         }
-        if (! $user->isAdmin() && $lead->assigned_to !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'این سرنخ به شما الحاق نشده است.'], 403);
-        }
+        $this->authorize('updateStatus', $lead);
 
         $stage = PipelineStage::find($data['stageId']);
         if (! $stage) {

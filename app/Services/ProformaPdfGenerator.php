@@ -125,11 +125,11 @@ class ProformaPdfGenerator
         $grandTotal = (float) $invoice->total_amount;
         $payable = $grandTotal - $discount;
         $currency = $invoice->currency ?? 'toman';
-        $unitLabel = Invoice::CURRENCIES[$currency] ?? 'Toman';
+        $unitLabel = ProformaBreakdownLocalizer::currency($currency);
         $exRate = (float) ($invoice->exchange_rate ?? 0);
         $breakdown = array_map(fn ($row) => [
             'label' => ProformaBreakdownLocalizer::label($row, 'en'),
-            'rate' => $row['rate'] ?? '',
+            'rate' => ProformaBreakdownLocalizer::rate($row, 'en'),
             'amount' => $this->formatAmount($row['amount'] ?? 0).' '.$unitLabel,
         ], $invoice->breakdownForDisplay());
         $totalsSummary = [
@@ -151,7 +151,7 @@ class ProformaPdfGenerator
             'customerPhone' => $invoice->customer_phone,
             'customerEmail' => $invoice->customer_email,
             'carLabel' => $invoice->car_label,
-            'categoryLabel' => $invoice->categoryLabel(),
+            'categoryLabel' => ProformaBreakdownLocalizer::category($invoice->category, $invoice->categoryLabel()),
             'breakdown' => $breakdown,
             'totalsSummary' => $totalsSummary,
             'contact' => $this->contact(),
