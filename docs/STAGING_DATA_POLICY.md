@@ -16,4 +16,3 @@ Do not place a full snapshot or realistic customer data on staging. The staging 
 ## Reset boundary
 
 A staging reset may overwrite only the staging database and staging copied uploads. It must never write production database tables, production `.env`, production storage, or production public files.
-
