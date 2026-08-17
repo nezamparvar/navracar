@@ -13,6 +13,17 @@ class PublicCostDisplayTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_public_payment_and_timeline_copy_matches_owner_acceptance(): void
+    {
+        $template = file_get_contents(resource_path('views/components/car-calculator.blade.php'));
+
+        $this->assertStringContainsString('هزینه‌های ترخیص خودرو (جمع کل هزینه‌های گمرکی)', $template);
+        $this->assertStringNotContainsString("label: 'پرداخت هزینه‌های ترخیص خودرو (جمع کل هزینه‌های گمرکی)'", $template);
+        $this->assertStringContainsString("label: 'پرداخت کارمزد ترخیص‌کار و کارگزار (ناوراکار)'", $template);
+        $this->assertStringNotContainsString("shortLabel: 'کارمزد کارگزار'", $template);
+        $this->assertStringContainsString("shortLabel: 'ترخیص گمرکی'", $template);
+    }
+
     public function test_public_summary_shows_three_cost_categories(): void
     {
         Setting::set(Setting::FREE_RATE, '50000');

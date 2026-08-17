@@ -26,7 +26,7 @@
         ['route' => 'admin.invoices.index', 'label' => 'پیش‌فاکتورها', 'icon' => 'invoice'],
     ];
     $contentNavItems = [
-        ['route' => 'admin.car-listings.index', 'label' => 'آگهی‌های دابیزل', 'icon' => 'car'],
+        ['route' => 'admin.car-listings.index', 'label' => 'آگهی‌ها و ایمپورت', 'icon' => 'car'],
         ['route' => 'admin.posts.index', 'label' => 'وبلاگ', 'icon' => 'message'],
         ['route' => 'admin.home-slides.index', 'label' => 'اسلایدر صفحه اصلی', 'icon' => 'image'],
         ['route' => 'admin.menu-items.index', 'label' => 'منوی سایت', 'icon' => 'menu'],

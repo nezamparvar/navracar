@@ -10,6 +10,18 @@ class MarketplaceImportTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_import_page_links_all_supported_marketplaces(): void
+    {
+        $template = file_get_contents(resource_path('views/admin/car-listings/index.blade.php'));
+
+        $this->assertStringContainsString('https://dubai.dubizzle.com/motors/used-cars/', $template);
+        $this->assertStringContainsString('https://www.dubicars.com/', $template);
+        $this->assertStringContainsString('https://uae.yallamotor.com/used-cars', $template);
+        $this->assertStringContainsString('name="html_source" rows="5" required', $template);
+        $this->assertStringContainsString("route('admin.extension-pairing.index')", $template);
+        $this->assertStringContainsString("route('admin.import-queue.index')", $template);
+    }
+
     public function test_manual_html_adapters_detect_dubicars_and_yallamotor(): void
     {
         $service = app(MarketplaceHtmlImportService::class);
