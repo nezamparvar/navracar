@@ -1,0 +1,72 @@
+import { escapeHtml, formatMoney, formatNumber } from './format.js';
+
+const esc = escapeHtml;
+const qs = (obj) => new URLSearchParams(Object.entries(obj).filter(([, value]) => value !== '' && value != null)).toString();
+export const loadingView = () => '<section class="page"><div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div></section>';
+export const errorView = (message) => `<section class="page"><div class="card state"><strong>دریافت اطلاعات انجام نشد</strong><p>${esc(message)}</p><button class="btn btn-primary" data-action="retry">تلاش دوباره</button></div></section>`;
+export const emptyView = (title, body, action = '') => `<div class="card state"><strong>${esc(title)}</strong><p>${esc(body)}</p>${action}</div>`;
+
+export function vehicleCard(vehicle, favorite = false) {
+  const image = vehicle.cover_image ? `<img src="${esc(vehicle.cover_image)}" alt="${esc(vehicle.title)}" loading="lazy" data-image-fallback>` : '<span class="vehicle-placeholder" aria-hidden="true">▱</span>';
+  return `<a class="vehicle-card" href="#/vehicle/${encodeURIComponent(vehicle.slug)}" data-testid="vehicle-card">
+    <button class="favorite" type="button" aria-label="${favorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'}" data-favorite="${esc(vehicle.slug)}">${favorite ? '♥' : '♡'}</button>
+    <div class="vehicle-media">${image}</div><div class="vehicle-body"><h3 dir="ltr">${esc(vehicle.title)}</h3>
+    <div class="chips"><span class="chip">${esc(vehicle.year || '—')}</span><span class="chip">${esc(vehicle.specs?.engine_capacity_cc || '—')} cc</span></div>
+    <strong class="price ltr">${formatMoney(vehicle.price_aed, 'AED')}</strong><small class="price-sub">${formatMoney(vehicle.price_toman, 'IRR')}</small></div></a>`;
+}
+
+export function homeView(data) {
+  const vehicles = (data.featured_vehicles || []).map(vehicleCard).join('');
+  return `<section class="page"><div class="hero"><div class="hero__content"><p class="eyebrow">NAVRACAR V2</p><h1>خودروی بعدی شما، مطمئن‌تر</h1><p>انتخاب، محاسبه و ثبت درخواست واردات خودرو با اطلاعات مرکزی ناوراکار</p>
+  <form class="search" data-form="home-search"><input name="q" type="search" aria-label="جستجوی خودرو" placeholder="برند، مدل یا کد خودرو"><button class="btn btn-primary icon-btn" aria-label="جستجو">⌕</button></form></div></div>
+  <div class="quick-grid"><a class="quick-action" href="#/pricing"><span>⌁</span><b>محاسبه هزینه</b></a><a class="quick-action" href="#/vehicles"><span>▱</span><b>انتخاب خودرو</b></a><a class="quick-action" href="#/share"><span>↗</span><b>ارسال لینک</b></a><a class="quick-action" href="tel:${esc(data.contact?.phone)}"><span>♧</span><b>مشاوره</b></a></div>
+  <div class="section-title"><h2>پیشنهادهای ویژه</h2><a href="#/vehicles">مشاهده همه</a></div><div class="vehicle-grid">${vehicles || '<p class="muted">خودروی منتشرشده‌ای وجود ندارد.</p>'}</div>
+  <div class="card rate-card"><div class="rate-head"><div><strong>به‌روزرسانی نرخ ارز</strong><small class="muted">آخرین نرخ ثبت‌شده در تنظیمات مرکزی</small></div><span class="rate-dot">● زنده</span></div><div class="rates"><div class="rate"><small>AED</small><strong>${formatNumber(data.rates?.aed_to_toman)} تومان</strong></div><div class="rate"><small>منبع نرخ</small><strong>تنظیمات مرکزی</strong></div></div></div></section>`;
+}
+
+export function vehiclesView(payload, filters = {}) {
+  return `<section class="page"><header class="page-header"><div><p class="eyebrow">بازار امارات</p><h1>خودروها</h1><p>${formatNumber(payload.meta?.total || 0)} نتیجه منتشرشده</p></div></header>
+  <form class="card card-pad filter-form" data-form="vehicle-filter"><input type="search" name="q" aria-label="جستجوی خودرو" value="${esc(filters.q || '')}" placeholder="برند، مدل یا کد خودرو"><div class="filter-row"><select name="make" aria-label="برند"><option value="">همه برندها</option>${(payload.facets?.makes || []).map(value => `<option ${filters.make === value ? 'selected' : ''}>${esc(value)}</option>`).join('')}</select><select name="fuel" aria-label="نوع سوخت"><option value="">همه سوخت‌ها</option>${(payload.facets?.fuels || []).map(value => `<option ${filters.fuel === value ? 'selected' : ''}>${esc(value)}</option>`).join('')}</select></div><button class="btn btn-primary">اعمال فیلتر</button></form>
+  <div class="sort-row"><a class="sort-link ${!filters.sort || filters.sort === 'newest' ? 'active' : ''}" href="#/vehicles?${qs({ ...filters, sort: 'newest' })}">جدیدترین</a><a class="sort-link ${filters.sort === 'price_asc' ? 'active' : ''}" href="#/vehicles?${qs({ ...filters, sort: 'price_asc' })}">کمترین قیمت</a><a class="sort-link ${filters.sort === 'price_desc' ? 'active' : ''}" href="#/vehicles?${qs({ ...filters, sort: 'price_desc' })}">بیشترین قیمت</a></div>
+  ${(payload.data || []).length ? `<div class="vehicle-grid">${payload.data.map(vehicleCard).join('')}</div>` : emptyView('نتیجه‌ای پیدا نشد', 'فیلترها را تغییر دهید و دوباره تلاش کنید.')}</section>`;
+}
+
+export function detailView(vehicle) {
+  const gallery = vehicle.gallery?.[0]?.url ? `<img src="${esc(vehicle.gallery[0].url)}" alt="${esc(vehicle.title)}" data-image-fallback>` : '<span class="vehicle-placeholder">▱</span>';
+  const specs = [['سال', vehicle.year], ['حجم موتور', `${vehicle.specs?.engine_capacity_cc || '—'} cc`], ['کارکرد', `${vehicle.specs?.kilometers || '—'} km`], ['سوخت', vehicle.specs?.fuel_type], ['انتقال', vehicle.specs?.transmission], ['موقعیت', vehicle.location]];
+  return `<section class="page"><div class="gallery">${gallery}</div><div class="card detail-title"><span class="make">${esc(vehicle.make)}</span><h1>${esc(vehicle.title)}</h1><div class="chips"><span class="chip">${esc(vehicle.year)}</span><span class="chip">${esc(vehicle.specs?.engine_capacity_cc)} cc</span></div><div class="detail-price">${formatMoney(vehicle.price_aed, 'AED')}</div><small class="muted">${formatMoney(vehicle.price_toman, 'IRR')}</small></div>
+  <div class="card card-pad"><div class="section-title"><h2>مشخصات خودرو</h2></div><div class="spec-grid">${specs.map(([key, value]) => `<div class="spec"><small>${key}</small><b class="${/[A-Za-z0-9]/.test(value || '') ? 'ltr' : ''}">${esc(value || '—')}</b></div>`).join('')}</div></div>
+  <div class="card card-pad"><div class="section-title"><h2>برآورد هزینه واردات</h2></div><div class="pricing-grid">${vehicle.pricing.public_summary.map(row => `<div class="pricing-row"><small>${esc(row.label)}</small><strong>${formatMoney(row.value_toman, 'IRR')}</strong></div>`).join('')}<div class="pricing-row grand-total"><b>جمع کل</b><strong>${formatMoney(vehicle.pricing.grand_total_toman, 'IRR')}</strong></div></div></div>
+  <div class="action-stack"><button class="btn btn-primary" data-action="open-quote">ثبت درخواست</button><button class="btn btn-secondary" data-action="open-pricing" data-price="${vehicle.price_aed}" data-category="${esc(vehicle.pricing.category.id)}">محاسبه هزینه</button></div></section>`;
+}
+
+export function pricingView(categories, preset = {}) {
+  return `<section class="page"><header class="page-header"><div><p class="eyebrow">محاسبه مرکزی</p><h1>محاسبه هزینه</h1><p>فرمول، نرخ و تنظیمات فقط از سرویس مرکزی دریافت می‌شوند.</p></div></header><form class="card form-card form-stack" data-form="pricing"><label>قیمت واقعی خودرو به درهم<input name="real_price_aed" inputmode="decimal" required value="${esc(preset.price || '')}" placeholder="345000"></label><label>دسته خودرو<select name="category" required>${categories.map(category => `<option value="${esc(category.id)}" ${preset.category === category.id ? 'selected' : ''}>${esc(category.label)}</option>`).join('')}</select></label><button class="btn btn-primary">دریافت محاسبه</button></form><div id="pricing-result"></div></section>`;
+}
+
+export function pricingResultView(data) {
+  const pricing = data.publicSummary;
+  return `<div class="result-panel"><div class="pricing-grid"><div class="pricing-row"><small>قیمت خودرو</small><strong>${formatMoney(pricing.car_price_toman, 'IRR')}</strong></div><div class="pricing-row"><small>جمع هزینه‌های ترخیص</small><strong>${formatMoney(pricing.clearance_total_toman, 'IRR')}</strong></div><div class="pricing-row"><small>هزینه‌های پلاک</small><strong>${formatMoney(pricing.plate_total_toman, 'IRR')}</strong></div><div class="pricing-row grand-total"><b>جمع کل برآوردشده</b><strong>${formatMoney(pricing.grand_total_toman, 'IRR')}</strong></div></div><button class="btn btn-primary" data-action="open-quote" style="width:100%;margin-top:12px">ثبت درخواست</button></div>`;
+}
+
+export function quoteView(preset = {}) {
+  return `<section class="page"><header class="page-header"><div><p class="eyebrow">همان پرونده CRM</p><h1>ثبت درخواست</h1><p>کارشناسان ناوراکار درخواست شما را در فرایند فعلی پیگیری می‌کنند.</p></div></header><form class="card form-card form-stack" data-form="quote"><label>نام و نام خانوادگی<input name="name" autocomplete="name" required></label><label>شماره تماس<input name="phone" class="ltr" inputmode="tel" autocomplete="tel" required></label><label>ایمیل (اختیاری)<input name="email" class="ltr" type="email" autocomplete="email"></label><label>خودرو<input name="car" value="${esc(preset.car || '')}"></label><label>قیمت خودرو به درهم<input name="real_price_aed" inputmode="decimal" required value="${esc(preset.price || '')}"></label><label>توضیحات<textarea name="notes"></textarea></label><input type="hidden" name="category" value="${esc(preset.category || 'c2000')}"><button class="btn btn-primary">ثبت در ناوراکار</button></form></section>`;
+}
+
+export function requestsView(items) {
+  const list = items.map(request => `<article class="card request-card"><div class="request-head"><div><span class="request-ref">${esc(request.reference)}</span><h3 dir="ltr">${esc(request.car || 'درخواست واردات')}</h3></div><span class="status">${esc(request.status || 'باز')}</span></div><div class="timeline" aria-label="مرحله درخواست"><i>۱</i><span></span><i>۲</i><span></span><i>۳</i><span></span><i>۴</i></div><p class="muted">مرحله جاری: ${esc(request.stage || 'ثبت درخواست')}</p><strong>${formatMoney(request.total_toman, 'IRR')}</strong></article>`).join('');
+  return `<section class="page"><header class="page-header"><div><p class="eyebrow">پیگیری پرونده</p><h1>درخواست‌های من</h1><p>آخرین وضعیت پرونده‌های ثبت‌شده</p></div></header>${items.length ? list : emptyView('هنوز درخواستی ندارید', 'از صفحه خودرو یا محاسبه‌گر درخواست جدید ثبت کنید.', '<a class="btn btn-primary" href="#/vehicles">مشاهده خودروها</a>')}</section>`;
+}
+
+export function accountView(customer, mode = 'login') {
+  if (!customer) return `<section class="page"><header class="page-header"><div><p class="eyebrow">حساب مشتری</p><h1>ورود یا ثبت‌نام</h1><p>برای همگام‌سازی درخواست‌ها و علاقه‌مندی‌ها وارد شوید.</p></div></header><div class="tabs"><button class="tab ${mode === 'login' ? 'active' : ''}" data-auth-tab="login">ورود</button><button class="tab ${mode === 'register' ? 'active' : ''}" data-auth-tab="register">ثبت‌نام</button></div>${mode === 'login' ? `<form class="card form-card form-stack" data-form="login"><label>موبایل یا ایمیل<input name="login" class="ltr" autocomplete="username" required></label><label>رمز عبور<input name="password" type="password" autocomplete="current-password" required></label><button class="btn btn-primary">ورود</button></form>` : `<form class="card form-card form-stack" data-form="register"><label>نام و نام خانوادگی<input name="name" autocomplete="name" required></label><label>موبایل<input name="phone" class="ltr" autocomplete="tel" required></label><label>ایمیل<input name="email" class="ltr" type="email" autocomplete="email"></label><label>رمز عبور<input name="password" type="password" minlength="8" autocomplete="new-password" required></label><button class="btn btn-primary">ساخت حساب</button></form>`}</section>`;
+  return `<section class="page"><div class="card account-hero"><div class="avatar">${esc(customer.name?.[0] || 'ن')}</div><h1>${esc(customer.name)}</h1><p>${esc(customer.phone)}</p></div><div class="card menu-list"><a class="menu-link" href="#/favorites" aria-label="علاقه‌مندی‌ها"><span>علاقه‌مندی‌ها</span><b>‹</b></a><a class="menu-link" href="#/requests"><span>درخواست‌های من</span><b>‹</b></a><a class="menu-link" href="https://navracar.com/about" target="_blank" rel="noopener"><span>درباره ناوراکار</span><b>↗</b></a><a class="menu-link" href="https://navracar.com/privacy" target="_blank" rel="noopener"><span>حریم خصوصی و قوانین</span><b>↗</b></a></div><div class="card card-pad"><strong>اعلان وضعیت درخواست</strong><p class="muted">زیرساخت Android آماده است؛ فعال‌سازی Push به پیکربندی FCM سمت سرور نیاز دارد.</p></div><button class="btn btn-danger" data-action="logout">خروج از حساب</button></section>`;
+}
+
+export function favoritesView(items) {
+  return `<section class="page"><header class="page-header"><div><p class="eyebrow">فهرست شخصی</p><h1>علاقه‌مندی‌ها</h1></div></header>${items.length ? `<div class="vehicle-grid">${items.map(vehicle => vehicleCard(vehicle, true)).join('')}</div>` : emptyView('فهرست خالی است', 'از صفحه خودروها موارد دلخواه را ذخیره کنید.', '<a class="btn btn-primary" href="#/vehicles">مشاهده خودروها</a>')}</section>`;
+}
+
+export function shareView(url = '') {
+  return `<section class="page"><header class="page-header"><div><p class="eyebrow">Share to NavraCar</p><h1>ارسال لینک خودرو</h1><p>لینک Dubizzle، DubiCars یا YallaMotor را برای صف بررسی موجود بفرستید.</p></div></header><form class="card form-card form-stack" data-form="share"><label>نشانی آگهی<input class="ltr" name="url" type="url" inputmode="url" required value="${esc(url)}" placeholder="https://..."></label><p class="muted">هیچ cookie، header، session یا credential مرورگر دریافت نمی‌شود.</p><button class="btn btn-primary">ارسال برای بررسی</button></form></section>`;
+}
