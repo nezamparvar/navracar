@@ -4,13 +4,14 @@ Last updated: 2026-08-17
 
 ## Current release state
 
-**STAGING REJECTED — REMEDIATION READY FOR REVIEW**
+**STAGING REJECTED — REMEDIATION READY FOR MERGE APPROVAL**
 
 - PR #27 was merged to `main` as `0a73ff0e29093ab47b863d7427bdc7c7c4788b1c` after Mostafa's explicit approval.
 - Candidate `rc-v1.3.0-1` was built successfully and published to `cpanel-staging` as `ebd36599e41af80ad7e1c3fb250a2a28bc37a0e3` (artifact `9279049851`).
 - The candidate was deployed to the isolated cPanel Staging environment. Production was not promoted or deployed.
 - Owner acceptance found reproducible HTTP 500 failures. The Staging log proves the imported database had not applied the candidate migrations (`quote_requests.deleted_at`, `car_listings.customs_price_aed`, and `import_queue` were missing). PDF generation also failed because persistent `storage/fonts` was absent.
-- Remediation implementation SHA: `37fee5bcc5ca214cfeebe8ce02e6b4650f452f3d` on `agent/staging-runtime-migrations`.
+- Remediation tested SHA: `21afee63d5bc195db0acb2587fb4b3b9b24bc3d9` on `agent/staging-runtime-migrations` in [PR #28](https://github.com/nezamparvar/navracar/pull/28).
+- Protected [CI run #115](https://github.com/nezamparvar/navracar/actions/runs/32005784098) completed successfully: Dependencies, Backend tests, Frontend build, Browser QA, Browser extension, and Android build all passed.
 - The remediation makes Staging **Deploy HEAD Commit** locate cPanel PHP 8.3+, apply outstanding migrations to the isolated Staging database, create the PDF font runtime, and rebuild Laravel caches without SSH or Terminal. Production deployment logic is unchanged.
 - Staging acceptance remains rejected until the remediation is merged, rebuilt as a new immutable candidate, deployed, and retested.
 
@@ -24,7 +25,7 @@ Last updated: 2026-08-17
 | cPanel web-server errors | No matching application fault; visible `wp-login.php`/`xmlrpc.php` entries were unrelated bot scans. |
 | cPanel Resource Usage | Unavailable on this hosting plan; host directs the owner to support. |
 | Local remediation validation | PASS — `bash -n`, `git diff --check`, PHP resolver simulation, and runtime-directory creation including `storage/fonts`. |
-| Local PHP test suite | BLOCKED in this workspace because no PHP executable is installed; protected GitHub CI must run before merge. |
+| Protected remediation CI | PASS — all six required jobs, including PHP tests and migration lifecycle, succeeded on `21afee63d5bc195db0acb2587fb4b3b9b24bc3d9`. |
 
 The original source candidate passed its automated gates, but live Staging
 acceptance correctly found deployment-runtime defects that CI did not model.
@@ -57,7 +58,7 @@ The remediation must pass a new protected CI run before merge.
 | 8. Security/privacy | Complete | Composer/npm audits and Gitleaks pass; no leak found. |
 | 9. Full automated gate | Complete | Dependencies, Backend tests, Frontend build, Browser QA, Browser extension, and Android build all pass on the exact SHA. |
 | 10. Docs/release preparation | Complete | Runbooks, protected checks, artifact links, SHA, and promotion guardrails recorded. |
-| 11. Staging/Production gates | Staging rejected; remediation ready | `rc-v1.3.0-1` exposed stale-schema and PDF-runtime defects. Production remains unchanged. |
+| 11. Staging/Production gates | Staging rejected; remediation CI passed | `rc-v1.3.0-1` exposed stale-schema and PDF-runtime defects. PR #28 is ready for owner merge approval; Production remains unchanged. |
 
 ## Validation log — CI run #112
 
