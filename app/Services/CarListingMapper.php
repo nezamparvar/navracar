@@ -23,6 +23,7 @@ class CarListingMapper
         // Liters (e.g., "2.0L", "2.5 liter")
         if (preg_match('/(\d+(?:\.\d+)?)\s*(?:l|liter|litre)\b/i', $normalized, $m)) {
             $cc = (int) round((float) $m[1] * 1000);
+
             return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
         }
 
@@ -36,18 +37,21 @@ class CarListingMapper
         if (preg_match('/cc\s*[+]?\s*(\d{3,5})/i', $normalized, $m) ||
             preg_match('/[+]\s*(\d{3,5})\s*cc/i', $normalized, $m)) {
             $cc = (int) $m[1];
+
             return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
         }
 
         // Plain cc pattern (word boundary before)
         if (preg_match('/\b(\d{3,5})\s*cc\b/i', $normalized, $m)) {
             $cc = (int) $m[1];
+
             return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
         }
 
         // Plain digits only
         if (preg_match('/^\s*(\d{3,5})\s*$/', $normalized, $m)) {
             $cc = (int) $m[1];
+
             return ['kind' => 'exact', 'min' => $cc, 'max' => $cc];
         }
 
@@ -102,8 +106,8 @@ class CarListingMapper
 
     public function buildPersianTitle(array $data): string
     {
-        $make = $data['make'] ? Str::of($data['make'])->replace('-', ' ')->upper() : '';
-        $model = $data['model'] ? Str::of($data['model'])->replace('-', ' ')->upper() : '';
+        $make = ! empty($data['make']) ? Str::of($data['make'])->replace('-', ' ')->upper() : '';
+        $model = ! empty($data['model']) ? Str::of($data['model'])->replace('-', ' ')->upper() : '';
         $trim = $data['trim_level'] ?? '';
         $year = $data['model_year'] ?? '';
 
@@ -115,10 +119,13 @@ class CarListingMapper
 
     public function buildMetaDescription(array $data, string $titleFa): string
     {
-        $price = isset($data['price_aed']) ? number_format((float) $data['price_aed']) : null;
-        $km = $data['kilometers'] ?? null;
+        $title = $this->normalizeMetaText($titleFa);
+        $price = isset($data['price_aed']) && is_numeric($data['price_aed'])
+            ? number_format((float) $data['price_aed'])
+            : null;
+        $km = $this->normalizeMetaText($data['kilometers'] ?? $data['mileage_km'] ?? null);
 
-        $bits = [$titleFa];
+        $bits = array_filter([$title]);
         if ($price) {
             $bits[] = "قیمت {$price} درهم";
         }
@@ -128,6 +135,46 @@ class CarListingMapper
         $bits[] = 'به همراه جدول کامل هزینه ترخیص، عوارض گمرکی و پلاک برای واردات به ایران.';
 
         return Str::limit(implode(' — ', $bits), 300);
+    }
+
+    /**
+     * Resolve persisted listing metadata without depending on a marketplace.
+     * Existing non-empty values win; browser-extension vehicle fields are used
+     * only as deterministic fallbacks.
+     *
+     * @return array{meta_title:string,meta_description:string}
+     */
+    public function resolveMeta(array $data, string $listingTitle): array
+    {
+        $existingTitle = $this->normalizeMetaText($data['meta_title'] ?? null);
+        $existingDescription = $this->normalizeMetaText($data['meta_description'] ?? null);
+        $vehicleTitle = $this->normalizeMetaText($listingTitle)
+            ?: $this->normalizeMetaText($data['title'] ?? null)
+            ?: $this->buildPersianTitle([
+                'make' => $data['make'] ?? null,
+                'model' => $data['model'] ?? null,
+                'trim_level' => $data['trim_level'] ?? $data['trim'] ?? null,
+                'model_year' => $data['model_year'] ?? $data['year'] ?? null,
+            ]);
+
+        $metaTitle = $existingTitle ?: trim($vehicleTitle.' | ناوراکار');
+        $metaDescription = $existingDescription ?: $this->buildMetaDescription($data, $vehicleTitle);
+
+        return [
+            'meta_title' => Str::limit($metaTitle, 255, ''),
+            'meta_description' => Str::limit($metaDescription, 500, ''),
+        ];
+    }
+
+    private function normalizeMetaText(mixed $value): string
+    {
+        if (! is_scalar($value)) {
+            return '';
+        }
+
+        $text = strip_tags(html_entity_decode((string) $value, ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+
+        return trim((string) preg_replace('/\s+/u', ' ', $text));
     }
 
     public function slugify(array $data): string

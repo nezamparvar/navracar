@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const dist = path.resolve(__dirname, '..', 'dist');
+const packageVersion = JSON.parse(fs.readFileSync(path.resolve(__dirname, '..', 'package.json'), 'utf8')).version;
 const expectedConfiguration = {
   staging: {
     apiUrl: 'https://staging.nezamparvar.com/api',
@@ -26,6 +27,9 @@ for (const environment of ['staging', 'production']) {
   }
 
   const manifest = JSON.parse(fs.readFileSync(path.join(dist, environment, 'manifest.json'), 'utf8'));
+  if (manifest.version !== packageVersion) {
+    throw new Error(`${environment} package has version ${manifest.version}; expected ${packageVersion}`);
+  }
   const expectedHost = expectedConfiguration[environment].hostPermission;
   const otherEnvironment = environment === 'staging' ? 'production' : 'staging';
   const otherHost = expectedConfiguration[otherEnvironment].hostPermission;

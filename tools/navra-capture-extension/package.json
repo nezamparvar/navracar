@@ -1,11 +1,11 @@
 {
   "name": "navra-capture-extension",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Navra Capture Browser Extension for NavraCar",
   "scripts": {
     "build": "npm run bundle && npm run archive:staging && npm run archive:production && npm run checksum",
-    "archive:staging": "cd dist/staging && zip -qr ../navra-capture-staging.zip .",
-    "archive:production": "cd dist/production && zip -qr ../navra-capture-production.zip .",
+    "archive:staging": "node scripts/archive.js staging",
+    "archive:production": "node scripts/archive.js production",
     "checksum": "node scripts/checksum.js",
     "bundle": "node scripts/bundle.js",
     "test": "jest",
