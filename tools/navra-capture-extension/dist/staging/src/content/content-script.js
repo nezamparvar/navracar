@@ -21,18 +21,21 @@ function waitForPageReady(maxWait = 5000) {
 }
 
 // Message listener for popup/service-worker
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  try {
-    if (request.action === 'captureCurrentPage') {
-      await waitForPageReady();
-      await captureAndSend();
-      sendResponse({ status: 'capture_started' });
-    } else if (request.action === 'canCapture') {
-      sendResponse({ canCapture: canCaptureCurrentPage() });
-    }
-  } catch (error) {
-    console.error('[Navra Capture] Error:', error);
-    sendResponse({ status: 'error', error: error.message });
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'captureCurrentPage') {
+    (async () => {
+      try {
+        await waitForPageReady();
+        const payload = await captureAndSend();
+        sendResponse({ status: 'success', payload });
+      } catch (error) {
+        console.error('[Navra Capture] Capture error:', error);
+        sendResponse({ status: 'error', error: error.message });
+      }
+    })();
+    return true; // Indicate async response
+  } else if (request.action === 'canCapture') {
+    sendResponse({ canCapture: canCaptureCurrentPage() });
   }
 });
 
@@ -65,7 +68,7 @@ function canCaptureCurrentPage() {
 
 async function captureAndSend() {
   const source = getMarketplaceSource();
-  if (!source) return;
+  if (!source) throw new Error('Unsupported marketplace');
 
   let payload = null;
   if (source === 'dubizzle') {
@@ -76,8 +79,18 @@ async function captureAndSend() {
     payload = captureYallaMotor();
   }
 
-  if (payload) {
-    chrome.runtime.sendMessage({ action: 'sendCaptureToNavraCar', payload });
+  if (!payload) throw new Error('Failed to capture listing data');
+
+  try {
+    const response = await chrome.runtime.sendMessage({
+      action: 'sendCaptureToNavraCar',
+      payload
+    });
+    console.log('[Navra Capture] Send response:', response);
+    return payload;
+  } catch (error) {
+    console.error('[Navra Capture] Send error:', error);
+    throw error;
   }
 }
 
@@ -201,36 +214,43 @@ const Extractors = {
 
 // DubizzleCar extraction
 function captureDubizzle() {
+  console.log('[Navra Capture] Starting Dubizzle extraction');
   const url = window.location.href;
   const jsonLd = Extractors.extractJsonLd();
 
   const vehicle = {
-    title: Extractors.trySelectors(['[data-testid="listing-name"]', 'h1']),
+    title: Extractors.trySelectors(['[data-testid="listing-name"]', 'h1', '[class*="listing-title"]']),
     make: null,
     model: null,
-    year: Extractors.extractTextFrom('[data-testid="listing-year-value"]'),
+    year: Extractors.trySelectors(['[data-testid="listing-year-value"]', '[class*="year"]']),
     price_aed: null,
-    mileage_km: Extractors.extractTextFrom('[data-testid="listing-kilometers-value"]'),
-    fuel_type: Extractors.extractTextFrom('[data-testid="overview-fuel_type-value"]'),
-    transmission: Extractors.extractTextFrom('[data-testid="overview-transmission_type-value"]'),
-    body_type: Extractors.extractTextFrom('[data-testid="overview-body_type-value"]'),
-    regional_specs: Extractors.extractTextFrom('[data-testid="listing-regional_specs-value"]'),
-    steering_side: Extractors.extractTextFrom('[data-testid="listing-steering_side-value"]'),
-    exterior_color: Extractors.extractTextFrom('[data-testid="overview-exterior_color-value"]'),
-    interior_color: Extractors.extractTextFrom('[data-testid="overview-interior_color-value"]'),
-    seller_type: Extractors.extractTextFrom('[data-testid="overview-seller_type-value"]'),
-    warranty: Extractors.extractTextFrom('[data-testid="overview-warranty-value"]'),
-    horsepower: Extractors.extractTextFrom('[data-testid="overview-horsepower-value"]'),
-    no_of_cylinders: Extractors.extractTextFrom('[data-testid="overview-no_of_cylinders-value"]'),
-    doors: Extractors.extractTextFrom('[data-testid="overview-doors-value"]'),
-    seating_capacity: Extractors.extractTextFrom('[data-testid="overview-seating_capacity-value"]'),
-    engine: Extractors.extractTextFrom('[data-testid="overview-engine_capacity_cc-value"]'),
-    trim: Extractors.extractTextFrom('[data-testid="overview-motors_trim-value"]'),
+    mileage_km: Extractors.trySelectors(['[data-testid="listing-kilometers-value"]', '[class*="mileage"]', '[class*="kilometers"]']),
+    fuel_type: Extractors.trySelectors(['[data-testid="overview-fuel_type-value"]', '[class*="fuel"]']),
+    transmission: Extractors.trySelectors(['[data-testid="overview-transmission_type-value"]', '[class*="transmission"]']),
+    body_type: Extractors.trySelectors(['[data-testid="overview-body_type-value"]', '[class*="body"]']),
+    regional_specs: Extractors.trySelectors(['[data-testid="listing-regional_specs-value"]', '[class*="regional"]']),
+    steering_side: Extractors.trySelectors(['[data-testid="listing-steering_side-value"]', '[class*="steering"]']),
+    exterior_color: Extractors.trySelectors(['[data-testid="overview-exterior_color-value"]', '[class*="color"]']),
+    interior_color: Extractors.trySelectors(['[data-testid="overview-interior_color-value"]', '[class*="interior"]']),
+    seller_type: Extractors.trySelectors(['[data-testid="overview-seller_type-value"]', '[class*="seller"]']),
+    warranty: Extractors.trySelectors(['[data-testid="overview-warranty-value"]', '[class*="warranty"]']),
+    horsepower: Extractors.trySelectors(['[data-testid="overview-horsepower-value"]', '[class*="horsepower"]']),
+    no_of_cylinders: Extractors.trySelectors(['[data-testid="overview-no_of_cylinders-value"]', '[class*="cylinder"]']),
+    doors: Extractors.trySelectors(['[data-testid="overview-doors-value"]', '[class*="door"]']),
+    seating_capacity: Extractors.trySelectors(['[data-testid="overview-seating_capacity-value"]', '[class*="seating"]']),
+    engine: Extractors.trySelectors(['[data-testid="overview-engine_capacity_cc-value"]', '[class*="engine"]']),
+    trim: Extractors.trySelectors(['[data-testid="overview-motors_trim-value"]', '[class*="trim"]']),
     description: null,
     posted_on: null,
   };
 
-  // Try JSON-LD first
+  console.log('[Navra Capture] Extracted initial fields:', {
+    title: vehicle.title,
+    year: vehicle.year,
+    mileage: vehicle.mileage_km,
+  });
+
+  // Try JSON-LD first for fallback data
   if (jsonLd) {
     if (jsonLd.name && !vehicle.title) vehicle.title = jsonLd.name;
     if (jsonLd.brand && !vehicle.make) {
@@ -243,7 +263,7 @@ function captureDubizzle() {
     }
   }
 
-  // Extract make/model from URL
+  // Extract make/model from URL (most reliable on Dubizzle)
   if (!vehicle.make) {
     const makeMatch = url.match(/\/motors\/(?:used-cars|new-cars|export-cars)\/([a-z0-9-]+)/i);
     if (makeMatch) vehicle.make = makeMatch[1].replace(/-/g, ' ');
@@ -253,11 +273,17 @@ function captureDubizzle() {
     if (modelMatch) vehicle.model = modelMatch[1].replace(/-/g, ' ');
   }
 
-  // Extract price
+  // Extract price with fallback to meta tags
   if (!vehicle.price_aed) {
     const priceEl = document.querySelector('[data-testid="listing-price"]');
     if (priceEl) {
       vehicle.price_aed = Extractors.parsePrice(priceEl.textContent || '');
+    }
+  }
+  if (!vehicle.price_aed) {
+    const metaPrice = Extractors.extractFromMeta('price');
+    if (metaPrice) {
+      vehicle.price_aed = Extractors.parsePrice(metaPrice);
     }
   }
 
@@ -287,7 +313,7 @@ function captureDubizzle() {
   const listingIdMatch = url.match(/-([a-f0-9]{32})/i);
   const listingId = listingIdMatch ? listingIdMatch[1].toLowerCase() : null;
 
-  return {
+  const payload = {
     schema_version: 'navracar.capture.v1',
     source: 'dubizzle',
     source_url: url,
@@ -298,6 +324,9 @@ function captureDubizzle() {
     images: Extractors.extractImages().map((url) => ({ url, confidence: 'high' })),
     diagnostics: generateDiagnostics(vehicle),
   };
+
+  console.log('[Navra Capture] Dubizzle extraction complete:', payload);
+  return payload;
 }
 
 // DubiCars extraction
