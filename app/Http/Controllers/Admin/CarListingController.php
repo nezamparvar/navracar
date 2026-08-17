@@ -34,7 +34,7 @@ class CarListingController extends Controller
         $listings = CarListing::with('images')->latest()->paginate(20);
 
         return view('admin.car-listings.index', [
-            'pageTitle' => 'آگهی‌های دابیزل (قیمت خودروها)',
+            'pageTitle' => 'آگهی‌ها و ایمپورت خودرو',
             'listings' => $listings,
         ]);
     }
@@ -474,4 +474,3 @@ class CarListingController extends Controller
         }
     }
 }
-
