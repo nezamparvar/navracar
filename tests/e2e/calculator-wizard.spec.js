@@ -80,8 +80,8 @@ test.describe('3-Step Calculator Wizard', () => {
     // Verify pricing data is preserved
     const realPriceInput = await page.inputValue('#realPriceAED');
     const customsPriceInput = await page.inputValue('#customsPriceAED');
-    expect(realPriceInput).toBe(realPriceValue);
-    expect(customsPriceInput).toBe(customsPriceValue);
+    expect(realPriceInput.replace(/,/g, '')).toBe(realPriceValue);
+    expect(customsPriceInput.replace(/,/g, '')).toBe(customsPriceValue);
   });
 
   test('progress indicator shows correct step', async ({ page }) => {
@@ -107,13 +107,15 @@ test.describe('3-Step Calculator Wizard', () => {
     await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
 
-    // Intercept pricing request
+    // Fill first so the navigation click cannot race ahead of the input events.
+    await page.fill('#realPriceAED', '100000');
+    await page.fill('#customsPriceAED', '80000');
+
+    // Intercept the authoritative calculation triggered by navigation.
     const [calcResponse] = await Promise.all([
       page.waitForResponse(response =>
         response.url().includes('/vehicle-pricing/calculate') && response.ok()
       ),
-      page.fill('#realPriceAED', '100000'),
-      page.fill('#customsPriceAED', '80000'),
       page.click('#wizNextBtn'),
     ]);
 
