@@ -13,6 +13,9 @@
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
     RewriteCond %{HTTP:x-xsrf-token} .
     RewriteRule .* - [E=HTTP_X_XSRF_TOKEN:%{HTTP:X-XSRF-Token}]
+    # LiteSpeed/WCDN may not honor DirectoryIndex for a subdirectory root.
+    # Route /staging/ explicitly through Laravel before the directory guard.
+    RewriteRule ^$ index.php [L]
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^ index.php [L]

@@ -38,6 +38,20 @@
         <x-button :href="route('admin.kanban')" variant="secondary" size="sm">پاک کردن</x-button>
     </form>
 
+    @if (auth()->user()->isAdmin())
+        <form method="POST" action="{{ route('admin.pipeline-stages.store') }}" class="mb-5 flex flex-wrap items-end gap-3 rounded-2xl border border-ink-200/70 bg-white p-4 dark:border-white/10 dark:bg-white/5">
+            @csrf
+            <div class="flex min-w-64 flex-1 flex-col gap-1.5">
+                <label for="pipeline-stage-name" class="text-xs font-bold text-ink-500 dark:text-ink-400">افزودن ستون پایپ‌لاین</label>
+                <input id="pipeline-stage-name" type="text" name="name" maxlength="100" required placeholder="مثلاً: در انتظار مدارک" class="rounded-lg border border-ink-200 bg-ink-50 px-3 py-2 text-sm dark:border-white/10 dark:bg-white/5">
+            </div>
+            <x-button type="submit" size="sm">افزودن ستون</x-button>
+        </form>
+        @error('stage')
+            <div class="mb-5 rounded-xl bg-rose-50 px-4 py-3 text-sm font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">{{ $message }}</div>
+        @enderror
+    @endif
+
     <div
         x-data="kanbanBoard"
         class="flex gap-4 overflow-x-auto pb-4"
@@ -59,12 +73,17 @@
                         @if (auth()->user()->isAdmin())
                             <button
                                 type="button"
-                                @click="openStageNameEditor('{{ $stage->id }}', '{{ addslashes($stage->name) }}')"
+                                @click="openStageNameEditor('{{ $stage->id }}', @js($stage->name))"
                                 class="rounded p-1 text-xs text-ink-400 hover:bg-brand-100 hover:text-brand-600 dark:hover:bg-brand-500/15"
                                 title="ویرایش نام"
                             >
                                 ✏️
                             </button>
+                            <form method="POST" action="{{ route('admin.pipeline-stages.destroy', $stage) }}" class="inline" @submit="!confirm('ستون «{{ $stage->name }}» حذف شود؟ ستون دارای کارت قابل حذف نیست.') && $event.preventDefault()">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="rounded p-1 text-xs text-ink-400 hover:bg-rose-100 hover:text-rose-600 dark:hover:bg-rose-500/15" title="حذف ستون">🗑️</button>
+                            </form>
                         @endif
                     </div>
                     <span class="rounded-full bg-brand-100 px-2.5 py-0.5 text-xs font-extrabold text-brand-800 dark:bg-brand-500/15 dark:text-brand-300">{{ $leads->count() }}</span>
