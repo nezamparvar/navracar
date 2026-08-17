@@ -38,6 +38,13 @@ ensure_staging_runtime_dirs() {
             echo "Refusing staging deployment: public disk root is not writable: $public_disk_root." >&2
             return 1
         }
+
+        # Imported media may come from a File Manager/database snapshot with
+        # owner-only modes. Normalize only the isolated Staging public disk so
+        # LiteSpeed/WCDN can read images while the cPanel user retains writes.
+        chmod 0755 -- "$public_disk_root" || return 1
+        find "$public_disk_root" -type d -exec chmod 0755 -- {} + || return 1
+        find "$public_disk_root" -type f -exec chmod 0644 -- {} + || return 1
     fi
 }
 
