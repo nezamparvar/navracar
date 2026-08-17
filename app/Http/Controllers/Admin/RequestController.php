@@ -81,7 +81,7 @@ class RequestController extends Controller
 
         $rows = $query->orderByDesc('created_at')->paginate(15)->withQueryString();
         $staffList = $user->isAdmin() ? AdminUser::orderBy('username')->get() : collect();
-        $pipelineStages = PipelineStage::orderBy('order')->get();
+        $pipelineStages = PipelineStage::orderBy('sort_order')->get();
 
         return view('admin.requests.index', [
             'pageTitle' => 'درخواست‌های استعلام قیمت (CRM)',
@@ -318,7 +318,7 @@ class RequestController extends Controller
 
         ActivityLogger::error('حذف درخواست از سیستم', ['id' => $lead->id, 'name' => $leadName]);
 
-        return back()->with('success', 'درخواست با موفقیت حذف شد.');
+        return redirect()->route('admin.requests.index')->with('success', 'درخواست با موفقیت حذف شد.');
     }
 
     public function deletedIndex(Request $request)
