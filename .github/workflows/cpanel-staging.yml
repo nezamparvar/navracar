@@ -161,7 +161,7 @@ jobs:
           git rm -r --ignore-unmatch .
           git clean -fdx
           cp -a "$RUNNER_TEMP/navracar-cpanel-staging/." .
-          git add -A
+          git add -Af
           if git ls-files | grep -Eq '^(node_modules|vendor|public|tools)/'; then
             echo 'Refusing to publish development artifacts at the staging branch root.' >&2
             exit 1
