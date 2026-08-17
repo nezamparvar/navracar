@@ -1,6 +1,6 @@
 792b97fc33a0c4da1a53d7923218ca687183bda588a926e5382662d01a3ff3a0  ./.cpanel.yml
-9b762a38d471e8dca9d9f43c5e6c1658588a5c9896aeb960e09c634280730e46  ./DEPLOYMENT-METADATA.json
-9b762a38d471e8dca9d9f43c5e6c1658588a5c9896aeb960e09c634280730e46  ./application/.cpanel-release.json
+c6ac0b3c90d862b55f56b6ebe4402985fade56c87260583fd8abcb4fdee605ac  ./DEPLOYMENT-METADATA.json
+c6ac0b3c90d862b55f56b6ebe4402985fade56c87260583fd8abcb4fdee605ac  ./application/.cpanel-release.json
 37f367944fb18c5a23d8d702ed785071bdf1ed5735a79c72367d02f8777ae81b  ./application/.env.example
 62f6675f6a2f7f7f05e842ad37cc548e6e1ac502a5d74eac60842aa18236a952  ./application/app/Console/Commands/Admin/CreateUserCommand.php
 7696296601922e9d80a843bbd41aa66046abccfdbdbdae00195932c61f66c029  ./application/app/Console/Commands/GenerateExtensionPairingCode.php
@@ -211,7 +211,7 @@ faa48341f41ab6638cdd0fde51387e8b02c1818fa9afa15efc7a7e6a1a994ec3  ./application/
 1ad07bb683fb0a22954fcc1d111493a7d4d18189e30edeb9cf109d806245dcd3  ./application/resources/views/pdf/proforma.blade.php
 d699f2a9bc300bc66dbbb260ec6be1f331a4d616498ad66834ff84395e318ed2  ./application/resources/views/public/blog/index.blade.php
 5314875c92e23b052652b567cbe365f60dfd6aa4c183316c4bbb1aacc1787bad  ./application/resources/views/public/blog/show.blade.php
-44c058c580a6d989fdec5479bdd8024147d83a3d4c3ecb60b252becbb4a9f4dd  ./application/resources/views/public/calculator.blade.php
+8322e87b898b7f67837d4e74f0b25834a5b872c392a851f3d1e65747a7bdc326  ./application/resources/views/public/calculator.blade.php
 cb2a26c951f3be5fccdeff223163d6fb8166c57dcb24e1886c638c8774d174fa  ./application/resources/views/public/car-prices/index.blade.php
 df5add2a034dd918b519e9953c41c4cd388e23f8bb21dd6085c3db4248d74f92  ./application/resources/views/public/car-prices/show.blade.php
 b288a6b39904532405b665e1c0150d1359fbb8afc125ea9b205124a2e7986f0d  ./application/resources/views/public/car-prices/sitemap.blade.php
@@ -289,7 +289,7 @@ c8cce4b6b9729f264ffdf9296d505d63432497feeed1f586d1902b942197e024  ./application/
 aaf36ae939c550571e229b309191a2c9996bf56b30f4516321a8aae09663f1e5  ./application/vendor/composer/autoload_real.php
 1ae232d7a204d2ca6d5badd5ab8ea6fe2356d138fd955d0fcc4827ad472132a3  ./application/vendor/composer/autoload_static.php
 e0f822650113891ec3c12f319ed4a9c11a6ffa617324e9486431077692bfebcd  ./application/vendor/composer/installed.json
-08386880792eb4017900e433916ad60854be39d5a5a9522b50691dd5bf1a7539  ./application/vendor/composer/installed.php
+a349c394b78236088a5047fceffb797fff47bfc4ccbcb851fc14f0b1036f643b  ./application/vendor/composer/installed.php
 45f40bb671c2e809778cd8065a7a40f1472e476e155275440e34ae43e3fc9e9c  ./application/vendor/composer/platform_check.php
 403150740c4b8ca02747049f1f56e9405d3e42297a9ddf0f490d7e24e3c369fc  ./application/vendor/dflydev/dot-access-data/CHANGELOG.md
 a51874d3253d042002b8971c778102223ca89048c5b71c46e58f7bb5bc728941  ./application/vendor/dflydev/dot-access-data/LICENSE
