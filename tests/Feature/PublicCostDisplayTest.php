@@ -148,4 +148,31 @@ class PublicCostDisplayTest extends TestCase
         $expectedFinalTotal = $result->totals['preServiceTotalToman'] + $result->totals['serviceFeeToman'];
         $this->assertEquals($expectedFinalTotal, $result->totals['finalTotalToman']);
     }
+
+    public function test_print_report_hides_service_fee_row_but_keeps_it_in_final_total(): void
+    {
+        $template = file_get_contents(resource_path('views/public/calculator.blade.php'));
+
+        $printTotalsPattern = "/lastTotals\\s*=\\s*\\{\\s*'جمع کل بدون کارمزد'(?<rows>.*?)\\};/s";
+        $this->assertMatchesRegularExpression($printTotalsPattern, $template);
+        preg_match($printTotalsPattern, $template, $matches);
+
+        $this->assertStringNotContainsString('کارمزد ترخیص‌کار و کارگزار (ناوراکار)', $matches['rows']);
+        $this->assertStringContainsString("'جمع کل نهایی': fmt(result.finalTotalToman)", $matches['rows']);
+
+        $result = (new VehiclePricingService())->calculate(
+            VehiclePricingInput::fromArray([
+                'real_price_aed' => 50000,
+                'customs_price_aed' => 30000,
+                'category_id' => 'c2000',
+            ]),
+            VehiclePricingSettings::current()
+        );
+
+        $this->assertGreaterThan(0, $result->totals['serviceFeeToman']);
+        $this->assertEquals(
+            $result->totals['preServiceTotalToman'] + $result->totals['serviceFeeToman'],
+            $result->totals['finalTotalToman']
+        );
+    }
 }
