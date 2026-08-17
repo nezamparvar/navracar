@@ -23,6 +23,15 @@ takes precedence over the five-item illustrative image.
 Production has not been deployed or modified. Promotion requires explicit
 approval after staging acceptance.
 
+The V2 reference describes native Material 3 screens, while the repository and
+task explicitly require reuse of the already-approved Capacitor stack and
+prohibit an unnecessary second mobile stack. V1 therefore packages its UI
+locally in Capacitor and adds native Android Keystore, Share target, intent, and
+deep-link integration; it is not a remote-site wrapper. Its controls reproduce
+the V2 Material-like tokens and dimensions, but they remain HTML/CSS rather than
+Android Material widgets. A full native-widget migration is a documented future
+architecture decision, not silently represented as complete here.
+
 ## Architecture
 
 ```text
@@ -147,7 +156,7 @@ Playwright fixture test traverses and captures the complete RTL screen set.
 ```bash
 php artisan test --compact tests/Feature/MobileApiV1Test.php
 php artisan test --compact
-node --test tests/mobile/api.test.js tests/mobile/auth.test.js tests/mobile/format.test.js tests/mobile/state.test.js
+node --test tests/mobile/api.test.js tests/mobile/format.test.js tests/mobile/state.test.js
 npx playwright test --config=playwright.android.config.js
 cd android && ./gradlew testDebugUnitTest --no-daemon
 cd android && ./gradlew assembleDebug assembleRelease -PstagingBuild=true --no-daemon
@@ -181,6 +190,9 @@ claimed. The deployment steps below remain the external acceptance boundary.
   About, Terms, or Privacy content endpoint/page. Android links only to existing
   web sources and does not duplicate legal copy. Those three canonical web/API
   sources must be supplied before claiming the legal-content portion complete.
+- The existing Capacitor stack is retained to avoid a second Android stack. The
+  UI is packaged locally and has native security/share/deep-link bridges, but
+  its screen widgets are not a full native Material 3 implementation.
 - Push is an Android/backend integration foundation only. FCM sender credentials,
   device-token endpoints, consent UI, and server events are not present and were
   not invented as a new messaging platform.

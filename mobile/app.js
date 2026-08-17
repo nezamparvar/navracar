@@ -54,12 +54,14 @@ async function route() {
   try {
     switch (state.route.name) {
       case 'home':
-        app.innerHTML = homeView(await ensureBootstrap());
+        state.vehicleList = (await ensureBootstrap()).featured_vehicles || [];
+        app.innerHTML = homeView(state.bootstrap, (await favoriteItems()).map(item => item.slug));
         break;
       case 'vehicles': {
         const search = serializeQuery(state.route.query);
         const payload = await api.get(`/api/mobile/v1/vehicles${search ? `?${search}` : ''}`);
-        app.innerHTML = vehiclesView(payload, state.route.query);
+        state.vehicleList = payload.data || [];
+        app.innerHTML = vehiclesView(payload, state.route.query, (await favoriteItems()).map(item => item.slug));
         break;
       }
       case 'vehicle':
@@ -68,7 +70,8 @@ async function route() {
         break;
       case 'pricing': {
         const bootstrap = await ensureBootstrap();
-        app.innerHTML = pricingView(bootstrap.categories, { price: state.route.query.price, category: state.route.query.category });
+        state.pricingDraft = { car: state.route.query.car || '', price: state.route.query.price || '', category: state.route.query.category || 'c2000' };
+        app.innerHTML = pricingView(bootstrap.categories, state.pricingDraft);
         break;
       }
       case 'quote':
@@ -128,14 +131,19 @@ app.addEventListener('click', async (event) => {
   if (tab) { authMode = tab.dataset.authTab; app.innerHTML = accountView(null, authMode); return; }
   const action = event.target.closest('[data-action]');
   if (!action) return;
-  if (action.dataset.action === 'open-pricing') location.hash = `#/pricing?price=${encodeURIComponent(action.dataset.price || '')}&category=${encodeURIComponent(action.dataset.category || 'c2000')}`;
+  if (action.dataset.action === 'open-pricing') location.hash = `#/pricing?car=${encodeURIComponent(action.dataset.car || '')}&price=${encodeURIComponent(action.dataset.price || '')}&category=${encodeURIComponent(action.dataset.category || 'c2000')}`;
   if (action.dataset.action === 'open-quote') {
     const vehicle = state.vehicle || {};
-    location.hash = `#/quote?car=${encodeURIComponent(vehicle.title || '')}&price=${encodeURIComponent(vehicle.price_aed || '')}&category=${encodeURIComponent(vehicle.pricing?.category?.id || 'c2000')}`;
+    const source = action.dataset.quoteSource === 'pricing' ? state.pricingDraft || {} : { car: vehicle.title, price: vehicle.price_aed, category: vehicle.pricing?.category?.id };
+    location.hash = `#/quote?car=${encodeURIComponent(source.car || '')}&price=${encodeURIComponent(source.price || '')}&category=${encodeURIComponent(source.category || 'c2000')}`;
   }
   if (action.dataset.action === 'logout') {
-    try { await api.post('/api/mobile/v1/auth/logout', {}); } catch {}
-    tokens.clear(); state.customer = null; authMode = 'login'; showToast('از حساب خارج شدید.'); route();
+    try {
+      await api.post('/api/mobile/v1/auth/logout', {});
+      tokens.clear(); state.customer = null; authMode = 'login'; showToast('از حساب خارج شدید.'); route();
+    } catch (error) {
+      showToast(`خروج انجام نشد: ${normalizeApiError(error)}`);
+    }
   }
 });
 
@@ -148,7 +156,9 @@ app.addEventListener('submit', async (event) => {
     if (form.dataset.form === 'vehicle-filter') { location.hash = `#/vehicles?${serializeQuery(formData(form))}`; return; }
     if (form.dataset.form === 'pricing') {
       const values = formData(form);
-      const result = await api.post('/api/vehicle-pricing/calculate', { real_price_aed: Number(normalizePersianDigits(values.real_price_aed)), category: values.category });
+      const price = Number(normalizePersianDigits(values.real_price_aed));
+      const result = await api.post('/api/vehicle-pricing/calculate', { real_price_aed: price, category: values.category });
+      state.pricingDraft = { car: state.pricingDraft?.car || '', price, category: values.category, result };
       document.getElementById('pricing-result').innerHTML = pricingResultView(result);
       return;
     }
@@ -201,7 +211,7 @@ async function toggleFavorite(slug, button) {
       else await api.put(`/api/mobile/v1/favorites/${encodeURIComponent(slug)}`);
     } else {
       const current = await favoriteItems();
-      const vehicle = state.vehicle || state.bootstrap?.featured_vehicles?.find(item => item.slug === slug);
+      const vehicle = state.vehicle?.slug === slug ? state.vehicle : state.vehicleList?.find(item => item.slug === slug) || state.bootstrap?.featured_vehicles?.find(item => item.slug === slug);
       const next = active ? current.filter(item => item.slug !== slug) : [...current, vehicle].filter(Boolean);
       localStorage.setItem('navracar.local-favorites', JSON.stringify(next));
       showToast('برای همگام‌سازی علاقه‌مندی‌ها وارد حساب شوید.');

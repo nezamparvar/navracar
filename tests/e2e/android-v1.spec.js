@@ -15,8 +15,9 @@ const vehicle = {
     price_aed: 345000, price_toman: 7635000000, cover_image: null,
     specs: { engine_capacity_cc: '3000', fuel_type: 'بنزین', transmission: 'اتوماتیک', kilometers: '30000' },
 };
+const secondVehicle = { ...vehicle, slug: 'toyota-camry', title: 'Toyota Camry Hybrid', make: 'Toyota', model: 'Camry', price_aed: 128000 };
 
-async function mockMobileApi(page) {
+async function mockMobileApi(page, options = {}) {
     await page.route('https://navracar.com/**', async (route) => {
         const url = new URL(route.request().url());
         const path = url.pathname;
@@ -34,7 +35,7 @@ async function mockMobileApi(page) {
                 { key: 'plate', label: 'هزینه‌های پلاک', value_toman: 700000000 },
             ], grand_total_toman: 11235000000,
         } });
-        if (path.endsWith('/vehicles')) return json({ data: [vehicle], meta: { current_page: 1, last_page: 1, total: 1 }, facets: { makes: ['BMW'], fuels: ['بنزین'] } });
+        if (path.endsWith('/vehicles')) return json({ data: [vehicle, secondVehicle], meta: { current_page: 1, last_page: 1, total: 2 }, facets: { makes: ['BMW', 'Toyota'], fuels: ['بنزین', 'هیبرید'] } });
         if (path.endsWith('/vehicle-pricing/calculate')) return json({ publicSummary: {
             car_price_toman: 7635000000, clearance_total_toman: 2900000000, plate_total_toman: 700000000, grand_total_toman: 11235000000,
         }, category: { id: 'c2000', label: 'بنزینی ۱۵۰۰ تا ۲۰۰۰ سی‌سی' } });
@@ -43,6 +44,7 @@ async function mockMobileApi(page) {
         if (path.endsWith('/account')) return json({ customer: { id: 1, name: 'مریم احمدی', phone: '+989121234567', email: 'maryam@example.com' } });
         if (path.endsWith('/quote-requests')) return json({ success: true, id: 129, message: 'درخواست شما با موفقیت ثبت شد.' });
         if (path.endsWith('/auth/login') || path.endsWith('/auth/register')) return json({ token: '1|abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ', customer: { id: 1, name: 'مریم احمدی', phone: '+989121234567', email: 'maryam@example.com' } });
+        if (path.endsWith('/auth/logout') && options.logoutStatus) return json({ message: 'سرویس خروج موقتاً در دسترس نیست.' }, options.logoutStatus);
         return json({}, 204);
     });
 }
@@ -59,7 +61,9 @@ test('renders complete Persian RTL Android V1 screen inventory', async ({ page }
     await page.getByRole('link', { name: 'خودروها' }).click();
     await expect(page.getByRole('heading', { name: 'خودروها' })).toBeVisible();
     await expect(page.getByRole('searchbox', { name: 'جستجوی خودرو' })).toBeVisible();
-    await expect(page.getByTestId('vehicle-card')).toHaveCount(1);
+    await expect(page.getByLabel('مدل')).toBeVisible();
+    await expect(page.getByLabel('حداقل حجم موتور')).toBeVisible();
+    await expect(page.getByTestId('vehicle-card')).toHaveCount(2);
     await capture(page, '02-vehicle-listing.png');
 
     await page.getByRole('searchbox', { name: 'جستجوی خودرو' }).fill('BMW');
@@ -68,7 +72,7 @@ test('renders complete Persian RTL Android V1 screen inventory', async ({ page }
     await expect(page).toHaveURL(/q=BMW/);
     await capture(page, '03-filter-search.png');
 
-    await page.getByTestId('vehicle-card').click();
+    await page.getByTestId('vehicle-card').first().click();
     await expect(page.getByRole('heading', { name: 'BMW X5 xDrive40i' })).toBeVisible();
     await expect(page.getByText('جمع هزینه‌های ترخیص')).toBeVisible();
     await expect(page.getByText('کارمزد ترخیص‌کار و کارگزار')).toHaveCount(0);
@@ -78,13 +82,14 @@ test('renders complete Persian RTL Android V1 screen inventory', async ({ page }
 
     await page.getByRole('button', { name: 'محاسبه هزینه' }).click();
     await expect(page.getByRole('heading', { name: 'محاسبه هزینه' })).toBeVisible();
-    await page.getByLabel('قیمت واقعی خودرو به درهم').fill('345000');
+    await page.getByLabel('قیمت واقعی خودرو به درهم').fill('123456');
     await page.getByRole('button', { name: 'دریافت محاسبه' }).click();
     await expect(page.getByText('جمع کل برآوردشده')).toBeVisible();
     await capture(page, '06-pricing-calculator.png');
 
     await page.getByRole('button', { name: 'ثبت درخواست' }).click();
     await expect(page.getByRole('heading', { name: 'ثبت درخواست' })).toBeVisible();
+    await expect(page.getByLabel('قیمت خودرو به درهم')).toHaveValue('123456');
     await capture(page, '07-quote-request.png', false);
 
     await page.evaluate(() => localStorage.setItem('navracar.mobile.token', '1|abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ'));
@@ -101,4 +106,19 @@ test('renders complete Persian RTL Android V1 screen inventory', async ({ page }
     await page.getByRole('link', { name: 'علاقه‌مندی‌ها' }).click();
     await expect(page.getByRole('heading', { name: 'علاقه‌مندی‌ها' })).toBeVisible();
     await capture(page, '10-favorites.png');
+});
+
+test('guest favorites resolve the selected listing and failed logout preserves the token', async ({ page }) => {
+    await mockMobileApi(page, { logoutStatus: 503 });
+    await page.goto('http://127.0.0.1:4173/#/vehicles');
+    await expect(page.getByTestId('vehicle-card')).toHaveCount(2);
+    await page.locator('[data-favorite="toyota-camry"]').click();
+    await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('navracar.local-favorites') || '[]')[0]?.slug)).toBe('toyota-camry');
+
+    await page.evaluate(() => localStorage.setItem('navracar.mobile.token', '1|abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ'));
+    await page.goto('http://127.0.0.1:4173/#/account');
+    await expect(page.getByText('مریم احمدی')).toBeVisible();
+    await page.getByRole('button', { name: 'خروج از حساب' }).click();
+    await expect(page.getByText(/خروج انجام نشد/)).toBeVisible();
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('navracar.mobile.token'))).toContain('|');
 });
