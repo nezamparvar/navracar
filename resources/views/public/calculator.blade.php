@@ -823,6 +823,7 @@ categories.forEach(cat=>{
   const btn = document.createElement('button');
   btn.className = 'cat-btn' + (cat.id===activeCat.id ? ' active':'');
   btn.type = 'button';
+  btn.dataset.categoryId = cat.id;
   btn.innerHTML = `<div class="icon">${cat.icon}</div><div class="lbl">${cat.label}</div><div class="coef">ضریب ${cat.coef.toFixed(2)}</div>`;
   btn.addEventListener('click', ()=>{ selectCategoryById(cat.id); });
   catGrid.appendChild(btn);

@@ -13,15 +13,15 @@ test.describe('3-Step Calculator Wizard', () => {
 
     // Step 1: Vehicle details
     await page.waitForSelector('.wiz-step[data-step="details"].active');
-    await expect(page.locator('.wiz-step-title')).toContainText('اطلاعات خودرو');
+    await expect(page.locator('.wiz-step.active .wiz-step-title')).toContainText('اطلاعات خودرو');
 
-    // Enter manual CC
-    await page.fill('#manualCC', '2000');
+    // Select the engine-capacity category exposed by CC mode.
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
 
     // Step 2: Pricing
     await page.waitForSelector('.wiz-step[data-step="pricing"].active');
-    await expect(page.locator('.wiz-step-title')).toContainText('قیمت و نرخ ارز');
+    await expect(page.locator('.wiz-step.active .wiz-step-title')).toContainText('قیمت و نرخ ارز');
 
     // Enter prices
     await page.fill('#realPriceAED', '100000');
@@ -30,7 +30,7 @@ test.describe('3-Step Calculator Wizard', () => {
 
     // Step 3: Results
     await page.waitForSelector('.wiz-step[data-step="result"].active');
-    await expect(page.locator('.wiz-step-title')).toContainText('نتیجه محاسبه');
+    await expect(page.locator('.wiz-step.active .wiz-step-title')).toContainText('نتیجه محاسبه');
     await expect(page.locator('#s_total')).toBeVisible();
   });
 
@@ -40,7 +40,7 @@ test.describe('3-Step Calculator Wizard', () => {
     await page.waitForSelector('.wiz-step[data-step="details"].active');
 
     // Go to pricing
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
     await page.waitForSelector('.wiz-step[data-step="pricing"].active');
 
@@ -57,9 +57,9 @@ test.describe('3-Step Calculator Wizard', () => {
     // Choose method
     await page.click('[data-mode="cc"]');
 
-    // Step 1: Enter details
-    const manualCCValue = '2500';
-    await page.fill('#manualCC', manualCCValue);
+    // Step 1: Select a category.
+    const categoryId = 'c2500';
+    await page.click(`[data-category-id="${categoryId}"]`);
     await page.click('#wizNextBtn');
 
     // Step 2: Enter prices
@@ -71,9 +71,8 @@ test.describe('3-Step Calculator Wizard', () => {
     // Go back to details
     await page.click('#wizPrevBtn');
 
-    // Verify data is preserved
-    const manualCCInput = await page.inputValue('#manualCC');
-    expect(manualCCInput).toBe(manualCCValue);
+    // Verify data is preserved.
+    await expect(page.locator(`[data-category-id="${categoryId}"]`)).toHaveClass(/active/);
 
     // Go back to pricing
     await page.click('#wizNextBtn');
@@ -95,7 +94,7 @@ test.describe('3-Step Calculator Wizard', () => {
     expect(dots).toBe(1);
 
     // Go to step 2
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
 
     // Should show step 2
@@ -105,7 +104,7 @@ test.describe('3-Step Calculator Wizard', () => {
 
   test('calculator computes correctly when advancing from pricing to result', async ({ page }) => {
     await page.click('[data-mode="cc"]');
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
 
     // Intercept pricing request
@@ -133,7 +132,7 @@ test.describe('3-Step Calculator Wizard', () => {
     page.setViewportSize({ width: 375, height: 812 });
 
     await page.click('[data-mode="cc"]');
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
 
     // Elements should be visible without horizontal scroll
     const overflow = await page.evaluate(() =>
@@ -157,7 +156,7 @@ test.describe('3-Step Calculator Wizard', () => {
     page.setViewportSize({ width: 390, height: 844 });
 
     await page.click('[data-mode="cc"]');
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
 
     const overflow = await page.evaluate(() =>
@@ -170,7 +169,7 @@ test.describe('3-Step Calculator Wizard', () => {
     page.setViewportSize({ width: 768, height: 1024 });
 
     await page.click('[data-mode="cc"]');
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
     await page.fill('#realPriceAED', '100000');
     await page.click('#wizNextBtn');
@@ -185,7 +184,7 @@ test.describe('3-Step Calculator Wizard', () => {
     page.setViewportSize({ width: 1280, height: 800 });
 
     await page.click('[data-mode="cc"]');
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
     await page.fill('#realPriceAED', '100000');
     await page.fill('#customsPriceAED', '80000');
@@ -202,8 +201,8 @@ test.describe('3-Step Calculator Wizard', () => {
 
   test('back button from pricing returns to details with data intact', async ({ page }) => {
     await page.click('[data-mode="cc"]');
-    const detailsValue = '2000';
-    await page.fill('#manualCC', detailsValue);
+    const categoryId = 'c2000';
+    await page.click(`[data-category-id="${categoryId}"]`);
     await page.click('#wizNextBtn');
 
     // At pricing step
@@ -216,14 +215,13 @@ test.describe('3-Step Calculator Wizard', () => {
 
     // Should be back at details with data
     await expect(page.locator('.wiz-step[data-step="details"]')).toHaveClass(/active/);
-    const retrievedCC = await page.inputValue('#manualCC');
-    expect(retrievedCC).toBe(detailsValue);
+    await expect(page.locator(`[data-category-id="${categoryId}"]`)).toHaveClass(/active/);
   });
 
   test('reset wizard clears all data', async ({ page }) => {
     // Fill out all steps
     await page.click('[data-mode="cc"]');
-    await page.fill('#manualCC', '2000');
+    await page.click('[data-category-id="c2000"]');
     await page.click('#wizNextBtn');
     await page.fill('#realPriceAED', '100000');
     await page.fill('#customsPriceAED', '80000');

@@ -176,7 +176,7 @@
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div class="rounded-2xl border border-ink-200/70 p-4 text-center dark:border-white/10">
             <div class="text-xs font-bold text-ink-500 dark:text-ink-400">قیمت خودرو</div>
-            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(source?.realPriceToman || 0) + ' تومان'"></div>
+            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(pricingResult ? pricingResult.realPriceToman : 0) + ' تومان'"></div>
         </div>
         <div class="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-center dark:border-amber-500/40 dark:bg-amber-500/10">
             <div class="text-xs font-bold text-amber-800 dark:text-amber-300">قیمت تمام‌شده نهایی</div>
