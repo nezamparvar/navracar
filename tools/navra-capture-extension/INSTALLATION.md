@@ -11,6 +11,8 @@
 7. In Navracar Staging, sign in as an administrator and open **Extension pairing**.
 8. Generate a Staging code (normally 24 hours) and enter it in the extension once.
 
+The Staging package is fixed to `https://staging.nezamparvar.com/api` and has no runtime environment switch.
+
 ## Production boundary
 
 The Production ZIP is a separate artifact fixed to `https://navracar.com/api`. Do not install or distribute it until the exact candidate has passed CI, Staging acceptance is recorded, and the owner has explicitly approved Production promotion.

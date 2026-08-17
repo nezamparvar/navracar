@@ -14,6 +14,7 @@
     "*://*.dubizzle.com/*",
     "*://*.dubicars.com/*",
     "*://*.yallamotor.com/*",
+    "https://staging.nezamparvar.com/*",
     "https://navracar.com/*"
   ],
   "background": {

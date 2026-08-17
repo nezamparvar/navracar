@@ -181,13 +181,13 @@ describe('Environment Lock - Build-Time', () => {
   });
 
   it('should route staging to staging API', () => {
-    const stagingApi = 'https://navracar.com/staging/api';
-    expect(stagingApi).toContain('/staging');
+    const stagingApi = 'https://staging.nezamparvar.com/api';
+    expect(stagingApi).toContain('staging.nezamparvar.com');
   });
 
   it('should route production to production API', () => {
     const productionApi = 'https://navracar.com/api';
-    expect(productionApi).not.toContain('/staging');
+    expect(productionApi).not.toContain('staging.nezamparvar.com');
   });
 
   it('should prevent runtime environment switching', () => {

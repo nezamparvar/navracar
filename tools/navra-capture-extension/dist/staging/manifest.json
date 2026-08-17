@@ -14,7 +14,7 @@
     "*://*.dubizzle.com/*",
     "*://*.dubicars.com/*",
     "*://*.yallamotor.com/*",
-    "https://navracar.com/*"
+    "https://staging.nezamparvar.com/*"
   ],
   "background": {
     "service_worker": "src/background/service-worker.js"

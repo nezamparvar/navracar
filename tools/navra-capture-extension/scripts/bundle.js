@@ -5,6 +5,10 @@ const path = require('path');
 
 const ROOT = path.dirname(path.dirname(__dirname)) + '/navra-capture-extension';
 const DIST = path.join(ROOT, 'dist');
+const API_HOST_PERMISSIONS = {
+  staging: 'https://staging.nezamparvar.com/*',
+  production: 'https://navracar.com/*',
+};
 
 function createEnvironmentBuild(environment) {
   const envDist = path.join(DIST, environment);
@@ -21,6 +25,11 @@ function createEnvironmentBuild(environment) {
   let manifest = fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8');
   const manifestObj = JSON.parse(manifest);
   manifestObj.version = '1.0.0';
+  const apiHostPermissions = new Set(Object.values(API_HOST_PERMISSIONS));
+  manifestObj.host_permissions = manifestObj.host_permissions.filter(
+    (permission) => !apiHostPermissions.has(permission),
+  );
+  manifestObj.host_permissions.push(API_HOST_PERMISSIONS[environment]);
   if (environment === 'staging') {
     manifestObj.name = 'Navra Capture — Staging';
   }
