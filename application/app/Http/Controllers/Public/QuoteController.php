@@ -9,7 +9,6 @@ use App\Models\QuoteRequest;
 use App\Services\GeoLookupService;
 use App\Services\ProformaPdfGenerator;
 use App\Services\VehiclePricing\VehiclePricingCatalog;
-use App\Services\VehiclePricing\VehiclePricingInput;
 use App\Services\VehiclePricing\VehiclePricingService;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
@@ -43,15 +42,15 @@ class QuoteController extends Controller
             'car' => ['nullable', 'string', 'max:255'],
             'pricing' => ['required', 'array'],
             'pricing.real_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
-            'pricing.customs_price_aed' => ['required', 'numeric', 'min:0', 'max:1000000000'],
+            'pricing.customs_price_aed' => ['nullable', 'numeric', 'min:0', 'max:1000000000'],
             'pricing.category' => ['required', Rule::in(VehiclePricingCatalog::categoryIds())],
             // Accepted only for backward compatibility and deliberately ignored.
             'breakdown' => ['nullable', 'array'],
             'totals' => ['nullable', 'array'],
         ]);
 
-        $result = $pricing->calculate(VehiclePricingInput::fromArray($data['pricing']));
-        $breakdown = $result->breakdownRows(formatted: true);
+        $result = $pricing->calculate($pricing->inputFromArray($data['pricing']));
+        $breakdown = $result->breakdownRows(formatted: true, excludeServiceFee: true);
         $totals = $result->displayTotals();
         $geoData = $geo->lookup($request->ip());
 

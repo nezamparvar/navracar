@@ -21,9 +21,7 @@ class TemplateUseController extends Controller
         if (! $lead) {
             return response()->json(['success' => false]);
         }
-        if (! $request->user()->isAdmin() && $lead->assigned_to !== $request->user()->id) {
-            return response()->json(['success' => false], 403);
-        }
+        $this->authorize('update', $lead);
 
         $template = MessageTemplate::find($data['templateId']);
         $title = $template->title ?? ('#'.$data['templateId']);

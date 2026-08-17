@@ -12,11 +12,19 @@ final class StructuredVehicleExtractor
             foreach ($matches[1] as $raw) {
                 $decoded = json_decode(html_entity_decode(trim($raw), ENT_QUOTES | ENT_HTML5, 'UTF-8'), true);
                 $nodes = is_array($decoded) && array_is_list($decoded) ? $decoded : [$decoded];
-                foreach ($nodes as $node) {
-                    if (!is_array($node)) continue;
-                    if (isset($node['@graph']) && is_array($node['@graph'])) $nodes = array_merge($nodes, $node['@graph']);
-                    $type = strtolower((string) ($node['@type'] ?? ''));
-                    if (!str_contains($type, 'product') && !str_contains($type, 'vehicle') && !isset($node['offers'])) continue;
+                for ($index = 0; $index < count($nodes); $index++) {
+                    $node = $nodes[$index];
+                    if (! is_array($node)) {
+                        continue;
+                    }
+                    if (isset($node['@graph']) && is_array($node['@graph'])) {
+                        array_push($nodes, ...$node['@graph']);
+                    }
+                    $rawType = $node['@type'] ?? '';
+                    $type = strtolower(is_array($rawType) ? implode(' ', $rawType) : (string) $rawType);
+                    if (! str_contains($type, 'product') && ! str_contains($type, 'vehicle') && ! isset($node['offers'])) {
+                        continue;
+                    }
                     $result['title_en'] ??= $node['name'] ?? null;
                     $result['description_en'] ??= $node['description'] ?? null;
                     $result['price_aed'] ??= isset($node['offers']['price']) ? (float) $node['offers']['price'] : null;

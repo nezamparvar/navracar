@@ -9,7 +9,11 @@ use Psr\Http\Message\StreamInterface;
 
 class CarImageDownloader
 {
-    private const ALLOWED_HOSTS = ['dbz-images.dubizzle.com'];
+    private const ALLOWED_HOSTS = [
+        'dbz-images.dubizzle.com',
+        'www.dubicars.com',
+        'ymimg1.b8cdn.com',
+    ];
 
     private const MAX_IMAGES = 20;
 

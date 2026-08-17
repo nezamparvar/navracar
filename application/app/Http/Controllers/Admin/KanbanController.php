@@ -18,7 +18,7 @@ class KanbanController extends Controller
         $user = $request->user();
         $stages = PipelineStage::where('is_active', true)->orderBy('sort_order')->get();
 
-        $query = QuoteRequest::query()->with('assignee');
+        $query = QuoteRequest::query()->with('assignee')->where('is_archived', false);
 
         if (! $user->isAdmin()) {
             $query->where('assigned_to', $user->id);
@@ -70,9 +70,7 @@ class KanbanController extends Controller
         if (! $lead) {
             return response()->json(['success' => false, 'message' => 'سرنخ یافت نشد.'], 404);
         }
-        if (! $user->isAdmin() && $lead->assigned_to !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'این سرنخ به شما الحاق نشده است.'], 403);
-        }
+        $this->authorize('updateStatus', $lead);
 
         $stage = PipelineStage::find($data['stageId']);
         if (! $stage) {
@@ -100,5 +98,21 @@ class KanbanController extends Controller
         ActivityLogger::info('تغییر مرحله پایپ‌لاین', ['lead' => $lead->id, 'stage' => $stage->slug]);
 
         return response()->json(['success' => true]);
+    }
+
+    public function updateStageName(Request $request, PipelineStage $stage)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $oldName = $stage->name;
+        $stage->update(['name' => $data['name']]);
+
+        ActivityLogger::info('تغییر نام مرحله پایپ‌لاین', ['stage_id' => $stage->id, 'old_name' => $oldName, 'new_name' => $data['name']]);
+
+        return response()->json(['success' => true, 'message' => 'نام مرحله به‌روزرسانی شد.']);
     }
 }

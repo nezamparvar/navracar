@@ -5,8 +5,10 @@ use App\Http\Controllers\Admin\CalculationLogController;
 use App\Http\Controllers\Admin\CarListingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
+use App\Http\Controllers\Admin\ExtensionPairingController;
 use App\Http\Controllers\Admin\HomeSlideController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\ImportQueueController;
 use App\Http\Controllers\Admin\KanbanController;
 use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\MessageTemplateController;
@@ -19,22 +21,33 @@ use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VinCheckController;
 use Illuminate\Support\Facades\Route;
 
+// Only recovery routes may resolve soft-deleted leads. Normal CRM routes keep
+// Laravel's default binding so deleted records remain inaccessible.
+Route::bind('deletedLead', function ($value) {
+    return \App\Models\QuoteRequest::withTrashed()->findOrFail($value);
+});
+
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
     // بخش‌های فروش: هم مدیر کامل و هم «کارشناس فروش» دسترسی دارند (کارشناس
     // فروش فقط درخواست‌ها/پیش‌فاکتورهای الحاق‌شده به خودش را می‌بیند — کنترل
     // دقیق‌تر داخل خود کنترلرهاست).
     Route::middleware('sales.role')->group(function () {
+        Route::get('/', DashboardController::class)->name('dashboard');
         Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban');
         Route::post('/kanban/change-stage', [KanbanController::class, 'updateStage'])->name('kanban.change-stage');
 
         Route::prefix('requests')->name('requests.')->group(function () {
             Route::get('/', [RequestController::class, 'index'])->name('index');
+            Route::get('/deleted', [RequestController::class, 'deletedIndex'])->name('deleted.index');
             Route::get('/create', [RequestController::class, 'create'])->name('create');
             Route::post('/', [RequestController::class, 'store'])->name('store');
             Route::get('/{lead}', [RequestController::class, 'show'])->name('show');
             Route::post('/{lead}/assign', [RequestController::class, 'assign'])->name('assign');
             Route::post('/{lead}/temperature', [RequestController::class, 'temperature'])->name('temperature');
             Route::post('/{lead}/status', [RequestController::class, 'status'])->name('status');
+            Route::post('/{lead}/close', [RequestController::class, 'close'])->name('close');
+            Route::post('/{lead}/archive', [RequestController::class, 'archive'])->name('archive');
+            Route::post('/{lead}/unarchive', [RequestController::class, 'unarchive'])->name('unarchive');
         });
 
         Route::post('/template-use', TemplateUseController::class)->name('template-use');
@@ -100,7 +113,10 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // بخش‌های فقط برای مدیر کامل.
     Route::middleware('admin.role')->group(function () {
-        Route::get('/', DashboardController::class)->name('dashboard');
+        Route::delete('/requests/{lead}', [RequestController::class, 'destroy'])->name('requests.destroy');
+        Route::post('/requests/{deletedLead}/restore', [RequestController::class, 'restore'])->name('requests.restore');
+        Route::delete('/requests/{deletedLead}/force', [RequestController::class, 'forceDelete'])->name('requests.force-delete');
+        Route::patch('/pipeline-stages/{stage}/name', [KanbanController::class, 'updateStageName'])->name('pipeline-stages.update-name');
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
         Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');
@@ -121,9 +137,22 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::get('/activity-log', [ActivityLogController::class, 'index'])->name('activity-log.index');
 
+        Route::prefix('extension-pairing')->name('extension-pairing.')->group(function () {
+            Route::get('/', [ExtensionPairingController::class, 'index'])->name('index');
+            Route::post('/', [ExtensionPairingController::class, 'store'])->name('store');
+            Route::post('/{pairing}/revoke', [ExtensionPairingController::class, 'revoke'])->name('revoke');
+        });
+
+        Route::prefix('import-queue')->name('import-queue.')->group(function () {
+            Route::get('/', [ImportQueueController::class, 'index'])->name('index');
+            Route::get('/{importQueue}', [ImportQueueController::class, 'show'])->name('show');
+            Route::put('/{importQueue}', [ImportQueueController::class, 'update'])->name('update');
+            Route::post('/{importQueue}/publish', [ImportQueueController::class, 'publish'])->name('publish');
+            Route::post('/{importQueue}/cancel', [ImportQueueController::class, 'cancel'])->name('cancel');
+        });
+
         Route::get('/settings', [SettingController::class, 'edit'])->name('settings.edit');
         Route::post('/settings', [SettingController::class, 'update'])->name('settings.update');
         Route::post('/imports/browser-capture', BrowserCaptureController::class)->name('imports.browser-capture');
     });
 });
-

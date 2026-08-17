@@ -17,6 +17,8 @@ class Setting extends Model
 
     public const SEA_FREIGHT_AED = 'sea_freight_aed';
 
+    public const OTHER_COSTS_AED = 'other_costs_aed';
+
     public const STORAGE_TOMAN = 'storage_toman';
 
     public const SCRAP_CERT_PRICE_TOMAN = 'scrap_cert_price_toman';
@@ -82,6 +84,7 @@ class Setting extends Model
         self::CUSTOMS_RATE => '35688',
         self::LICENSE_FEE_AED => '60000',
         self::SEA_FREIGHT_AED => '1500',
+        self::OTHER_COSTS_AED => '0',
         self::STORAGE_TOMAN => '0',
         self::SCRAP_CERT_PRICE_TOMAN => '0',
         self::SCRAP_THRESHOLD_AED => '60000',

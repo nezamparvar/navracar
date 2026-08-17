@@ -1,5 +1,5 @@
 @php
-    $breakdown = $lead->breakdown();
+    $breakdown = $lead->breakdownForDisplay();
     $totals = $lead->totals();
 @endphp
 <x-layouts.admin :page-title="$pageTitle">
@@ -50,21 +50,38 @@
                 @endif
             </x-card>
 
-            <x-card title="تاریخچه پیگیری (CRM)" icon="clock">
-                @if ($activities->isEmpty())
-                    <x-empty-state icon="clock" title="هنوز فعالیتی ثبت نشده." />
-                @else
-                    <div class="space-y-3">
+            <x-card title="جدول زمانی مکالمات" icon="clock">
+                <div class="mb-5 space-y-4">
+                    @if ($activities->isEmpty())
+                        <x-empty-state icon="clock" title="هنوز فعالیتی ثبت نشده." />
+                    @else
                         @foreach ($activities as $a)
-                            <div class="border-e-[3px] border-brand-100 py-1 pe-3.5 dark:border-brand-500/30">
-                                <div class="text-sm">{{ $a->note }}</div>
-                                <div class="mt-0.5 text-xs text-ink-400">{{ $a->adminUser?->username ?? 'سیستم' }} — {{ $a->created_at->format('Y-m-d H:i') }}</div>
+                            @php
+                                $typeIcons = [
+                                    'note' => '📝',
+                                    'status_change' => '🔄',
+                                    'assign' => '👤',
+                                ];
+                                $typeLabels = [
+                                    'note' => 'یادداشت',
+                                    'status_change' => 'تغییر وضعیت',
+                                    'assign' => 'الحاق',
+                                ];
+                            @endphp
+                            <div class="border-e-4 border-brand-200 bg-white p-3.5 dark:border-brand-500/30 dark:bg-white/5">
+                                <div class="mb-1.5 flex items-center gap-2">
+                                    <span class="text-sm">{{ $typeIcons[$a->activity_type] ?? '•' }}</span>
+                                    <span class="text-xs font-bold text-brand-700 dark:text-brand-300">{{ $typeLabels[$a->activity_type] ?? 'سایر' }}</span>
+                                    <span class="text-xs text-ink-400">{{ $a->created_at->format('Y-m-d H:i') }}</span>
+                                </div>
+                                <div class="mb-1.5 text-sm text-ink-700 dark:text-ink-200">{{ $a->note }}</div>
+                                <div class="text-xs text-ink-400">{{ $a->adminUser?->displayName() ?? 'سیستم' }}</div>
                             </div>
                         @endforeach
-                    </div>
-                @endif
+                    @endif
+                </div>
 
-                <form method="POST" action="{{ route('admin.requests.status', $lead) }}" class="mt-5 space-y-3 border-t border-ink-100 pt-5 dark:border-white/10">
+                <form method="POST" action="{{ route('admin.requests.status', $lead) }}" class="space-y-3 border-t border-ink-100 pt-5 dark:border-white/10">
                     @csrf
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">تغییر وضعیت پیگیری</label>
@@ -122,6 +139,31 @@
                 @endif
             </x-card>
 
+            <x-card title="بستن درخواست" icon="x-circle" class="border-amber-200 dark:border-amber-900/30">
+                <p class="mb-3 text-sm text-ink-600 dark:text-ink-400">درخواست را به عنوان موفق یا ناموفق بسته کنید.</p>
+                <form method="POST" action="{{ route('admin.requests.close', $lead) }}" class="flex flex-wrap gap-2">
+                    @csrf
+                    <input type="hidden" name="status" id="close-status" value="">
+                    <x-button type="submit" onclick="document.getElementById('close-status').value = 'بسته - موفق'" variant="success" size="sm">✓ بسته - موفق</x-button>
+                    <x-button type="submit" onclick="document.getElementById('close-status').value = 'بسته - ناموفق'" variant="danger" size="sm">✕ بسته - ناموفق</x-button>
+                </form>
+            </x-card>
+
+            <x-card title="{{ $lead->is_archived ? 'درخواست بایگانی شده' : 'بایگانی درخواست' }}" icon="archive" class="border-slate-200 dark:border-slate-900/30">
+                <p class="mb-3 text-sm text-ink-600 dark:text-ink-400">{{ $lead->is_archived ? 'این درخواست بایگانی شده است.' : 'درخواست را بایگانی کنید تا از لیست اصلی پنهان شود.' }}</p>
+                @if ($lead->is_archived)
+                    <form method="POST" action="{{ route('admin.requests.unarchive', $lead) }}">
+                        @csrf
+                        <x-button type="submit" variant="secondary" size="sm">خارج کردن از بایگانی</x-button>
+                    </form>
+                @else
+                    <form method="POST" action="{{ route('admin.requests.archive', $lead) }}" x-data @submit="!confirm('این درخواست بایگانی شود و از لیست اصلی پنهان خواهد شد.') && $event.preventDefault()">
+                        @csrf
+                        <x-button type="submit" variant="secondary" size="sm">بایگانی درخواست</x-button>
+                    </form>
+                @endif
+            </x-card>
+
             @if (auth()->user()->isAdmin())
                 <x-card title="الحاق به کارشناس (فقط مدیر)" icon="users">
                     <form method="POST" action="{{ route('admin.requests.assign', $lead) }}" class="space-y-3">
@@ -133,6 +175,15 @@
                             @endforeach
                         </select>
                         <x-button type="submit" variant="amber">ثبت الحاق</x-button>
+                    </form>
+                </x-card>
+
+                <x-card title="حذف درخواست" icon="trash" class="border-red-200 dark:border-red-900/30">
+                    <p class="mb-3 text-sm text-ink-600 dark:text-ink-400">حذف درخواست از سیستم قابل بازگشت است.</p>
+                    <form method="POST" action="{{ route('admin.requests.destroy', $lead) }}" x-data @submit="!confirm('آیا از حذف این درخواست اطمینان دارید؟') && $event.preventDefault()">
+                        @csrf
+                        @method('DELETE')
+                        <x-button type="submit" variant="danger">حذف درخواست</x-button>
                     </form>
                 </x-card>
             @else

@@ -14,6 +14,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('public.home');
 Route::get('/calculator', [CalculatorController::class, 'index'])->name('public.calculator');
+Route::get('/app', fn() => view('public.mobile-app'))->name('public.mobile-app');
 Route::post('/vehicle-pricing/calculate', VehiclePricingController::class)
     ->middleware('throttle:60,1')->name('public.vehicle-pricing.calculate');
 Route::post('/quote-requests', [QuoteController::class, 'store'])->middleware('throttle:5,1')->name('public.quote-requests.store');
