@@ -84,6 +84,75 @@ class VehiclePricingEngineTest extends TestCase
         $this->assertGreaterThan($response->json('finalTotalToman'), $updated->json('finalTotalToman'));
     }
 
+    public function test_missing_customs_price_uses_the_configured_discount_on_the_server(): void
+    {
+        Setting::set(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '30');
+
+        $response = $this->postJson(route('public.vehicle-pricing.calculate'), [
+            'real_price_aed' => 100000,
+            'category' => 'c2000',
+        ]);
+
+        $response->assertOk()->assertJsonPath('input.customsPriceAed', 70000);
+    }
+
+    public function test_native_mobile_origin_can_use_the_stateless_pricing_api_but_random_origins_are_not_allowed(): void
+    {
+        $payload = ['real_price_aed' => 100000, 'category' => 'c2000'];
+
+        $this->withHeader('Origin', 'https://localhost')
+            ->postJson(route('api.vehicle-pricing.calculate'), $payload)
+            ->assertOk()
+            ->assertHeader('Access-Control-Allow-Origin', 'https://localhost')
+            ->assertJsonPath('input.customsPriceAed', 70000);
+
+        $this->withHeader('Origin', 'https://untrusted.example')
+            ->postJson(route('api.vehicle-pricing.calculate'), $payload)
+            ->assertOk()
+            ->assertHeaderMissing('Access-Control-Allow-Origin');
+    }
+
+    public function test_zero_percent_setting_and_explicit_zero_customs_override_are_not_replaced_by_defaults(): void
+    {
+        Setting::set(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '0');
+        $pricing = app(VehiclePricingService::class);
+
+        $suggested = $pricing->inputFromArray([
+            'real_price_aed' => 100000,
+            'category' => 'c2000',
+        ]);
+        $this->assertSame(100000.0, $suggested->customsPriceAed);
+
+        Setting::set(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '30');
+        $explicitZero = $pricing->inputFromArray([
+            'real_price_aed' => 100000,
+            'customs_price_aed' => 0,
+            'category' => 'c2000',
+        ]);
+        $this->assertSame(0.0, $explicitZero->customsPriceAed);
+    }
+
+    public function test_automatic_invoice_computes_a_blank_customs_price_on_the_server(): void
+    {
+        Setting::set(Setting::CUSTOMS_VALUE_DISCOUNT_PERCENT, '30');
+
+        $this->actingAs($this->admin())->post(route('admin.invoices.store'), [
+            'customer_name' => 'Server Customs Default',
+            'customer_phone' => '09121111112',
+            'category' => 'c2000',
+            'pricing_mode' => 'automatic',
+            'real_price_aed' => 100000,
+            'customs_price_aed' => '',
+            'adjustment_amount' => 0,
+            'discount_amount' => '0',
+            'currency' => 'toman',
+            'invoice_type' => 'full',
+        ])->assertRedirect();
+
+        $invoice = Invoice::firstOrFail();
+        $this->assertSame(70000.0, (float) $invoice->pricingMetadata()['pricing_input']['customsPriceAed']);
+    }
+
     public function test_every_category_and_representative_price_matches_the_previous_correct_listing_formula(): void
     {
         foreach (VehiclePricingCatalog::categoryIds() as $categoryId) {

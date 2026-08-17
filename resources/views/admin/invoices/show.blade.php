@@ -74,7 +74,7 @@
             <div class="invoice-table"><table class="w-full text-sm">
                 <thead><tr class="bg-ink-50 text-xs text-ink-500"><th class="p-2.5 text-start">شرح</th><th class="p-2.5 text-start">نرخ / توضیح</th><th class="p-2.5 text-start">مبلغ</th></tr></thead>
                 <tbody>
-                    @foreach ($breakdown as $row)
+                    @foreach ($invoice->breakdownForDisplay() as $row)
                         <tr class="border-b border-ink-100"><td class="p-2.5">{{ $row['label'] ?? '' }}</td><td class="p-2.5 text-xs text-ink-500">{{ $row['rate'] ?? '' }}</td><td class="num-font p-2.5 font-bold">{{ $money($row['amount'] ?? '') }}</td></tr>
                     @endforeach
                 </tbody>

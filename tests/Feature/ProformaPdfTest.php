@@ -7,6 +7,7 @@ use App\Mail\QuoteRequestReceived;
 use App\Models\AdminUser;
 use App\Models\Invoice;
 use App\Models\QuoteRequest;
+use App\Services\ProformaBreakdownLocalizer;
 use App\Services\ProformaPdfGenerator;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -128,6 +129,27 @@ class ProformaPdfTest extends TestCase
             ->assertOk()->assertHeader('content-type', 'application/pdf');
         Storage::disk('public')->assertExists('proformas/invoice-'.$invoice->id.'-en.pdf');
         $this->assertSame(17130240000.0, (float) $invoice->fresh()->total_amount);
+    }
+
+    public function test_english_pdf_system_labels_rates_categories_and_currencies_are_localized(): void
+    {
+        $rows = [
+            ['key' => 'tariff_duty', 'label' => 'عوارض گمرکی', 'rate' => '120٪ از ارزش گمرکی'],
+            ['key' => 'vat', 'label' => 'مالیات ارزش افزوده', 'rate' => '10٪ از ارزش گمرکی + عوارض تعرفه'],
+            ['key' => 'sea_freight', 'label' => 'حمل دریایی', 'rate' => 'درهم × نرخ ارز آزاد'],
+            ['key' => 'other_costs', 'label' => 'هزینه‌های دیگر', 'rate' => 'درهم × نرخ ارز آزاد'],
+            ['key' => 'scrappage', 'label' => 'گواهی اسقاط', 'rate' => '7 گواهی × نرخ هر گواهی'],
+        ];
+
+        foreach ($rows as $row) {
+            $localized = ProformaBreakdownLocalizer::label($row, 'en').' '.ProformaBreakdownLocalizer::rate($row, 'en');
+            $this->assertDoesNotMatchRegularExpression('/[\x{0600}-\x{06FF}]/u', $localized);
+        }
+
+        $this->assertSame('Toman', ProformaBreakdownLocalizer::currency('toman'));
+        $this->assertSame('AED', ProformaBreakdownLocalizer::currency('aed'));
+        $this->assertSame('Petrol, 1,500–2,000 cc', ProformaBreakdownLocalizer::category('c2000'));
+        $this->assertSame('Petrol, 2,500–3,000 cc', ProformaBreakdownLocalizer::category('بنزینی ۲۵۰۰ تا ۳۰۰۰ سی‌سی'));
     }
 
     public function test_invoice_form_initializes_customs_price_from_discount_percentage(): void

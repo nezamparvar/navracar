@@ -142,6 +142,12 @@
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
                 </div>
                 <div>
+                    <label class="mb-1 block text-xs font-bold text-ink-500">هزینه‌های دیگر (درهم)</label>
+                    <input type="number" step="1" name="other_costs_aed" value="{{ old('other_costs_aed', $otherCostsAed) }}" required
+                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                    <p class="mt-1 text-[11px] text-ink-400">هزینه‌های سایر خدمات یا هزینه‌های جانبی (صفر = بدون هزینه اضافی)</p>
+                </div>
+                <div>
                     <label class="mb-1 block text-xs font-bold text-ink-500">انبارداری و دموراژ (تومان)</label>
                     <input type="number" step="1" name="storage_toman" value="{{ old('storage_toman', $storageToman) }}" required
                            class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">

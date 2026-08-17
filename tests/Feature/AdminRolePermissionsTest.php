@@ -48,6 +48,7 @@ class AdminRolePermissionsTest extends TestCase
     {
         $user = $this->makeUser('sales', 'sales-scope-test');
 
+        $this->actingAs($user)->get(route('admin.dashboard'))->assertOk();
         $this->actingAs($user)->get(route('admin.kanban'))->assertOk();
         $this->actingAs($user)->get(route('admin.requests.index'))->assertOk();
         $this->actingAs($user)->get(route('admin.invoices.index'))->assertOk();
@@ -56,7 +57,6 @@ class AdminRolePermissionsTest extends TestCase
         $this->actingAs($user)->get(route('admin.posts.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.home-slides.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.menu-items.index'))->assertForbidden();
-        $this->actingAs($user)->get(route('admin.dashboard'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.calculations.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.vin-checks.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.export'))->assertForbidden();

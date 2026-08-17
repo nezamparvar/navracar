@@ -6,11 +6,22 @@
         "dev": "vite",
         "test:e2e": "playwright test",
         "test:e2e:accessibility": "playwright test tests/e2e/accessibility.spec.js",
-        "test:e2e:responsive": "playwright test tests/e2e/responsive.spec.js"
+        "test:e2e:responsive": "playwright test tests/e2e/responsive.spec.js",
+        "mobile:build": "npm run build && npx cap sync android",
+        "mobile:dev": "npx cap run android --livereload",
+        "mobile:open": "npx cap open android"
+    },
+    "overrides": {
+        "xcode": {
+            "uuid": "^11.1.1"
+        }
     },
     "devDependencies": {
         "@alpinejs/csp": "^3.15.12",
         "@axe-core/playwright": "^4.13.0",
+        "@capacitor/android": "^8.5.0",
+        "@capacitor/cli": "^8.5.0",
+        "@capacitor/core": "^8.5.0",
         "@playwright/test": "^1.62.1",
         "@tailwindcss/forms": "^0.5.2",
         "autoprefixer": "^10.4.2",

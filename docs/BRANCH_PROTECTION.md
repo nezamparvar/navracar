@@ -6,6 +6,8 @@
 - `Backend tests`
 - `Frontend build`
 - `Browser QA`
+- `Android build`
+- `Browser extension`
 
 The workflow is named `CI`; GitHub displays these jobs under that workflow, but branch protection stores the job names above as its registered contexts.
 

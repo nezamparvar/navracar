@@ -26,7 +26,7 @@ jobs:
           tools: composer:v2
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: composer validate --strict
       - run: composer audit --locked
@@ -53,14 +53,29 @@ jobs:
           tools: composer:v2
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm ci
       - run: npm run build
       - run: cp .env.example .env
       - run: find app routes database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Verify database migration lifecycle
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/navracar-ci.sqlite
+        run: |
+          touch "$DB_DATABASE"
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=1 --force
+          php artisan migrate --force
       - run: php artisan test --compact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proforma-pdf-acceptance
+          path: storage/app/public/proformas/acceptance/*.pdf
+          if-no-files-found: error
+          retention-days: 14
 
   frontend:
     name: Frontend build
@@ -69,7 +84,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: npm ci
       - run: npm audit --audit-level=high
@@ -78,6 +93,7 @@ jobs:
   browser:
     name: Browser QA
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: shivammathur/setup-php@v2
@@ -88,7 +104,7 @@ jobs:
           tools: composer:v2
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
       - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm ci
@@ -103,3 +119,58 @@ jobs:
             playwright-report/
             test-results/
           retention-days: 7
+
+  android:
+    name: Android build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm run build
+      - run: npx cap sync android
+      - run: ./gradlew assembleDebug
+        working-directory: android
+      - uses: actions/upload-artifact@v4
+        with:
+          name: navracar-android-debug
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
+
+  extension:
+    name: Browser extension
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/navra-capture-extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: tools/navra-capture-extension/package-lock.json
+      - run: npm ci
+      - run: npm audit --audit-level=high
+      - run: npm test -- --runInBand
+      - run: npm run build
+      - run: cd dist && sha256sum -c navra-capture-staging.zip.sha256 navra-capture-production.zip.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: navra-capture-extension
+          path: |
+            tools/navra-capture-extension/dist/navra-capture-staging.zip
+            tools/navra-capture-extension/dist/navra-capture-staging.zip.sha256
+            tools/navra-capture-extension/dist/navra-capture-production.zip
+            tools/navra-capture-extension/dist/navra-capture-production.zip.sha256
+          retention-days: 14

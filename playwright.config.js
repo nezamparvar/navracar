@@ -1,5 +1,19 @@
 import { defineConfig } from '@playwright/test';
 
+const responsiveViewports = [
+    ['360x800', 360, 800],
+    ['375x812', 375, 812],
+    ['390x844', 390, 844],
+    ['430x932', 430, 932],
+    ['768x1024', 768, 1024],
+    ['820x1180', 820, 1180],
+    ['1024x1366', 1024, 1366],
+    ['1280x800', 1280, 800],
+    ['1440x900', 1440, 900],
+    ['1536x960', 1536, 960],
+    ['1920x1080', 1920, 1080],
+];
+
 export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: false,
@@ -17,16 +31,30 @@ export default defineConfig({
         timeout: 120_000,
     },
     projects: [
-        { name: '360x800', use: { browserName: 'chromium', viewport: { width: 360, height: 800 } } },
-        { name: '375x812', use: { browserName: 'chromium', viewport: { width: 375, height: 812 } } },
-        { name: '390x844', use: { browserName: 'chromium', viewport: { width: 390, height: 844 } } },
-        { name: '430x932', use: { browserName: 'chromium', viewport: { width: 430, height: 932 } } },
-        { name: '768x1024', use: { browserName: 'chromium', viewport: { width: 768, height: 1024 } } },
-        { name: '820x1180', use: { browserName: 'chromium', viewport: { width: 820, height: 1180 } } },
-        { name: '1024x1366', use: { browserName: 'chromium', viewport: { width: 1024, height: 1366 } } },
-        { name: '1280x800', use: { browserName: 'chromium', viewport: { width: 1280, height: 800 } } },
-        { name: '1440x900', use: { browserName: 'chromium', viewport: { width: 1440, height: 900 } } },
-        { name: '1536x960', use: { browserName: 'chromium', viewport: { width: 1536, height: 960 } } },
-        { name: '1920x1080', use: { browserName: 'chromium', viewport: { width: 1920, height: 1080 } } },
+        {
+            name: 'functional-mobile',
+            testMatch: /critical-flows\.spec\.js/,
+            use: { browserName: 'chromium', viewport: { width: 375, height: 812 } },
+        },
+        {
+            name: 'functional-desktop',
+            testMatch: /(calculator-wizard|critical-flows)\.spec\.js/,
+            use: { browserName: 'chromium', viewport: { width: 1280, height: 800 } },
+        },
+        {
+            name: 'accessibility-mobile',
+            testMatch: /accessibility\.spec\.js/,
+            use: { browserName: 'chromium', viewport: { width: 375, height: 812 } },
+        },
+        {
+            name: 'accessibility-desktop',
+            testMatch: /accessibility\.spec\.js/,
+            use: { browserName: 'chromium', viewport: { width: 1280, height: 800 } },
+        },
+        ...responsiveViewports.map(([name, width, height]) => ({
+            name: `responsive-${name}`,
+            testMatch: /responsive\.spec\.js/,
+            use: { browserName: 'chromium', viewport: { width, height } },
+        })),
     ],
 });

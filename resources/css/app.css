@@ -56,6 +56,78 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+
+    /* Mobile-responsive table to card view */
+    @media (max-width: 768px) {
+        .responsive-table thead {
+            display: none;
+        }
+
+        .responsive-table tbody,
+        .responsive-table tbody tr {
+            display: block;
+            width: 100%;
+        }
+
+        .responsive-table tbody tr {
+            border: 1px solid theme('colors.ink.200');
+            border-radius: theme('borderRadius.lg');
+            margin-bottom: theme('spacing.3');
+            background: theme('colors.white');
+            padding: theme('spacing.0');
+            @apply dark:border-white/10 dark:bg-ink-900/50;
+        }
+
+        .responsive-table tbody td {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            border-bottom: 1px solid theme('colors.ink.100');
+            padding: theme('spacing.3');
+            @apply dark:border-white/5;
+        }
+
+        .responsive-table tbody tr td:last-child {
+            border-bottom: none;
+        }
+
+        .responsive-table tbody td::before {
+            content: attr(data-label);
+            font-weight: theme('fontWeight.bold');
+            color: theme('colors.ink.500');
+            min-width: 120px;
+            text-align: right;
+            font-size: theme('fontSize.xs');
+            @apply dark:text-ink-400;
+        }
+
+        .responsive-table tbody td:last-child::before {
+            display: none;
+        }
+    }
+
+    /* Ensure 44px minimum touch targets on mobile */
+    @media (max-width: 768px) {
+        input[type="text"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"],
+        input[type="password"],
+        select,
+        textarea {
+            min-height: 2.75rem;
+        }
+
+        button,
+        [role="button"],
+        .btn {
+            min-height: 2.75rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+    }
 }
 
 @media print {

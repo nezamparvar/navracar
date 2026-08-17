@@ -4,7 +4,7 @@
 
 ## پشته فنی
 
-- **Laravel 11** + PHP 8.2+
+- **Laravel 12** + PHP 8.3
 - **Blade** + **Tailwind CSS** (از طریق Vite) برای رابط کاربری
 - **Alpine.js** برای تعامل‌های سمت کاربر (کانبان، تاگل حالت تاریک، فرم‌های AJAX)
 - **MySQL** در محیط عملیاتی (SQLite برای توسعه سریع محلی کافی است)
@@ -13,7 +13,7 @@
 
 ```bash
 composer install
-npm install
+npm ci
 
 cp .env.example .env
 php artisan key:generate
@@ -79,3 +79,17 @@ routes/
 ```bash
 php artisan test
 ```
+
+## اپ Android
+
+نسخه Android یک پوستهٔ Capacitor 8 با رابط محلی در `mobile/` است و محاسبات را از API مرکزی ناوراکار دریافت می‌کند؛ فرمول و نرخ‌ها داخل اپ تکرار نمی‌شوند.
+
+```bash
+npm ci
+npm run build
+npx cap sync android
+cd android
+./gradlew assembleDebug
+```
+
+نیازمندی‌ها: Node.js 22، JDK 21 و Android SDK 36. فایل APK آزمایشی نیز در job با نام `Android build` در CI ساخته می‌شود.

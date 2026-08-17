@@ -1,0 +1,14 @@
+{
+  "appId": "com.navracar.mobile",
+  "appName": "ناوراکار",
+  "webDir": "mobile",
+  "loggingBehavior": "debug",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 0
+    }
+  }
+}

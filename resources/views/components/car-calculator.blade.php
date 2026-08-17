@@ -8,6 +8,7 @@
     $config = [
         'priceAed' => (float) $listing->price_aed,
         'customsPriceAed' => $listing->customs_price_aed !== null ? (float) $listing->customs_price_aed : $defaultCustoms,
+        'customsPriceIsOverride' => $listing->customs_price_aed !== null,
         'categoryId' => $listing->category_id,
         'categories' => $categories,
         'freeRate' => $freeRate,
@@ -24,6 +25,7 @@
             ->map(fn ($y) => (int) trim($y))->filter()->values()->all(),
         'loanInterestRatePercent' => (float) \App\Models\Setting::get(\App\Models\Setting::LOAN_INTEREST_RATE_PERCENT),
         'carLabel' => $listing->title_fa,
+        'location' => $listing->location_text ?: '',
         'quoteUrl' => route('public.quote-requests.store'),
         'pricingUrl' => route('public.vehicle-pricing.calculate'),
         'csrfToken' => csrf_token(),
@@ -36,6 +38,13 @@
         نرخ درهم امروز: <span class="num-font" x-text="fmt(freeRate)"></span> تومان
         <span class="font-normal text-amber-800/70 dark:text-amber-300/70">(به‌روزرسانی زنده از پنل مدیریت ناوراکار)</span>
     </div>
+
+    @if ($listing->location_text)
+        <div class="rounded-2xl border border-ink-200 bg-white px-4 py-3 text-sm dark:border-white/10 dark:bg-ink-900">
+            <span class="text-xs font-bold text-ink-500 dark:text-ink-400">موقعیت:</span>
+            <span class="ms-2 font-semibold text-ink-900 dark:text-white">{{ $listing->location_text }}</span>
+        </div>
+    @endif
 
     <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
         <div>
@@ -119,19 +128,17 @@
                 </tr>
             </thead>
             <tbody>
-                <template x-for="(row, i) in results.customsRows" :key="i">
-                    <tr class="border-t border-ink-100 dark:border-white/5">
-                        <td class="p-2.5 text-ink-400" x-text="i + 1"></td>
-                        <td class="p-2.5 font-semibold" x-text="row.label"></td>
-                        <td class="p-2.5 text-ink-500 dark:text-ink-400" x-text="row.rate"></td>
-                        <td class="p-2.5 text-left num-font font-bold" x-text="fmt(row.value)"></td>
-                    </tr>
-                </template>
+                <tr class="border-t border-ink-100 dark:border-white/5">
+                    <td class="p-2.5 text-ink-400">۱</td>
+                    <td class="p-2.5 font-semibold">جمع هزینه ترخیص</td>
+                    <td class="p-2.5 text-ink-500 dark:text-ink-400">—</td>
+                    <td class="p-2.5 text-left num-font font-bold" x-text="fmt(results.clearanceTotalPublic)"></td>
+                </tr>
             </tbody>
             <tfoot>
                 <tr class="border-t border-ink-200 bg-ink-50 font-extrabold dark:border-white/10 dark:bg-white/5">
                     <td class="p-2.5" colspan="3">جمع هزینه‌های ترخیص گمرکی</td>
-                    <td class="p-2.5 text-left num-font" x-text="fmt(results.sumCustomsAll)"></td>
+                    <td class="p-2.5 text-left num-font" x-text="fmt(results.clearanceTotalPublic)"></td>
                 </tr>
             </tfoot>
         </table>
@@ -166,14 +173,10 @@
         </table>
     </div>
 
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div class="rounded-2xl border border-ink-200/70 p-4 text-center dark:border-white/10">
-            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">جمع کل بدون کارمزد ترخیص‌کار و کارگزار</div>
-            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(results.totalNoProfit) + ' تومان'"></div>
-        </div>
-        <div class="rounded-2xl border border-ink-200/70 p-4 text-center dark:border-white/10">
-            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">کارمزد ترخیص‌کار و کارگزار (ناوراکار)</div>
-            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(results.serviceProfitAmt) + ' تومان'"></div>
+            <div class="text-xs font-bold text-ink-500 dark:text-ink-400">قیمت خودرو</div>
+            <div class="mt-1 text-lg font-extrabold num-font" x-text="fmt(pricingResult ? pricingResult.realPriceToman : 0) + ' تومان'"></div>
         </div>
         <div class="rounded-2xl border-2 border-amber-400 bg-amber-50 p-4 text-center dark:border-amber-500/40 dark:bg-amber-500/10">
             <div class="text-xs font-bold text-amber-800 dark:text-amber-300">قیمت تمام‌شده نهایی</div>
@@ -342,7 +345,8 @@ window.carCalculatorApp = function (config = @js($config)) {
         realPriceAED: config.priceAed,
         customsPriceAED: config.customsPriceAed ?? Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent ?? 30) / 100)),
         customsValueDiscountPercent: config.customsValueDiscountPercent ?? 30,
-        customsPriceTouched: config.customsPriceAed > 0,
+        customsPriceTouched: config.customsPriceIsOverride === true
+            && Number(config.customsPriceAed) !== Math.max(0, config.priceAed * (1 - (config.customsValueDiscountPercent ?? 30) / 100)),
         usdToAedRate: config.usdToAedRate || 3.6725,
         priceCurrency: 'aed',
         customsPriceCurrency: 'aed',
@@ -553,11 +557,13 @@ window.carCalculatorApp = function (config = @js($config)) {
                 colorClass: stageColors[i],
             }));
 
+            const clearanceTotalPublic = sumCustomsAll + serviceProfitAmt;
             return {
                 customsRows: source.customsRows,
                 plateRows: source.plateRows,
                 sumCustomsAll,
                 sumPlate,
+                clearanceTotalPublic,
                 totalNoProfit: num(source.preServiceTotalToman),
                 serviceProfitAmt,
                 totalWithProfit,
@@ -570,4 +576,3 @@ window.carCalculatorApp = function (config = @js($config)) {
 };
 </script>
 @endonce
-

@@ -52,7 +52,7 @@ jobs:
           SOURCE_COMMIT: ${{ steps.source.outputs.source_commit }}
         with:
           script: |
-            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA'];
+            const required = ['Dependencies', 'Backend tests', 'Frontend build', 'Browser QA', 'Android build', 'Browser extension'];
             const runs = await github.paginate(github.rest.checks.listForRef, {
               owner: context.repo.owner, repo: context.repo.repo,
               ref: process.env.SOURCE_COMMIT, per_page: 100,
@@ -88,7 +88,7 @@ jobs:
           tools: composer:v2
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: source/package-lock.json
       - name: Validate locked dependencies
