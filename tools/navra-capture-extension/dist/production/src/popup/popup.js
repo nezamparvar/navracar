@@ -1,4 +1,5 @@
 let currentCapture = null;
+let captureMessageListener = null;
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
@@ -15,11 +16,20 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 async function checkAuthentication() {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Authentication check timeout'));
+    }, 5000);
+
     chrome.runtime.sendMessage({ action: 'getAuth' }, (response) => {
-      resolve(response && response.token);
+      clearTimeout(timeout);
+      if (chrome.runtime.lastError) {
+        resolve(null);
+      } else {
+        resolve(response && response.token);
+      }
     });
-  });
+  }).catch(() => null);
 }
 
 function showAuthState() {
@@ -78,15 +88,36 @@ function showAuthError(message) {
 }
 
 async function checkCurrentPage() {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab) {
+      showUnsupportedPage();
+      return;
+    }
 
-  chrome.tabs.sendMessage(tab.id, { action: 'canCapture' }, (response) => {
-    if (response && response.canCapture) {
-      captureCurrentPage(tab);
+    const canCapture = await new Promise((resolve) => {
+      const timeout = setTimeout(() => {
+        resolve(false);
+      }, 3000);
+
+      chrome.tabs.sendMessage(tab.id, { action: 'canCapture' }, (response) => {
+        clearTimeout(timeout);
+        if (chrome.runtime.lastError) {
+          resolve(false);
+        } else {
+          resolve(response && response.canCapture);
+        }
+      });
+    });
+
+    if (canCapture) {
+      await captureCurrentPage(tab);
     } else {
       showUnsupportedPage();
     }
-  });
+  } catch (error) {
+    showUnsupportedPage();
+  }
 }
 
 function showUnsupportedPage() {
@@ -96,22 +127,43 @@ function showUnsupportedPage() {
 
 async function captureCurrentPage(tab) {
   return new Promise((resolve) => {
-    // Use one-time message listener to prevent listener leak
-    const messageListener = (request, sender, sendResponse) => {
-      if (request.action === 'sendCaptureToNavraCar') {
+    // Ensure we don't have stale listener
+    if (captureMessageListener) {
+      chrome.runtime.onMessage.removeListener(captureMessageListener);
+    }
+
+    const timeout = setTimeout(() => {
+      if (captureMessageListener) {
+        chrome.runtime.onMessage.removeListener(captureMessageListener);
+        captureMessageListener = null;
+      }
+      showUnsupportedPage();
+      resolve();
+    }, 10000);
+
+    captureMessageListener = (request, sender, sendResponse) => {
+      if (request.action === 'sendCaptureToNavraCar' && sender.tab?.id === tab.id) {
+        clearTimeout(timeout);
         currentCapture = request.payload;
         displayCapturePreview(request.payload);
         document.getElementById('listing-detected-state').style.display = 'block';
         document.getElementById('unsupported-page-state').style.display = 'none';
-        // Remove listener after handling message (exactly once)
-        chrome.runtime.onMessage.removeListener(messageListener);
+        chrome.runtime.onMessage.removeListener(captureMessageListener);
+        captureMessageListener = null;
         resolve();
       }
     };
-    chrome.runtime.onMessage.addListener(messageListener);
+
+    chrome.runtime.onMessage.addListener(captureMessageListener);
+
     chrome.tabs.sendMessage(tab.id, { action: 'captureCurrentPage' }, (response) => {
-      if (!response) {
-        chrome.runtime.onMessage.removeListener(messageListener);
+      if (chrome.runtime.lastError) {
+        if (captureMessageListener) {
+          chrome.runtime.onMessage.removeListener(captureMessageListener);
+          captureMessageListener = null;
+        }
+        clearTimeout(timeout);
+        showUnsupportedPage();
         resolve();
       }
     });
@@ -376,37 +428,40 @@ async function sendBatchCapture() {
 
 async function captureAndSendTab(tabId) {
   return new Promise((resolve, reject) => {
+    const timeoutId = setTimeout(() => {
+      chrome.runtime.onMessage.removeListener(listener);
+      reject(new Error('Capture timeout'));
+    }, 10000);
+
+    const listener = (request, sender) => {
+      if (request.action === 'sendCaptureToNavraCar' && sender.tab?.id === tabId) {
+        clearTimeout(timeoutId);
+        chrome.runtime.onMessage.removeListener(listener);
+
+        // Send to NavraCar
+        chrome.runtime.sendMessage(
+          { action: 'sendCaptureToNavraCar', payload: request.payload },
+          (response) => {
+            if (chrome.runtime.lastError) {
+              reject(new Error('Failed to send capture'));
+            } else if (response && response.status === 'success') {
+              resolve(response);
+            } else {
+              reject(new Error(response?.error || 'Failed to send'));
+            }
+          }
+        );
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(listener);
+
     chrome.tabs.sendMessage(tabId, { action: 'captureCurrentPage' }, (response) => {
       if (chrome.runtime.lastError) {
+        chrome.runtime.onMessage.removeListener(listener);
+        clearTimeout(timeoutId);
         reject(new Error('Failed to communicate with tab'));
-        return;
       }
-
-      // Wait for capture
-      const timeoutId = setTimeout(() => {
-        reject(new Error('Capture timeout'));
-      }, 10000);
-
-      const listener = (request) => {
-        if (request.action === 'sendCaptureToNavraCar') {
-          clearTimeout(timeoutId);
-          chrome.runtime.onMessage.removeListener(listener);
-
-          // Send to NavraCar
-          chrome.runtime.sendMessage(
-            { action: 'sendCaptureToNavraCar', payload: request.payload },
-            (response) => {
-              if (response && response.status === 'success') {
-                resolve(response);
-              } else {
-                reject(new Error(response?.error || 'Failed to send'));
-              }
-            }
-          );
-        }
-      };
-
-      chrome.runtime.onMessage.addListener(listener);
     });
   });
 }

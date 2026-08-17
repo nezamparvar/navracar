@@ -38,11 +38,31 @@ export abstract class SourceAdapter {
 
   protected parsePrice(priceText: string | null | undefined): number | null {
     if (!priceText) return null;
-    const match = priceText.match(/[\d,]+/);
+
+    const text = priceText.toLowerCase();
+
+    // Reject installment/monthly prices (common pitfall from meta tags)
+    if (
+      /(?:per\s+month|monthly|\/month|installment|aed\s*\d+\s*\/|monthly\s+payment|subscription)/i.test(
+        text
+      )
+    ) {
+      return null;
+    }
+
+    // Extract numeric value
+    const match = text.match(/[\d,]+(?:\.[\d]+)?/);
     if (!match) return null;
-    const numStr = match[0].replace(/,/g, '');
+
+    let numStr = match[0].replace(/,/g, '').replace(/\./g, '');
+
+    // Sanity check: price should be between 500 and 5,000,000 AED
     const num = parseFloat(numStr);
-    return !isNaN(num) ? num : null;
+    if (isNaN(num) || num < 500 || num > 5000000) {
+      return null;
+    }
+
+    return num;
   }
 
   protected parseNumber(text: string | null | undefined): string | null {
@@ -55,15 +75,43 @@ export abstract class SourceAdapter {
   protected extractImages(): string[] {
     const images: string[] = [];
     const seenUrls = new Set<string>();
+    const MAX_IMAGES = 20;
 
-    const imgElements = document.querySelectorAll('img');
-    imgElements.forEach((img) => {
-      const src = img.src || img.getAttribute('data-src');
-      if (src && !seenUrls.has(src)) {
+    // Priority order for image extraction
+    const selectors = [
+      'picture img',
+      'img[data-testid*="image"]',
+      'img[class*="gallery"]',
+      'img[class*="carousel"]',
+      'img[src*="listing"]',
+      'img[src*="product"]',
+      'figure img',
+      'img[alt*="car"]',
+      'img[alt*="vehicle"]',
+      'img',
+    ];
+
+    for (const selector of selectors) {
+      if (images.length >= MAX_IMAGES) break;
+
+      document.querySelectorAll(selector).forEach((el) => {
+        if (images.length >= MAX_IMAGES) return;
+
+        const img = el as HTMLImageElement;
+        const src = img.src || img.getAttribute('data-src') || img.getAttribute('data-srcset');
+        if (!src || seenUrls.has(src)) return;
+
+        // Filter invalid URLs
+        if (!src.startsWith('http') && !src.startsWith('//')) return;
+        // Skip placeholder/tracking pixels
+        if (src.includes('pixel') || src.includes('blank') || src.includes('1x1')) return;
+        // Skip data URLs
+        if (src.startsWith('data:')) return;
+
         seenUrls.add(src);
         images.push(src);
-      }
-    });
+      });
+    }
 
     return images;
   }
