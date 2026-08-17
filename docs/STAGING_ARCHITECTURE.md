@@ -42,5 +42,8 @@ copying or deleting any existing staging uploads.
 
 ## Security controls
 
-The staging `robots.txt`, HTML metadata, and `X-Robots-Tag` header all request no indexing. Protect the entire staging document root with cPanel Directory Privacy in addition to Laravel authentication. Do not put the directory password in GitHub, this repository, or the artifact.
+The staging `robots.txt`, HTML metadata, and `X-Robots-Tag` header all request no indexing. Do not enable HTTP Basic Auth, CloudPanel password protection, or cPanel Directory Privacy on the staging document root. Browser challenges break the Android client, extension/API flows, and automated acceptance tests. Staging safety instead depends on environment/database/storage isolation, disabled real outbound integrations, rate limiting, anonymized or synthetic data, and normal Laravel authentication for admin routes. No staging access password belongs in GitHub, this repository, the artifact, or the server `.env`.
+
+The CloudPanel vhost for `staging.nezamparvar.com` must not contain `auth_basic` or `auth_basic_user_file`. After changing that vhost, run `nginx -t`, reload Nginx, and verify that `GET /` returns `200` without `WWW-Authenticate` and that `POST /api/vehicle-pricing/calculate` reaches Laravel validation. This policy is staging-only and does not change the production vhost.
 The staging URL is `https://navracar.com/staging`. It is a same-domain subdirectory, not a subdomain. Staging uses its own `.env`, database/schema, cache prefix, session cookie (`SESSION_COOKIE=navracar_staging_session`) and cookie path (`SESSION_PATH=/staging`). Set `APP_URL=https://navracar.com/staging` and `ASSET_URL=https://navracar.com/staging` in the staging-only environment so generated links, public uploads, and Vite assets remain under `/staging`.
+
