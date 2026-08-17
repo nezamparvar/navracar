@@ -23,4 +23,3 @@ Terminal. Any failed command marks the deployment failed; it never targets the
 production application or database.
 
 The first candidate deployment is intentionally not performed by this change. The owner must complete the one-time cPanel setup and explicitly deploy a candidate.
-
