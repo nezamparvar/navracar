@@ -11,8 +11,9 @@ The safest default is **an anonymized staging snapshot**. Customer names, phone 
 5. Rotate or remove tokens, webhook URLs, mail credentials, payment credentials, and bot credentials before staging starts.
 6. Verify the staging application connects only to the staging database.
 
-If realistic customer data is genuinely required, use a full snapshot only with owner approval, Directory Privacy, strong unique staging credentials, restricted tester access, and a documented retention/deletion date. Never connect staging directly to the live database and never run anonymization against production.
+Do not place a full snapshot or realistic customer data on staging. The staging endpoint intentionally has no perimeter password because browser challenges break Android, extension/API, and automated acceptance flows. Use only anonymized or synthetic data, even with owner approval. Never connect staging directly to the live database and never run anonymization against production.
 
 ## Reset boundary
 
 A staging reset may overwrite only the staging database and staging copied uploads. It must never write production database tables, production `.env`, production storage, or production public files.
+
