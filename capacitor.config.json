@@ -2,7 +2,7 @@
   "appId": "com.navracar.mobile",
   "appName": "ناوراکار",
   "webDir": "mobile",
-  "loggingBehavior": "debug",
+  "loggingBehavior": "none",
   "server": {
     "androidScheme": "https"
   },

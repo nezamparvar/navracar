@@ -58,13 +58,27 @@ class VehicleController extends Controller
                 ->orWhere('make', 'like', "%{$q}%")->orWhere('model', 'like', "%{$q}%")->orWhere('slug', 'like', "%{$q}%"));
         }
         foreach (['make' => 'make', 'model' => 'model', 'fuel' => 'fuel_type', 'category' => 'category_id'] as $input => $column) {
-            if (isset($data[$input])) $query->where($column, $data[$input]);
+            if (isset($data[$input])) {
+                $query->where($column, $data[$input]);
+            }
         }
-        if (isset($data['year_min'])) $query->where('model_year', '>=', $data['year_min']);
-        if (isset($data['year_max'])) $query->where('model_year', '<=', $data['year_max']);
-        if (isset($data['engine_min'])) $query->whereRaw('CAST(engine_capacity_cc AS INTEGER) >= ?', [$data['engine_min']]);
-        if (isset($data['engine_max'])) $query->whereRaw('CAST(engine_capacity_cc AS INTEGER) <= ?', [$data['engine_max']]);
-        if (isset($data['price_min'])) $query->where('price_aed', '>=', $data['price_min']);
-        if (isset($data['price_max'])) $query->where('price_aed', '<=', $data['price_max']);
+        if (isset($data['year_min'])) {
+            $query->where('model_year', '>=', $data['year_min']);
+        }
+        if (isset($data['year_max'])) {
+            $query->where('model_year', '<=', $data['year_max']);
+        }
+        if (isset($data['engine_min'])) {
+            $query->whereRaw('CAST(engine_capacity_cc AS INTEGER) >= ?', [$data['engine_min']]);
+        }
+        if (isset($data['engine_max'])) {
+            $query->whereRaw('CAST(engine_capacity_cc AS INTEGER) <= ?', [$data['engine_max']]);
+        }
+        if (isset($data['price_min'])) {
+            $query->where('price_aed', '>=', $data['price_min']);
+        }
+        if (isset($data['price_max'])) {
+            $query->where('price_aed', '<=', $data['price_max']);
+        }
     }
 }

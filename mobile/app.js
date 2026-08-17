@@ -82,7 +82,7 @@ async function route() {
       }
       case 'account':
         await ensureCustomer();
-        app.innerHTML = accountView(state.customer, authMode);
+        app.innerHTML = accountView(state.customer, authMode, (await ensureBootstrap()).contact);
         break;
       case 'favorites':
         state.favorites = await favoriteItems();
@@ -96,6 +96,7 @@ async function route() {
     }
     state = reducer(state, { type: 'REQUEST_SUCCESS', payload: {} });
     bindImageFallbacks();
+    window.scrollTo(0, 0);
     app.focus({ preventScroll: true });
   } catch (error) {
     const message = normalizeApiError(error);
@@ -162,6 +163,13 @@ app.addEventListener('submit', async (event) => {
       const result = await api.post(`/api/mobile/v1/auth/${form.dataset.form}`, formData(form));
       tokens.set(result.token); state.customer = result.customer; showToast('ورود با موفقیت انجام شد.'); app.innerHTML = accountView(state.customer); return;
     }
+    if (form.dataset.form === 'profile') {
+      const result = await api.patch('/api/mobile/v1/account', formData(form));
+      state.customer = result.customer;
+      app.innerHTML = accountView(state.customer, authMode, (await ensureBootstrap()).contact);
+      showToast('مشخصات حساب به‌روزرسانی شد.');
+      return;
+    }
     if (form.dataset.form === 'share') {
       const result = await api.post('/api/mobile/v1/shared-listings', formData(form));
       form.replaceWith(htmlNode(emptyView('لینک دریافت شد', `شماره صف بررسی: ${result.id}`)));
@@ -218,4 +226,8 @@ if (globalThis.NavraShare?.consume) {
   const shared = globalThis.NavraShare.consume();
   if (shared) location.hash = `#/share?url=${encodeURIComponent(shared)}`;
 }
+window.addEventListener('navracar:share', () => {
+  const shared = globalThis.NavraShare?.consume?.();
+  if (shared) location.hash = `#/share?url=${encodeURIComponent(shared)}`;
+});
 if (!location.hash) location.hash = '#/home'; else route();

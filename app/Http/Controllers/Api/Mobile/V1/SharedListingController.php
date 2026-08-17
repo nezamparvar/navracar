@@ -36,7 +36,9 @@ class SharedListingController extends Controller
     private function source(string $host): ?string
     {
         foreach (['dubizzle' => 'dubizzle.com', 'dubicars' => 'dubicars.com', 'yallamotor' => 'yallamotor.com'] as $source => $domain) {
-            if ($host === $domain || str_ends_with($host, '.'.$domain)) return $source;
+            if ($host === $domain || str_ends_with($host, '.'.$domain)) {
+                return $source;
+            }
         }
 
         return null;

@@ -2,8 +2,6 @@
 
 use App\Http\Controllers\Api\BrowserCapture\CaptureController;
 use App\Http\Controllers\Api\BrowserCapture\PairingController;
-use App\Http\Controllers\Public\VehiclePricingController;
-use App\Http\Controllers\Public\QuoteController;
 use App\Http\Controllers\Api\Mobile\V1\AccountController as MobileAccountController;
 use App\Http\Controllers\Api\Mobile\V1\AuthController as MobileAuthController;
 use App\Http\Controllers\Api\Mobile\V1\BootstrapController as MobileBootstrapController;
@@ -11,6 +9,8 @@ use App\Http\Controllers\Api\Mobile\V1\FavoriteController as MobileFavoriteContr
 use App\Http\Controllers\Api\Mobile\V1\RequestController as MobileRequestController;
 use App\Http\Controllers\Api\Mobile\V1\SharedListingController as MobileSharedListingController;
 use App\Http\Controllers\Api\Mobile\V1\VehicleController as MobileVehicleController;
+use App\Http\Controllers\Public\QuoteController;
+use App\Http\Controllers\Public\VehiclePricingController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/vehicle-pricing/calculate', VehiclePricingController::class)

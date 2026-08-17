@@ -1,4 +1,14 @@
 import { expect, test } from '@playwright/test';
+import { mkdirSync } from 'node:fs';
+import path from 'node:path';
+
+const screenshots = path.join(process.cwd(), 'artifacts', 'android-v1', 'screenshots');
+const capture = async (page, name, fullPage = true) => {
+    await page.waitForTimeout(300);
+    await page.evaluate(() => document.activeElement?.blur());
+    await page.evaluate(() => window.scrollTo(0, 0));
+    await page.screenshot({ path: path.join(screenshots, name), fullPage });
+};
 
 const vehicle = {
     slug: 'bmw-x5', title: 'BMW X5 xDrive40i', make: 'BMW', model: 'X5', year: '2024',
@@ -38,33 +48,57 @@ async function mockMobileApi(page) {
 }
 
 test('renders complete Persian RTL Android V1 screen inventory', async ({ page }) => {
+    mkdirSync(screenshots, { recursive: true });
     await mockMobileApi(page);
     await page.goto('http://127.0.0.1:4173/');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
     await expect(page.getByRole('navigation', { name: 'ناوبری اصلی' }).getByRole('link')).toHaveCount(4);
     await expect(page.getByRole('heading', { name: /خودروی بعدی/ })).toBeVisible();
+    await capture(page, '01-home-rtl.png');
 
     await page.getByRole('link', { name: 'خودروها' }).click();
     await expect(page.getByRole('heading', { name: 'خودروها' })).toBeVisible();
     await expect(page.getByRole('searchbox', { name: 'جستجوی خودرو' })).toBeVisible();
     await expect(page.getByTestId('vehicle-card')).toHaveCount(1);
+    await capture(page, '02-vehicle-listing.png');
+
+    await page.getByRole('searchbox', { name: 'جستجوی خودرو' }).fill('BMW');
+    await page.getByLabel('حداقل سال').fill('2023');
+    await page.getByRole('button', { name: 'اعمال فیلتر' }).click();
+    await expect(page).toHaveURL(/q=BMW/);
+    await capture(page, '03-filter-search.png');
 
     await page.getByTestId('vehicle-card').click();
     await expect(page.getByRole('heading', { name: 'BMW X5 xDrive40i' })).toBeVisible();
     await expect(page.getByText('جمع هزینه‌های ترخیص')).toBeVisible();
     await expect(page.getByText('کارمزد ترخیص‌کار و کارگزار')).toHaveCount(0);
+    await capture(page, '04-vehicle-detail-top.png', false);
+    await page.getByRole('heading', { name: 'برآورد هزینه واردات' }).scrollIntoViewIfNeeded();
+    await capture(page, '05-pricing-section.png', false);
 
     await page.getByRole('button', { name: 'محاسبه هزینه' }).click();
     await expect(page.getByRole('heading', { name: 'محاسبه هزینه' })).toBeVisible();
     await page.getByLabel('قیمت واقعی خودرو به درهم').fill('345000');
     await page.getByRole('button', { name: 'دریافت محاسبه' }).click();
     await expect(page.getByText('جمع کل برآوردشده')).toBeVisible();
+    await capture(page, '06-pricing-calculator.png');
+
+    await page.getByRole('button', { name: 'ثبت درخواست' }).click();
+    await expect(page.getByRole('heading', { name: 'ثبت درخواست' })).toBeVisible();
+    await capture(page, '07-quote-request.png', false);
 
     await page.evaluate(() => localStorage.setItem('navracar.mobile.token', '1|abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQ'));
     await page.getByRole('link', { name: 'درخواست‌ها' }).click();
     await expect(page.getByText('NR-00000128')).toBeVisible();
+    await capture(page, '08-requests.png');
 
     await page.getByRole('link', { name: 'حساب' }).click();
     await expect(page.getByText('مریم احمدی')).toBeVisible();
     await expect(page.getByRole('link', { name: 'علاقه‌مندی‌ها' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'ذخیره تغییرات' })).toBeVisible();
+    await capture(page, '09-account.png');
+
+    await page.getByRole('link', { name: 'علاقه‌مندی‌ها' }).click();
+    await expect(page.getByRole('heading', { name: 'علاقه‌مندی‌ها' })).toBeVisible();
+    await capture(page, '10-favorites.png');
 });

@@ -31,7 +31,11 @@ fs.writeFileSync(file, html);
 NODE
 
     (cd "$project_root" && npx cap sync android)
-    (cd "$project_root/android" && ./gradlew assembleDebug)
+    if [[ "$environment" == "staging" ]]; then
+        (cd "$project_root/android" && ./gradlew assembleDebug -PstagingBuild=true)
+    else
+        (cd "$project_root/android" && ./gradlew assembleDebug)
+    fi
     mkdir -p "$output_dir"
     cp "$apk_source" "$output_dir/navracar-${environment}-debug.apk"
 }

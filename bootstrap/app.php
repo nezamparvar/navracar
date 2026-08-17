@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Middleware\AuthenticateMobileCustomer;
 use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureContentManagerRole;
 use App\Http\Middleware\EnsureSalesRole;
-use App\Http\Middleware\AuthenticateMobileCustomer;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;

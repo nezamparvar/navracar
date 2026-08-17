@@ -3,10 +3,11 @@
 namespace App\Services;
 
 use App\Models\MobileAccessToken;
+use App\Models\MobileCustomer;
 
 final class MobileTokenAuthenticator
 {
-    /** @return array{customer: \App\Models\MobileCustomer, token: MobileAccessToken}|null */
+    /** @return array{customer: MobileCustomer, token: MobileAccessToken}|null */
     public function resolve(?string $plainToken): ?array
     {
         if (! is_string($plainToken) || ! preg_match('/^(\d+)\|([A-Za-z0-9_-]{43})$/', $plainToken, $matches)) {
