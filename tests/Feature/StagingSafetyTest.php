@@ -24,6 +24,18 @@ class StagingSafetyTest extends TestCase
         $this->assertStringNotContainsString('/home/navrac/navracar-app/.env', $deployScript);
     }
 
+    public function test_staging_subdirectory_root_is_explicitly_rewritten_to_laravel(): void
+    {
+        $htaccess = file_get_contents(base_path('deployment/cpanel-staging/public_html/.htaccess'));
+
+        $rootRewrite = strpos($htaccess, 'RewriteRule ^$ index.php [L]');
+        $directoryGuard = strpos($htaccess, 'RewriteCond %{REQUEST_FILENAME} !-d');
+
+        $this->assertNotFalse($rootRewrite);
+        $this->assertNotFalse($directoryGuard);
+        $this->assertLessThan($directoryGuard, $rootRewrite);
+    }
+
     public function test_staging_responses_are_marked_noindex_and_show_environment_indicator(): void
     {
         $this->app->detectEnvironment(fn () => 'staging');
