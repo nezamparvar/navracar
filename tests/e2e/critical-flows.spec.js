@@ -16,7 +16,7 @@ test('public home, calculator, and protected admin boundary are reachable', asyn
 });
 
 test('standalone calculator renders the authoritative backend total', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== '375x812', 'One viewport covers the shared pricing API contract.');
+    test.skip(testInfo.project.use.viewport.width !== 375, 'One viewport covers the shared pricing API contract.');
 
     await page.goto('/calculator');
     const result = await page.evaluate(async () => {
@@ -33,7 +33,7 @@ test('standalone calculator renders the authoritative backend total', async ({ p
 });
 
 test('listing calculator renders the same authoritative backend result', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== '1280x800', 'One representative Dubizzle listing covers the shared endpoint.');
+    test.skip(testInfo.project.use.viewport.width !== 1280, 'One representative Dubizzle listing covers the shared endpoint.');
 
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
@@ -55,7 +55,7 @@ test('listing calculator renders the same authoritative backend result', async (
 });
 
 test('public lead form completes its core local-only submission flow', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== '375x812', 'One isolated fixture submission covers the shared server flow.');
+    test.skip(testInfo.project.use.viewport.width !== 375, 'One isolated fixture submission covers the shared server flow.');
 
     await page.goto('/lead-form');
     await page.locator('[x-model="form.userId"]').selectOption({ index: 1 });
@@ -103,7 +103,7 @@ test('admin can authenticate, use a core list, and log out', async ({ page }) =>
 });
 
 test('admin issues an automatic server-priced Proforma and downloads its PDF', async ({ page }, testInfo) => {
-    test.skip(testInfo.project.name !== '1280x800', 'One desktop staff flow covers the shared Proforma contract.');
+    test.skip(testInfo.project.use.viewport.width !== 1280, 'One desktop staff flow covers the shared Proforma contract.');
 
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
