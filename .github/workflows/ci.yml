@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+env:
+  COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+  COMPOSER_MAX_PARALLEL_HTTP: 4
+
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -57,7 +61,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer install --no-interaction --prefer-source --no-progress
       - run: npm ci
       - run: npm run build
       - run: cp .env.example .env
@@ -94,6 +98,7 @@ jobs:
 
   browser:
     name: Browser QA
+    needs: backend
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -108,7 +113,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: composer install --no-interaction --prefer-dist --no-progress
+      - run: composer install --no-interaction --prefer-source --no-progress
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium

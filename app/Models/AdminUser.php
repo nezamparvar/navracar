@@ -9,6 +9,14 @@ class AdminUser extends Authenticatable
 {
     use Notifiable;
 
+    public const ROLES = ['admin', 'sales', 'content_manager'];
+
+    public const ROLE_LABELS = [
+        'admin' => 'مدیر',
+        'sales' => 'کارشناس فروش',
+        'content_manager' => 'مدیر محتوا',
+    ];
+
     protected $table = 'admin_users';
 
     public $timestamps = false;
