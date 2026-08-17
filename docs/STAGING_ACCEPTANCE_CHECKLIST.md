@@ -36,4 +36,3 @@ Artifact ID: ____________________
 Result: **APPROVE FOR PRODUCTION** / **REJECT / FIX REQUIRED**
 
 Owner/date: ____________________
-
