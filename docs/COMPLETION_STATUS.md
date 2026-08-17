@@ -5,57 +5,61 @@ Last updated: 2026-08-17
 ## Release guardrails
 
 - Candidate branch: `claude/navracar-pr26-review-l2w2mz`
-- Initial candidate SHA: `e15e942c6bf94e0d0a57674a930f2c411c71bb42`
-- Pull request: #26 currently points to `claude/new-session-ml3z1h` at `1ed6ec29675c938385b8c2aed243de6c0e01807d`.
-- No merge, Staging deployment, Production deployment, branch deletion, or PR closure without Mostafa's explicit approval.
-- Final status remains `NOT READY FOR MERGE` until every applicable acceptance gate is verified on the exact PR candidate SHA.
+- Latest tested implementation commit: `47ddeb7a` (`Integrate and harden Navra Capture extension`)
+- Pull request #26 still points to `claude/new-session-ml3z1h` at `1ed6ec29675c938385b8c2aed243de6c0e01807d`; it does not contain this candidate.
+- No merge, Staging deployment, Production deployment, branch deletion, or PR closure is permitted without Mostafa's explicit approval.
+- Final state is `NOT READY FOR MERGE`: exact-candidate PHP/Android/E2E CI and manual PDF/browser acceptance are still outstanding.
 
-## Source-of-truth findings
+## Completed implementation in the candidate
 
-- The review branch is six commits ahead of the current PR #26 head.
-- The six review commits cover Other Costs consistency, public cost grouping, calculator wizard E2E coverage, Persian slug/mobile pricing fixes, route generation, and test/authorization repairs.
-- PR #26's description and checkboxes are stale and no CI run is attached to the review branch SHA.
-- Repository instructions require PHP 8.3, locked Composer/npm dependencies, the centralized `VehiclePricingService`, and the release path `CI -> Staging -> owner acceptance -> Production`.
-- This execution environment currently has Node.js and Java but no PHP, Composer, Docker, Gradle, or browser binary. PHP/Composer checks are therefore environment-blocked locally until a suitable runtime is available; GitHub Actions remains the authoritative remote execution path.
+- Customs declared value now defaults to a configurable percentage below the real vehicle value, while an explicit zero remains zero. All pricing entry points use the centralized pricing service.
+- FA/EN PDF currency, category, row labels, and calculation basis were corrected and regression coverage was added.
+- CRM authorization and soft-deleted route binding were narrowed to policy-protected restore/force-delete flows.
+- Persian slugs, mobile pricing API/settings, responsive calculator flow, and reset/data-preservation behavior were repaired.
+- A buildable Capacitor Android project and a static mobile shell were added, with a dedicated Android CI check.
+- Navra Capture is integrated end to end: single-use hashed pairing, hashed bearer tokens, bounded validation, marketplace and image host allowlists, sensitive-diagnostic rejection, duplicate detection, review/edit/cancel queue, and draft-only publication.
+- Separate staging/production extension packages are generated with environment verification, SHA-256 files, and real 16/48/128 icons.
+- CI, release, staging, promotion, branch-protection documentation, extension installation, integration, and testing documentation were updated.
 
 ## Phase tracker
 
 | Phase | Status | Evidence / next action |
 |---|---|---|
-| 0. Reconcile PR #26 and review branch | In progress | Audit six commits, verify locally, then make the reviewed candidate reviewable without force-push. |
-| 1. Pricing and customs value | In progress | Server-side missing-value fallback and explicit-zero preservation implemented with regression tests; CI execution still required. Imports and every UI entry path remain to audit. |
-| 2. CRM/auth/lifecycle/archive | In progress / runtime blocked | Static audit centralized Kanban/template mutations on `QuoteRequestPolicy` and restricted soft-deleted model binding to restore/force-delete routes only; regression test added. Re-run policy, IDOR, dashboard, close/lost, archive, restore, and force-delete tests in PHP CI. |
-| 3. Public UX/calculator/catalog/responsive | Pending verification | Run E2E suite and direct viewport inspection. |
-| 4. PDF acceptance | In progress / runtime blocked | English currency, category, row-label, and calculation-basis localization repaired and tested in code. Generate, render, and visually inspect all four FA/EN full/single variants in CI/artifact-capable runtime. |
-| 5. Mobile/Capacitor/Android | In progress | Replaced the non-buildable Laravel `public/` webDir with a local static mobile shell; added stateless/CORS-restricted API, real native Android project, Capacitor 8.5, Node 22/SDK 36 CI job. `cap sync android` passes; local Gradle download is network-blocked, so `Android build` CI must verify assemble. |
-| 6. Browser capture/marketplaces | Pending | Reconcile extension branch after the main candidate is stable; test all three sanitized fixtures. |
-| 7. Database/migrations | Blocked pending PHP/database runtime | Fresh, upgrade, rollback, precision, index, and soft-delete checks. |
-| 8. Security/privacy | In progress | Recheck candidate diff, dependency audits, authorization, SSRF/import/upload/log/artifact boundaries. |
-| 9. Full automated gate | In progress | Run available npm gates locally and all four required GitHub Actions checks on the exact candidate SHA. |
-| 10. Docs/release preparation | Pending | Update runtime docs, deployment/rollback, artifacts, hashes, and release notes. |
-| 11. Staging/Production gates | Approval required | Prepare approval packet only; do not deploy or merge. |
+| 0. Reconcile PR and candidate | Blocked on publishing tool | Candidate is committed locally; install/authenticate `gh`, push the branch, and open a replacement draft PR because PR #26 has a different head. |
+| 1. Pricing and customs value | Implemented; candidate CI pending | Configurable fallback and explicit-zero preservation implemented with regression tests. |
+| 2. CRM/auth/lifecycle/archive | Implemented; candidate CI pending | Policy scope and soft-delete binding hardened; PHP regression execution required. |
+| 3. Public UX/calculator/catalog/responsive | Previously passed; candidate rerun pending | Reported E2E coverage passed before extension integration; rerun on exact candidate in Browser QA. |
+| 4. PDF acceptance | Implemented; visual acceptance pending | Code/tests cover four FA/EN full/single variants; render and visually inspect CI artifacts. |
+| 5. Mobile/Capacitor/Android | Implemented; Android CI pending | Vite and `cap sync android` pass locally; network-restricted local Gradle cannot fetch the distribution. |
+| 6. Browser capture/marketplaces | Implemented; PHP/manual acceptance pending | 110/110 extension tests pass; all three fixtures parse; secure backend flow and feature test added. |
+| 7. Database/migrations | Runtime blocked | Fresh/upgrade/rollback and schema precision checks need PHP/database CI. |
+| 8. Security/privacy | Locally reviewed; CI pending | Root and extension dependency audits report zero vulnerabilities; authorization, SSRF/host allowlists, token storage, diagnostics, and artifact boundaries hardened. |
+| 9. Full automated gate | In progress | Local Node gates pass; exact candidate needs GitHub Dependencies, Backend, Frontend, Browser QA, Browser extension, and Android checks. |
+| 10. Docs/release preparation | Implemented; final artifact links pending | Runbooks and extension docs updated; add CI artifact URLs and exact final candidate SHA after publishing. |
+| 11. Staging/Production gates | Approval required | Prepare review packet only. Do not merge or deploy. |
 
-## Required validation log
+## Validation log
 
 | Command / check | Result | Evidence |
 |---|---|---|
-| `composer validate` | BLOCKED BY ENVIRONMENT | `composer`/PHP unavailable locally. |
-| `composer audit` | BLOCKED BY ENVIRONMENT | `composer`/PHP unavailable locally. |
-| `php artisan test --compact` | BLOCKED BY ENVIRONMENT | PHP unavailable locally. |
-| `vendor/bin/pint --test` | BLOCKED BY ENVIRONMENT | PHP/vendor unavailable locally. |
-| `npm ci` | PASS | 236 locked packages installed after using a writable workspace cache; package lock updated for Capacitor 8.5. |
-| `npm audit` | PASS | `found 0 vulnerabilities` after Capacitor upgrade and a scoped `xcode -> uuid ^11.1.1` override. |
-| `npm run build` | PASS | Vite 6.4.3, 58 modules transformed, production assets emitted successfully. |
-| `npx cap sync android` | PASS | Local `mobile/` assets copied and Capacitor Android project updated successfully. |
-| Static syntax/integrity checks | PASS | `git diff --check`, `node --check mobile/app.js`, JSON parsing for npm/Capacitor files, and `bash -n android/gradlew` pass after the CRM route-binding hardening. |
-| `android/gradlew assembleDebug` | BLOCKED BY ENVIRONMENT | Wrapper could not download Gradle 8.14.3 because `services.gradle.org` is unreachable in this sandbox; new GitHub `Android build` job performs the authoritative build. |
-| `npm run test:e2e` | Not run yet | Requires browser installation/runtime. |
-| GitHub Actions: Dependencies | Not run on candidate | PR head must be updated or replacement PR opened. |
-| GitHub Actions: Backend tests | Not run on candidate | PR head must be updated or replacement PR opened. |
-| GitHub Actions: Frontend build | Not run on candidate | PR head must be updated or replacement PR opened. |
-| GitHub Actions: Browser QA | Not run on candidate | PR head must be updated or replacement PR opened. |
-| GitHub Actions: Android build | Not run on candidate | New required candidate check; produces a debug APK artifact. |
+| `composer validate` / `composer audit` | BLOCKED LOCALLY | PHP and Composer are unavailable in this runtime; run in GitHub Dependencies job. |
+| `php artisan test --compact` / Pint | BLOCKED LOCALLY | PHP/vendor runtime unavailable; candidate adds `BrowserExtensionFlowTest`. |
+| Root `npm ci` | PASS | 236 locked packages installed. |
+| Root `npm audit` | PASS | `found 0 vulnerabilities`. |
+| Root `npm run build` | PASS | Vite 6.4.3 built 58 modules. |
+| `npx cap sync android` | PASS | Mobile assets and Android plugins synchronized. |
+| `android/gradlew assembleDebug` | BLOCKED LOCALLY | Gradle 8.14.3 download host is inaccessible from the sandbox; dedicated CI job is authoritative. |
+| Extension Jest | PASS | 4 suites, 110/110 tests. |
+| Extension dependency audit | PASS | Offline audit reported zero vulnerabilities. |
+| Extension staging/production build | PASS | Both bundles generated; each worker contains the correct fixed environment. |
+| Extension package integrity | PASS | Both ZIP SHA-256 files verify; PNG dimensions are 16x16, 48x48, and 128x128. |
+| Source integrity/security scan | PASS | `git diff --check`, conflict-marker scan, and common committed-secret signature scan passed. |
+| Exact-candidate GitHub Actions | NOT RUN | Branch has not been pushed and no PR targets it. |
 
-## Resume rule
+## Exact resume point
 
-Resume at the first incomplete row above. Fix ordinary failures and continue. Stop only at an explicit approval/access boundary, and never report completion while any required item is failed, unverified, skipped, or environment-blocked without Mostafa's explicit acceptance.
+1. Install GitHub CLI, authenticate it, then push `claude/navracar-pr26-review-l2w2mz` without force-pushing.
+2. Open a replacement draft PR against the repository default branch; do not merge or deploy.
+3. Run and fix every exact-SHA required check: Dependencies, Backend tests, Frontend build, Browser QA, Browser extension, and Android build.
+4. Render and inspect all four PDF variants, manually load the staging extension against the three supported marketplaces, and verify the generated draft in admin review.
+5. Record the final candidate SHA, CI/artifact URLs, and acceptance results here. Only then report `READY FOR REVIEW — MERGE/DEPLOY NOT PERFORMED`.
