@@ -130,9 +130,15 @@
             <tbody>
                 <tr class="border-t border-ink-100 dark:border-white/5">
                     <td class="p-2.5 text-ink-400">۱</td>
-                    <td class="p-2.5 font-semibold">جمع هزینه ترخیص</td>
+                    <td class="p-2.5 font-semibold">هزینه‌های ترخیص خودرو (جمع کل هزینه‌های گمرکی)</td>
                     <td class="p-2.5 text-ink-500 dark:text-ink-400">—</td>
-                    <td class="p-2.5 text-left num-font font-bold" x-text="fmt(results.clearanceTotalPublic)"></td>
+                    <td class="p-2.5 text-left num-font font-bold" x-text="fmt(results.sumCustomsAll)"></td>
+                </tr>
+                <tr class="border-t border-ink-100 dark:border-white/5">
+                    <td class="p-2.5 text-ink-400">۲</td>
+                    <td class="p-2.5 font-semibold">کارمزد ترخیص‌کار و کارگزار (ناوراکار)</td>
+                    <td class="p-2.5 text-ink-500 dark:text-ink-400">—</td>
+                    <td class="p-2.5 text-left num-font font-bold" x-text="fmt(results.serviceProfitAmt)"></td>
                 </tr>
             </tbody>
             <tfoot>
@@ -543,19 +549,16 @@ window.carCalculatorApp = function (config = @js($config)) {
                 { no: 1, label: 'پرداخت ۱۰٪ مبلغ خودرو برای بوک کردن خودرو', duration: '۱ روز کاری', value: bookingAmt },
                 { no: 2, label: 'پرداخت هزینه صدور مجوز', duration: 'صدور مجوز حدود ۱ هفته', value: permits },
                 { no: 3, label: 'پرداخت الباقی مبلغ خودرو در امارات', duration: 'ارسال به ایران معمولاً ۳ روز کاری', value: realPriceToman - bookingAmt },
-                { no: 4, label: 'پرداخت هزینه‌های ترخیص خودرو (جمع کل هزینه‌های گمرکی)', duration: 'معمولاً ۲۰ الی ۴۰ روز کاری', value: sumCustomsAll - permits },
-                { no: 5, label: 'پرداخت کارمزد ترخیص‌کار و کارگزار (ناوراکار)', duration: '', value: serviceProfitAmt },
-                { no: 6, label: 'پرداخت هزینه‌های پلاک انتظامی', duration: '', value: sumPlate },
+                { no: 4, label: 'پرداخت کارمزد ترخیص‌کار و کارگزار (ناوراکار)', duration: '', value: serviceProfitAmt },
+                { no: 5, label: 'پرداخت هزینه‌های پلاک انتظامی', duration: '', value: sumPlate },
             ];
-            const stageColors = ['bg-brand-500', 'bg-brand-600', 'bg-brand-700', 'bg-brand-800', 'bg-brand-900', 'bg-brand-950'];
-            const shortLabels = ['بوک کردن خودرو', 'صدور مجوز', 'باقی‌ماندهٔ قیمت خودرو', 'ترخیص گمرکی', 'کارمزد کارگزار', 'پلاک انتظامی'];
-            const stageDays = [1, 7, 3, 30, 2, 2];
-            const timeline = paymentSteps.map((step, i) => ({
-                no: step.no, shortLabel: shortLabels[i],
-                duration: step.duration || (stageDays[i] + ' روز کاری'),
-                value: step.value, days: stageDays[i], weight: Math.sqrt(stageDays[i]),
-                colorClass: stageColors[i],
-            }));
+            const timeline = [
+                { no: 1, shortLabel: 'بوک کردن خودرو', duration: '۱ روز کاری', value: bookingAmt, days: 1, colorClass: 'bg-brand-500' },
+                { no: 2, shortLabel: 'صدور مجوز', duration: 'صدور مجوز حدود ۱ هفته', value: permits, days: 7, colorClass: 'bg-brand-600' },
+                { no: 3, shortLabel: 'باقی‌ماندهٔ قیمت خودرو', duration: 'ارسال به ایران معمولاً ۳ روز کاری', value: realPriceToman - bookingAmt, days: 3, colorClass: 'bg-brand-700' },
+                { no: 4, shortLabel: 'ترخیص گمرکی', duration: 'معمولاً ۲۰ الی ۴۰ روز کاری', value: Math.max(0, sumCustomsAll - permits), days: 30, colorClass: 'bg-brand-800' },
+                { no: 5, shortLabel: 'پلاک انتظامی', duration: '۲ روز کاری', value: sumPlate, days: 2, colorClass: 'bg-brand-950' },
+            ].map(step => ({ ...step, weight: Math.sqrt(step.days) }));
 
             const clearanceTotalPublic = sumCustomsAll + serviceProfitAmt;
             return {
@@ -564,6 +567,7 @@ window.carCalculatorApp = function (config = @js($config)) {
                 sumCustomsAll,
                 sumPlate,
                 clearanceTotalPublic,
+                serviceProfitAmt,
                 totalNoProfit: num(source.preServiceTotalToman),
                 serviceProfitAmt,
                 totalWithProfit,
