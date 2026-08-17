@@ -1,8 +1,9 @@
 # NavraCar V2 — Page Inventory
 
-**Locked design source:** `agent/navracar-v2-design-docs` @ `1cdab114920cdc2431f983a1c1ea9efb88e26f82` (verified with `git rev-parse` — matches the branch tip and `docs/design-v2/*` at that commit).
+**Locked design source (design authority only):** `agent/navracar-v2-design-docs` @ `1cdab114920cdc2431f983a1c1ea9efb88e26f82` (verified with `git rev-parse` — matches the branch tip and `docs/design-v2/*` at that commit). This commit is the source of truth for visual/design decisions (`DESIGN_SPEC.md`, `IMPLEMENTATION_PLAN.md`, `assets/`) — it is **not** the implementation base.
+**Implementation base (functional/backend authority):** `origin/main`. The implementation branch was created from the locked design commit, then **rebased onto `origin/main`** once it became clear `main` had moved 14 commits ahead of the design branch's own base (`c8ef9c1`) — including a pricing-integrity fix (`db34c8a` "Hide service fee row from calculator print report"), an admin-user-management fix (`aaf3fb3`/PR #36), and CI/staging stabilization. Rebase was clean (no conflicting files between the design-branch-era commits and the new main commits); all 5 Phase 1–2 commits were preserved unchanged in content, only replayed onto the new base. Current base: `origin/main` @ `17ef799` (merge of PR #40). Implementation HEAD after rebase: `7a93410`.
 **Implementation branch:** `claude/navracar-v2-complete-ui`
-**Method:** derived from `routes/*.php`, controller `view(...)` calls (grepped across `app/Http/Controllers`), `resources/views/components/layouts/*`, `AdminUser` role helpers, and the existing docs in `docs/DESIGN_SYSTEM.md`, `docs/UI_*.md`. Not derived from filenames alone — every row below traces to a real route + controller method + view file.
+**Method:** derived from `routes/*.php`, controller `view(...)` calls (grepped across `app/Http/Controllers`), `resources/views/components/layouts/*`, `AdminUser` role helpers, and the existing docs in `docs/DESIGN_SYSTEM.md`, `docs/UI_*.md`. Not derived from filenames alone — every row below traces to a real route + controller method + view file. **Note:** the route/controller/view mapping below was captured before the rebase; the two main-only commits above touched `resources/views/admin/users/index.blade.php` (row in section F) and `resources/views/public/calculator.blade.php` (row in section A) — their current content should be re-read, not assumed, when Phases 4/8 actually restyle those pages.
 
 Legend for **Status**: `not started` / `in progress` / `implemented` / `blocked (see GAP_REPORT)`.
 
@@ -115,3 +116,11 @@ Run in this session, on this exact commit, before any page/component was modifie
   - The full 90-test matrix (all responsive viewports + accessibility) was not completed in this sandbox because of the same environment browser-version mismatch; it should be captured in CI, which is expected to have a matched Playwright/browser install. `playwright.config.js` was **not** modified in any commit — the `executablePath` override was local-only and reverted immediately after the scoped check.
 
 Any test failure that appears later in this branch will be diffed against this baseline before being reported as a regression.
+
+## Re-verification after rebasing onto `origin/main`
+
+Same checks re-run after the implementation branch was rebased from the locked design commit onto `origin/main` @ `17ef799` (see header):
+
+- `npm run build` — passes, no change in behavior.
+- `php artisan test --compact` — **150 passed** (up from 144 — 6 new tests arrived with `origin/main`, mainly `AdminUserManagementTest`), **same 2 pre-existing failures** in `SalesDashboardScopingTest`, no new regressions.
+- Scoped e2e sanity (`critical-flows.spec.js` + `calculator-wizard.spec.js`, `functional-desktop` + `responsive-1280x800`, same temporary/reverted `executablePath` workaround as the original baseline): **15 passed**, including the new `print report hides the service fee row while preserving the fee in the final total` test that landed with `main`'s pricing-integrity fix. **Same 2 known issues reproduced again** (`/admin` redirect timeout, PDF download timeout) — consistent with the original baseline, still unconfirmed as sandbox-specific vs. real, still flagged for Phase 13.
