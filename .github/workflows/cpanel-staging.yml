@@ -16,6 +16,10 @@ permissions:
   contents: write
   checks: read
 
+env:
+  COMPOSER_AUTH: '{"github-oauth":{"github.com":"${{ github.token }}"}}'
+  COMPOSER_MAX_PARALLEL_HTTP: 4
+
 concurrency:
   group: cpanel-staging-${{ inputs.release_candidate }}
   cancel-in-progress: false
@@ -101,7 +105,7 @@ jobs:
       - name: Build one production-ready candidate
         working-directory: source
         run: |
-          composer install --no-dev --prefer-dist --optimize-autoloader --no-interaction --no-progress
+          composer install --no-dev --prefer-source --optimize-autoloader --no-interaction --no-progress
           npm run build
       - name: Build explicit staging deployment tree
         env:
