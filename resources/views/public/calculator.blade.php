@@ -1527,7 +1527,6 @@ async function calc(){
     ];
     lastTotals = {
       'جمع کل بدون کارمزد': fmt(result.preServiceTotalToman)+' تومان',
-      'کارمزد ترخیص‌کار و کارگزار (ناوراکار)': fmt(result.serviceFeeToman)+' تومان',
       'جمع کل نهایی': fmt(result.finalTotalToman)+' تومان',
     };
     lastRawValues = {

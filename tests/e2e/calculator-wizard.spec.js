@@ -238,4 +238,27 @@ test.describe('3-Step Calculator Wizard', () => {
       await expect(page.locator('.wiz-step[data-step="start"]')).toHaveClass(/active/);
     }
   });
+
+  test('print report hides the service fee row while preserving the fee in the final total', async ({ page }) => {
+    const pricing = await page.evaluate(async () => {
+      const built = await buildPrintSheet();
+
+      return {
+        built,
+        preServiceTotalToman: lastPricingResult.preServiceTotalToman,
+        serviceFeeToman: lastPricingResult.serviceFeeToman,
+        finalTotalToman: lastPricingResult.finalTotalToman,
+      };
+    });
+
+    expect(pricing.built).toBe(true);
+    expect(pricing.serviceFeeToman).toBeGreaterThan(0);
+    expect(pricing.finalTotalToman).toBe(pricing.preServiceTotalToman + pricing.serviceFeeToman);
+
+    const printTotals = page.locator('#psTotalsTable');
+    await expect(printTotals).not.toContainText('کارمزد ترخیص‌کار و کارگزار (ناوراکار)');
+    await expect(printTotals.locator('tr.total')).toContainText(
+      Math.round(pricing.finalTotalToman).toLocaleString('en-US'),
+    );
+  });
 });
