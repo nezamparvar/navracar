@@ -3,6 +3,7 @@
 use App\Http\Middleware\EnsureAdminRole;
 use App\Http\Middleware\EnsureContentManagerRole;
 use App\Http\Middleware\EnsureSalesRole;
+use App\Http\Middleware\AuthenticateMobileCustomer;
 use App\Http\Middleware\RedirectIfAuthenticated;
 use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Foundation\Application;
@@ -22,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.role' => EnsureAdminRole::class,
             'content.role' => EnsureContentManagerRole::class,
             'sales.role' => EnsureSalesRole::class,
+            'mobile.auth' => AuthenticateMobileCustomer::class,
             'guest' => RedirectIfAuthenticated::class,
         ]);
     })
