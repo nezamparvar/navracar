@@ -60,7 +60,22 @@ jobs:
       - run: npm run build
       - run: cp .env.example .env
       - run: find app routes database tests -name '*.php' -print0 | xargs -0 -n1 php -l
+      - name: Verify database migration lifecycle
+        env:
+          DB_CONNECTION: sqlite
+          DB_DATABASE: /tmp/navracar-ci.sqlite
+        run: |
+          touch "$DB_DATABASE"
+          php artisan migrate:fresh --force
+          php artisan migrate:rollback --step=1 --force
+          php artisan migrate --force
       - run: php artisan test --compact
+      - uses: actions/upload-artifact@v4
+        with:
+          name: proforma-pdf-acceptance
+          path: storage/app/public/proformas/acceptance/*.pdf
+          if-no-files-found: error
+          retention-days: 14
 
   frontend:
     name: Frontend build
