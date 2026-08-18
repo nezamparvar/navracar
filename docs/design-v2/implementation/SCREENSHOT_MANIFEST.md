@@ -135,3 +135,58 @@ Regenerated the three round-3 triads against the current implementation (both pa
 - **Admin dashboard:** confirms the dark sidebar/shell match, but also confirms — visually, not just in prose — the still-open gap already recorded in `GAP_REPORT.md` §3: the reference's 4-KPI row and line+bar performance chart differ from the implementation's 7-KPI two-row layout and horizontal-bar trend chart. Included honestly rather than cropped to hide the mismatch.
 
 No triad was attempted for the newly-built pages with no corresponding reference panel at this precision (calendar, kanban, content dashboard, request-tracking, calculator) — same reasoning as round 3's mobile composites: forcing a crop-and-overlay against a reference that doesn't actually depict that screen at a comparable scale would look rigorous without being so. Direct screenshots are the honest deliverable for those.
+
+## Round 4 remediation, round 2 (current evidence — post round-4-review fixes)
+
+Captured against commit `8bd64df42799daaf72f5451baa08fda8c4cf84e7` on `claude/navracar-v2-complete-ui`, immediately after `npm run build` and a fresh `migrate:fresh --seed` (`tests/e2e/serve.mjs`), verified live via authenticated Playwright navigation (every capture below asserted HTTP 200 before the screenshot was taken — see the capture log; no error/blank pages slipped through).
+
+Directory: `docs/design-v2/implementation/screenshots/round4-remediation-r2/`
+
+Captured at the mission's mandatory desktop (1440×900) and mobile (390×844) viewports, `fullPage: true`. **Known capture artifact, not a defect:** on pages with a `position: fixed` bottom nav, Playwright's `fullPage` screenshot mode renders the fixed nav "frozen" at an arbitrary scroll position, which can visually overlap content in the PNG even though the real page has a clear, verified gap. This is a rendering quirk of full-page capture, not a real layout bug — it is independently disproved by (a) the permanent `tests/e2e/responsive.spec.js` bottom-nav-clearance test, which measures actual DOM geometry after an instant scroll-to-end and requires a real ≥4px gap, and (b) manual non-fullPage viewport screenshots taken during this round's visual QA pass (not committed, used only to confirm the fullPage artifact before trusting the automated test).
+
+| File | Route | Viewport | Role | State | SHA-256 |
+|---|---|---|---|---|---|
+| `vehicle-list-1440x900.png` / `-390x844.png` | `/car-prices` | 1440×900 / 390×844 | public | populated, 8 listings | `91256c5deaeb1168f5862f8a72fde21a3b04395bedd8a1f2f7b4fc9b2cabdad8` / `50b0d1d0ecf6f7fd01d548b3123cc7771a71f33cca83aa96a742ddfa3882a1dd` |
+| `vehicle-detail-1440x900.png` / `-390x844.png` | `/car-prices/e2e-bmw-x4` | 1440×900 / 390×844 | public | populated, compressed 2-column fold (gallery+info / specs+cost-summary) | `a46ae48afdf9eafbf3d2af9013c8459c1add89e0f4967a82e06c173c9466a36d` / `46e7ee4330799df02381b52f32d348df8a2e503b2445cfb976692b60465b4d30` |
+| `calculator-1440x900.png` / `-390x844.png` | `/calculator` | 1440×900 / 390×844 | public | initial form, navy/blue/cyan migration complete (no orange/purple chrome) | `b0640c700b0e1f9ff5244c7af7a864f2eb779416565568e3ce73692a4ca8d8dd` / `8a430827024cd78cc9641de2f51a92da9e5000b2554496271d56cccd62eb56e2` |
+| `request-tracking-1440x900.png` / `-390x844.png` | `/track/1?phone=09120000000` | 1440×900 / 390×844 | public | populated, widened stepper, footer clears bottom nav with a real gap | `38cb31fd683879262ee2b8a5f9db45d52e374b4ef82277d2b33d39f8e9893501` / `f6d9287ac02113487636fe5c8a2bb570232ce91da0ddd0b614b4aa21bf473029` |
+| `admin-dashboard-1440x900.png` / `-390x844.png` | `/admin` | 1440×900 / 390×844 | admin | populated | `7ecd69af90d67938464533ffb737bb71193c0b22f179b8a729b69b84a1675a5b` / `c8ec29971f003b2908fd980afccedefa31eeb13881d5e68ee036d362cbc578e1` |
+| `sales-dashboard-1440x900.png` / `-390x844.png` | `/admin/sales-dashboard` | 1440×900 / 390×844 | admin (sales) | populated, new this round | `e743687958b0c7794046e5f3da4ed2d3ffe9cbace9cd10ce802132f5905d2dfe` / `492e3dbe5c30d6736cea09e520749350b06917e8af13c270cd6a7937a1572b80` |
+| `content-dashboard-1440x900.png` / `-390x844.png` | `/admin/content-dashboard` | 1440×900 / 390×844 | admin (content) | populated, new widgets this round | `373e4f56c76dfaa29a791176b8790ef06218117d1dfb52c2b1580e2aa172f263` / `7241f9d5d1ac5be12d5474c176cedaf375dcae659c49538675782f06cb3b4f12` |
+| `calendar-day-1440x900.png` / `-390x844.png` | `/admin/calendar?view=day` | 1440×900 / 390×844 | admin | real 1-column hour grid | `4f4415418b3c08678ac010231b8c9319a86056e41efd5d405bd412d15d42a43c` / `a2a8458f0938912a7346de223b648f896b24b72020838fa785b5a0c20e966662` |
+| `calendar-week-1440x900.png` / `-390x844.png` | `/admin/calendar?view=week` | 1440×900 / 390×844 | admin | real 7-column hour grid filling the page | `9000060d13ecf74b1d14565d184e157b09adf8f187bcec5941de89e1f4dba81a` / `dfe3c5c8b4a1d092830f63fa08154e8d0f1b99de4762808cb8e91d303db939cc` |
+| `calendar-list-1440x900.png` / `-390x844.png` | `/admin/calendar?view=list` | 1440×900 / 390×844 | admin | real upcoming-events list | `8f266fdbb99f83caa42c193b776a5ca56405bab9d1c9909d60f7f2a8ffbf6a13` / `08c141148efe564f9dbbf59e7c067c8f98e9adc45fc95372805088dcccb94d8c` |
+| `kanban-1440x900.png` / `-390x844.png` | `/admin/kanban` | 1440×900 / 390×844 | admin | populated, mobile: single column fully visible, snap-scroll, dot indicators + swipe hint, no clipping | `10096e9f8a709512a1cf273873f55bf804d4b3c452e112520b482e22279b8c02` / `eb24280b3a64a7aecc28a5f21ae1b04d2cecde1a261ff5545c6c504f4cb164c9` |
+
+### Reference-crop / implementation / overlay triads (round 4 remediation, round 2)
+
+Directory: `docs/design-v2/implementation/screenshots/round4-remediation-r2/triads/`
+
+Same method as prior rounds: exact reference panel cropped from the composite PNG, placed beside a same-content top-fold crop of a fresh implementation screenshot (scaled to the reference crop's height, preserving aspect ratio), plus a 50%-opacity overlay blend. Two new triads this round (sales dashboard, content dashboard) against their own dedicated reference composites (`03`, `04`) — these pages didn't exist as dedicated builds in earlier rounds.
+
+| File | Reference panel | Implementation | SHA-256 |
+|---|---|---|---|
+| `vehicle-list-triad.png` | `01-public-desktop-system.png`, right panel (x∈[844,1672], y∈[0,574]) | `vehicle-list-1440x900.png`, top crop (0,0,1440,998) | `45820a7caf9e850f1d77381952bab48252ee33496a8e7b01f5afc5dbe5d18338` |
+| `vehicle-detail-triad.png` | `01-public-desktop-system.png`, left panel (x∈[0,828], y∈[0,574]) | `vehicle-detail-1440x900.png`, top crop (0,0,1440,998) | `88806a13df34c16a0046ee407734cba4895e3e1c90bd1567a954561437d7daf3` |
+| `admin-dashboard-triad.png` | `02-admin-dashboard-calendar.png`, full canvas | `admin-dashboard-1440x900.png`, top crop (0,0,1440,812) | `38f8ef6b49b100d1a4275ac03f5fcf897e6815a725d0853de9717142bf28bbcc` |
+| `sales-dashboard-triad.png` | `03-sales-dashboard.png`, full canvas | `sales-dashboard-1440x900.png`, top crop (0,0,1440,812) | `32b710c8b8582cd95bcc05079213b8dfe9dd17d4f044d7ecadd31385ba7dfb16` |
+| `content-dashboard-triad.png` | `04-content-dashboard.png`, full canvas | `content-dashboard-1440x900.png`, top crop (0,0,1440,812) | `f8b32bf53bea244983e9c08e9aae8c3c90d5ffed55824656b49f33361961e341` |
+
+**Honest read of these five, not just "delivered":**
+- **Vehicle list:** strong structural match — 4-up card grid, dark theme, filter bar composition, price hierarchy line up closely with the reference panel. Placeholder vehicle images remain a disclosed sandbox limitation (no network access to fetch real photos).
+- **Vehicle detail:** gallery-left/info-right and the compressed 2-column fold (specs+cost-summary now fit beside each other, previously stacked and falling below the fold) are both now visible and correct. The specs table is honestly sparse (only "سال ساخت") because this specific demo listing has no populated engine/transmission fields — an honest empty state, not a hidden field.
+- **Admin dashboard:** now shows a real calendar mini-widget, trend chart, and pipeline mini-kanban in roughly the reference's positions — a much closer match than the prior round. The KPI-row shape (7 KPIs, two rows) still differs from the reference's 4-KPI + chart composition; this is the same still-open item already recorded in `GAP_REPORT.md` §3/§8, not new.
+- **Sales dashboard:** built new this round — KPI row, pipeline mini-kanban, today's schedule, recent proformas, overdue follow-ups, and a real stage-based funnel all land in approximately the reference's regions. Real E2E seed data is sparse (mostly 0/1 counts), leaving visible empty space the reference's demo data doesn't have — real production data would fill this out; not fabricated to look fuller.
+- **Content dashboard:** built new this round — KPI row, review queue, content-health bars, urgent tasks, and publish-activity chart all present and positioned close to the reference's layout. The content-health widget uses a bar list instead of the reference's radial gauge (a legitimate, real component substitution, not a missing feature).
+
+No triad was attempted for calendar/kanban/request-tracking/calculator — unchanged reasoning from prior rounds: no reference panel depicts these screens at a comparable scale.
+
+### Verification run for this evidence
+
+- `composer install` — clean, no errors.
+- `composer audit` — No security vulnerability advisories found.
+- `npm ci` — clean, 0 vulnerabilities.
+- `npm audit` — found 0 vulnerabilities.
+- `npm run build` — clean (`app-CoJPm-NY.css`, `app-AhPKnl-a.js`).
+- `php artisan test --compact` — **184/184 passed** (907 assertions).
+- `npx playwright test` (full suite, all projects) — see `QA_REPORT.md`'s "Round 4 remediation, round 2" section for the exact pass/fail/skip counts and commit SHA this was run against.
