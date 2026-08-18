@@ -57,13 +57,13 @@ class E2eSeeder extends Seeder
         // Additional synthetic listings so list/grid/detail pages have enough populated cards
         // for a real visual-parity comparison (a single card cannot demonstrate grid density).
         $demoListings = [
-            ['slug' => 'demo-mercedes-gle', 'title_fa' => 'مرسدس بنز GLE 450 4MATIC', 'make' => 'mercedes-benz', 'model' => 'gle', 'year' => 2024, 'price' => 320000, 'category' => 'c3000', 'km' => 8000, 'fuel' => 'بنزینی', 'color' => '#122C4A'],
-            ['slug' => 'demo-toyota-land-cruiser', 'title_fa' => 'تویوتا لندکروزر 300 VX', 'make' => 'toyota', 'model' => 'land-cruiser', 'year' => 2024, 'price' => 310000, 'category' => 'c3500', 'km' => 5000, 'fuel' => 'بنزینی', 'color' => '#1A3554'],
-            ['slug' => 'demo-lexus-lx600', 'title_fa' => 'لکسوس LX 600', 'make' => 'lexus', 'model' => 'lx', 'year' => 2024, 'price' => 375000, 'category' => 'c3500', 'km' => 3000, 'fuel' => 'بنزینی', 'color' => '#0F2038'],
-            ['slug' => 'demo-porsche-cayenne', 'title_fa' => 'پورشه کاین (Cayenne)', 'make' => 'porsche', 'model' => 'cayenne', 'year' => 2024, 'price' => 420000, 'category' => 'c3000', 'km' => 6000, 'fuel' => 'بنزینی', 'color' => '#14243F'],
-            ['slug' => 'demo-audi-q7', 'title_fa' => 'آئودی Q7 55 TFSI', 'make' => 'audi', 'model' => 'q7', 'year' => 2024, 'price' => 315000, 'category' => 'c3000', 'km' => 12000, 'fuel' => 'بنزینی', 'color' => '#0D1B30'],
-            ['slug' => 'demo-range-rover-sport', 'title_fa' => 'رنج روور اسپرت P400', 'make' => 'land-rover', 'model' => 'range-rover-sport', 'year' => 2024, 'price' => 360000, 'category' => 'c3000', 'km' => 9000, 'fuel' => 'بنزینی', 'color' => '#16294A'],
-            ['slug' => 'demo-volvo-xc90', 'title_fa' => 'ولوو XC90 B6', 'make' => 'volvo', 'model' => 'xc90', 'year' => 2024, 'price' => 295000, 'category' => 'c2500', 'km' => 15000, 'fuel' => 'بنزینی', 'color' => '#102240'],
+            ['slug' => 'demo-mercedes-gle', 'title_fa' => 'مرسدس بنز GLE 450 4MATIC', 'label' => 'Mercedes GLE 450', 'make' => 'mercedes-benz', 'model' => 'gle', 'year' => 2024, 'price' => 320000, 'category' => 'c3000', 'km' => 8000, 'fuel' => 'بنزینی', 'color' => '#122C4A'],
+            ['slug' => 'demo-toyota-land-cruiser', 'title_fa' => 'تویوتا لندکروزر 300 VX', 'label' => 'Land Cruiser 300', 'make' => 'toyota', 'model' => 'land-cruiser', 'year' => 2024, 'price' => 310000, 'category' => 'c3500', 'km' => 5000, 'fuel' => 'بنزینی', 'color' => '#1A3554'],
+            ['slug' => 'demo-lexus-lx600', 'title_fa' => 'لکسوس LX 600', 'label' => 'Lexus LX 600', 'make' => 'lexus', 'model' => 'lx', 'year' => 2024, 'price' => 375000, 'category' => 'c3500', 'km' => 3000, 'fuel' => 'بنزینی', 'color' => '#0F2038'],
+            ['slug' => 'demo-porsche-cayenne', 'title_fa' => 'پورشه کاین (Cayenne)', 'label' => 'Porsche Cayenne', 'make' => 'porsche', 'model' => 'cayenne', 'year' => 2024, 'price' => 420000, 'category' => 'c3000', 'km' => 6000, 'fuel' => 'بنزینی', 'color' => '#14243F'],
+            ['slug' => 'demo-audi-q7', 'title_fa' => 'آئودی Q7 55 TFSI', 'label' => 'Audi Q7 55 TFSI', 'make' => 'audi', 'model' => 'q7', 'year' => 2024, 'price' => 315000, 'category' => 'c3000', 'km' => 12000, 'fuel' => 'بنزینی', 'color' => '#0D1B30'],
+            ['slug' => 'demo-range-rover-sport', 'title_fa' => 'رنج روور اسپرت P400', 'label' => 'Range Rover Sport', 'make' => 'land-rover', 'model' => 'range-rover-sport', 'year' => 2024, 'price' => 360000, 'category' => 'c3000', 'km' => 9000, 'fuel' => 'بنزینی', 'color' => '#16294A'],
+            ['slug' => 'demo-volvo-xc90', 'title_fa' => 'ولوو XC90 B6', 'label' => 'Volvo XC90 B6', 'make' => 'volvo', 'model' => 'xc90', 'year' => 2024, 'price' => 295000, 'category' => 'c2500', 'km' => 15000, 'fuel' => 'بنزینی', 'color' => '#102240'],
         ];
 
         foreach ($demoListings as $d) {
@@ -86,7 +86,7 @@ class E2eSeeder extends Seeder
                     'published_at' => now()->subDays(random_int(0, 10)),
                 ],
             );
-            $this->attachCoverImage($listing, $d['title_fa'], $d['color']);
+            $this->attachCoverImage($listing, $d['label'], $d['color']);
         }
 
         // Non-zero, meaningful admin/sales dashboard KPIs — visual hierarchy can't be judged
@@ -149,6 +149,8 @@ class E2eSeeder extends Seeder
      */
     private function placeholderImage(string $label, string $hexColor): string
     {
+        // GD's built-in bitmap font only supports Latin-1, so $label must be ASCII (the
+        // English make/model, never title_fa) — Persian text renders as garbage otherwise.
         $width = 640;
         $height = 480;
         $image = imagecreatetruecolor($width, $height);
@@ -157,11 +159,22 @@ class E2eSeeder extends Seeder
         $bg = imagecolorallocate($image, $r, $g, $b);
         imagefill($image, 0, 0, $bg);
 
+        // A simple car-body silhouette so the placeholder reads as "a car photo slot",
+        // not just a color swatch — cabin + body + two wheels.
+        $silhouette = imagecolorallocatealpha($image, 255, 255, 255, 105);
+        $cx = $width / 2;
+        $cy = $height / 2;
+        imagefilledellipse($image, (int) $cx, (int) $cy + 10, 420, 140, $silhouette);
+        imagefilledrectangle($image, (int) $cx - 110, (int) $cy - 60, (int) $cx + 110, (int) $cy + 20, $silhouette);
+        $wheel = imagecolorallocatealpha($image, 2, 11, 24, 40);
+        imagefilledellipse($image, (int) $cx - 130, (int) $cy + 60, 70, 70, $wheel);
+        imagefilledellipse($image, (int) $cx + 130, (int) $cy + 60, 70, 70, $wheel);
+
         $accent = imagecolorallocate($image, 22, 119, 255);
-        imagefilledrectangle($image, 0, $height - 12, $width, $height, $accent);
+        imagefilledrectangle($image, 0, $height - 10, $width, $height, $accent);
 
         $text = imagecolorallocate($image, 248, 250, 252);
-        imagestring($image, 5, 24, $height / 2 - 10, $label, $text);
+        imagestring($image, 5, 24, $height - 34, $label, $text);
 
         ob_start();
         imagepng($image);
