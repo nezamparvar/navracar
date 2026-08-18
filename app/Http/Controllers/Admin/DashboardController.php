@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CalculationLog;
+use App\Models\CalendarEvent;
 use App\Models\ImportQueueItem;
 use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
@@ -94,6 +95,26 @@ class DashboardController extends Controller
             ")
             ->first() : null;
 
+        // This week's calendar events, condensed for the dashboard widget — same
+        // CalendarEvent data as the full /admin/calendar page.
+        $weekEvents = CalendarEvent::query()
+            ->forUser($user)
+            ->with(['quoteRequest', 'assignee'])
+            ->whereBetween('starts_at', [now()->startOfWeek(\Carbon\Carbon::SATURDAY), now()->startOfWeek(\Carbon\Carbon::SATURDAY)->addDays(6)->endOfDay()])
+            ->orderBy('starts_at')
+            ->get();
+
+        // Condensed sales-pipeline view — same PipelineStage/QuoteRequest data as
+        // admin.kanban, summarized to stage counts + first few cards per stage.
+        $pipelineStages = PipelineStage::where('is_active', true)->orderBy('sort_order')->get();
+        $pipelineQuery = $baseScope(QuoteRequest::query())->where('is_archived', false);
+        $pipelineLeads = $pipelineQuery->get(['id', 'name', 'car_label', 'current_stage_id']);
+        $pipelineByStage = $pipelineStages->map(function ($stage) use ($pipelineLeads) {
+            $leads = $pipelineLeads->where('current_stage_id', $stage->id);
+
+            return ['stage' => $stage, 'count' => $leads->count(), 'sample' => $leads->take(3)];
+        })->filter(fn ($row) => $row['count'] > 0)->values();
+
         return view('admin.dashboard', [
             'pageTitle' => 'داشبورد مدیریت',
             'pageSubtitle' => 'نمای کلی از درخواست‌های استعلام قیمت و محاسبات انجام‌شده روی سایت.',
@@ -113,6 +134,8 @@ class DashboardController extends Controller
             'isAdmin' => $isAdmin,
             'todayRates' => $todayRates,
             'importStatus' => $importStatus,
+            'weekEvents' => $weekEvents,
+            'pipelineByStage' => $pipelineByStage,
         ]);
     }
 }
