@@ -1,5 +1,9 @@
 # NavraCar Android V1
 
+Version 1.1.0 adds opt-in first-party analytics, live presence, device/search/
+contact reporting, and FCM Push. The complete privacy, API, admin, Firebase,
+retention, and staging runbook is in `docs/MOBILE_ENGAGEMENT.md`.
+
 ## Release boundary
 
 Android V1 is a stage-first extension of the existing NavraCar product. It uses
@@ -64,7 +68,7 @@ client contains no API, signing, pricing, or service secrets.
 | Pricing | Sends price/category to the existing central endpoint; renders only server-calculated public totals |
 | Quote request | Guest or authenticated submission into the existing QuoteRequest/CRM workflow |
 | Requests | Authenticated, customer-owned request history and status summary |
-| Account | Register/login/logout, profile update, requests, favorites, existing web/contact links, push-readiness notice |
+| Account | Register/login/logout, profile update, requests, favorites, existing web/contact links, independent analytics/Push consent and deletion controls |
 | Favorites | Server-backed after login; documented local-only fallback for guests |
 | Share to NavraCar | Android text share/deep link for supported HTTPS marketplace URLs into the existing review queue |
 
@@ -88,6 +92,10 @@ Pricing, quote, favorites, and share are contextual routes.
 | `GET /api/mobile/v1/favorites` | Bearer | New pivot to existing vehicles | Synced favorites |
 | `PUT/DELETE /api/mobile/v1/favorites/{slug}` | Bearer | New pivot to existing vehicles | Add/remove favorite |
 | `POST /api/mobile/v1/shared-listings` | Bearer | Existing `import_queue` | Allowlisted URL capture for server review |
+| `PUT/PATCH /api/mobile/v1/installations/{uuid}[/consent]` | Installation secret | New engagement boundary | Safe device metadata and independent consent |
+| `POST /api/mobile/v1/analytics/events` | Installation secret + consent | New first-party event store | Presence, screens, searches and semantic actions |
+| `POST/DELETE /api/mobile/v1/installations/{uuid}/push-token` | Installation secret + consent | Encrypted FCM token | Register/revoke Push |
+| `POST /api/mobile/v1/push/opened/{notification}` | Installation secret | Existing delivery record | Idempotent open count |
 
 Backend additions are limited to the mobile customer/token/favorite persistence,
 customer linkage on `quote_requests`, serializers/controllers, middleware, and
@@ -139,7 +147,7 @@ environment: staging
 API base: https://staging.nezamparvar.com
 applicationId: com.navracar.mobile.staging
 label: ناوراکار Staging
-version: 1.0-staging (2)
+version: 1.1.0-staging (3)
 ```
 
 The build script restores the source HTML after packaging. Production and
@@ -156,7 +164,7 @@ Playwright fixture test traverses and captures the complete RTL screen set.
 ```bash
 php artisan test --compact tests/Feature/MobileApiV1Test.php
 php artisan test --compact
-node --test tests/mobile/api.test.js tests/mobile/format.test.js tests/mobile/state.test.js
+npm run test:mobile
 npx playwright test --config=playwright.android.config.js
 cd android && ./gradlew testDebugUnitTest --no-daemon
 cd android && ./gradlew assembleDebug assembleRelease -PstagingBuild=true --no-daemon
@@ -192,9 +200,10 @@ the deployment steps below remain the external acceptance boundary.
 - The existing Capacitor stack is retained to avoid a second Android stack. The
   UI is packaged locally and has native security/share/deep-link bridges, but
   its screen widgets are not a full native Material 3 implementation.
-- Push is an Android/backend integration foundation only. FCM sender credentials,
-  device-token endpoints, consent UI, and server events are not present and were
-  not invented as a new messaging platform.
+- Push token, consent, FCM HTTP v1 delivery, open tracking, admin composer, and
+  delivery history are implemented. Real delivery remains externally blocked
+  until protected staging `google-services.json`, server service-account path,
+  and a test device are supplied; missing credentials disable Push cleanly.
 - Guest favorites stay on one installation and are not merged automatically
   after login; authenticated favorites are server-backed.
 - Shared links are accepted only for Dubizzle, DubiCars, and YallaMotor HTTPS
