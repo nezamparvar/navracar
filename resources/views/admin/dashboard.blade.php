@@ -115,6 +115,50 @@
         </x-card>
     </div>
 
+    {{-- برنامه امروز + پیگیری‌های عقب‌افتاده — matches 03-sales-dashboard.png's widgets, real
+         CalendarEvent/QuoteRequest.next_call_date data, scoped the same way as the rest of the
+         dashboard. See GAP_REPORT.md §3 for what's still not built (funnel, reduced sidebar). --}}
+    <div class="mb-6 grid gap-5 lg:grid-cols-2">
+        <x-card variant="v2" title="برنامه امروز" icon="clock">
+            @if ($todaySchedule->isEmpty())
+                <x-empty-state variant="v2" icon="clock" title="برای امروز رویدادی برنامه‌ریزی نشده است." />
+            @else
+                <div class="space-y-2">
+                    @foreach ($todaySchedule as $event)
+                        <div class="flex items-center gap-3 rounded-lg bg-v2-bg px-2.5 py-2 text-xs">
+                            <span class="shrink-0 rounded-md bg-v2-primary/15 px-2 py-1 font-black text-v2-primary num-font">{{ $event->starts_at->format('H:i') }}</span>
+                            <div class="min-w-0">
+                                <div class="truncate font-bold text-v2-text">{{ $event->displayTitle() }}</div>
+                                @if ($event->quoteRequest)
+                                    <div class="truncate text-v2-text-muted">{{ $event->quoteRequest->name }} — {{ $event->quoteRequest->car_label }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+            <div class="mt-3"><x-button :href="route('admin.calendar.index')" variant="v2-secondary" size="sm">مشاهده تقویم</x-button></div>
+        </x-card>
+
+        <x-card variant="v2" title="پیگیری‌های عقب‌افتاده" icon="alert">
+            @if ($overdueFollowUps->isEmpty())
+                <x-empty-state variant="v2" icon="check-circle" title="پیگیری عقب‌افتاده‌ای وجود ندارد." />
+            @else
+                <div class="space-y-2">
+                    @foreach ($overdueFollowUps as $r)
+                        <a href="{{ route('admin.requests.show', $r) }}" class="flex items-center justify-between gap-2 rounded-lg bg-v2-bg px-2.5 py-2 text-xs hover:bg-v2-elevated">
+                            <div class="min-w-0">
+                                <div class="truncate font-bold text-v2-text">{{ $r->name ?: 'بدون‌نام' }}</div>
+                                <div class="truncate text-v2-text-muted">{{ $r->car_label }}</div>
+                            </div>
+                            <span class="shrink-0 font-bold text-v2-error num-font">{{ $r->next_call_date->format('Y-m-d') }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </x-card>
+    </div>
+
     @if ($isAdmin)
         <div class="mb-6 grid gap-5 lg:grid-cols-2">
             <x-card variant="v2" title="وضعیت ایمپورت" icon="inbox">

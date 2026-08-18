@@ -115,6 +115,26 @@ class DashboardController extends Controller
             return ['stage' => $stage, 'count' => $leads->count(), 'sample' => $leads->take(3)];
         })->filter(fn ($row) => $row['count'] > 0)->values();
 
+        // "برنامه امروز" (today's schedule) and "پیگیری‌های عقب‌افتاده" (overdue follow-ups) —
+        // real data matching 03-sales-dashboard.png's widgets, scoped the same way as
+        // everything else on this dashboard. Not the reference's conversion-funnel/today's-
+        // schedule-with-icons composition exactly, but genuinely real, not fabricated.
+        $todaySchedule = CalendarEvent::query()
+            ->forUser($user)
+            ->with('quoteRequest')
+            ->whereDate('starts_at', today())
+            ->where('status', CalendarEvent::STATUS_SCHEDULED)
+            ->orderBy('starts_at')
+            ->get();
+
+        $overdueFollowUps = $baseScope(QuoteRequest::query())
+            ->where('is_archived', false)
+            ->whereNotNull('next_call_date')
+            ->whereDate('next_call_date', '<', today())
+            ->orderBy('next_call_date')
+            ->limit(5)
+            ->get(['id', 'name', 'car_label', 'next_call_date']);
+
         return view('admin.dashboard', [
             'pageTitle' => 'داشبورد مدیریت',
             'pageSubtitle' => 'نمای کلی از درخواست‌های استعلام قیمت و محاسبات انجام‌شده روی سایت.',
@@ -136,6 +156,8 @@ class DashboardController extends Controller
             'importStatus' => $importStatus,
             'weekEvents' => $weekEvents,
             'pipelineByStage' => $pipelineByStage,
+            'todaySchedule' => $todaySchedule,
+            'overdueFollowUps' => $overdueFollowUps,
         ]);
     }
 }
