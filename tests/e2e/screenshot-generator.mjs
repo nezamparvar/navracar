@@ -1,33 +1,33 @@
 import { chromium } from '@playwright/test';
 import { createHash } from 'crypto';
-import { mkdirSync, writeFileSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync } from 'fs';
 import { join } from 'path';
 
 const baseURL = 'http://127.0.0.1:8000';
-const outputDir = join(process.cwd(), 'docs/design-v2/implementation/screenshots/round4-remediation-r2');
+const outputDir = join(process.cwd(), 'docs/design-v2/implementation/screenshots/round5-remediation');
 mkdirSync(outputDir, { recursive: true });
 
 const routes = [
   // Public routes
-  { path: '/', name: 'homepage', auth: false, viewports: [375, 1280] },
-  { path: '/car-prices', name: 'vehicle-list', auth: false, viewports: [375, 1280] },
-  { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, viewports: [375, 1280] },
-  { path: '/calculator', name: 'calculator', auth: false, viewports: [375, 1280] },
-  { path: '/lead-form', name: 'lead-form', auth: false, viewports: [375, 1280] },
-  { path: '/track/1?phone=09120000000', name: 'request-tracking', auth: false, viewports: [375] },
+  { path: '/', name: 'homepage', auth: false, sizes: [390, 1440] },
+  { path: '/car-prices', name: 'vehicle-list', auth: false, sizes: [390, 1440] },
+  { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, sizes: [390, 1440] },
+  { path: '/calculator', name: 'calculator', auth: false, sizes: [390, 1440] },
+  { path: '/lead-form', name: 'lead-form', auth: false, sizes: [390, 1440] },
+  { path: '/track/1?phone=09120000000', name: 'request-tracking', auth: false, sizes: [390, 1440] },
   // Admin routes (need login)
-  { path: '/admin', name: 'admin-dashboard', auth: true, viewports: [375, 1280] },
-  { path: '/admin/sales-dashboard', name: 'sales-dashboard', auth: true, viewports: [375, 1280] },
-  { path: '/admin/content-dashboard', name: 'content-dashboard', auth: true, viewports: [375, 1280] },
-  { path: '/admin/calendar?view=day', name: 'calendar-day', auth: true, viewports: [375] },
-  { path: '/admin/calendar?view=week', name: 'calendar-week', auth: true, viewports: [375, 1280] },
-  { path: '/admin/calendar?view=list', name: 'calendar-list', auth: true, viewports: [375, 1280] },
-  { path: '/admin/kanban', name: 'kanban', auth: true, viewports: [375, 1280] },
+  { path: '/admin', name: 'admin-dashboard', auth: true, sizes: [390, 1440] },
+  { path: '/admin/sales-dashboard', name: 'sales-dashboard', auth: true, sizes: [390, 1440] },
+  { path: '/admin/content-dashboard', name: 'content-dashboard', auth: true, sizes: [390, 1440] },
+  { path: '/admin/calendar?view=day', name: 'calendar-day', auth: true, sizes: [390, 1440] },
+  { path: '/admin/calendar?view=week', name: 'calendar-week', auth: true, sizes: [390, 1440] },
+  { path: '/admin/calendar?view=list', name: 'calendar-list', auth: true, sizes: [390, 1440] },
+  { path: '/admin/kanban', name: 'kanban', auth: true, sizes: [390, 1440] },
 ];
 
 const viewportSizes = {
-  375: { width: 375, height: 812 },
-  1280: { width: 1280, height: 800 },
+  390: { width: 390, height: 844 },
+  1440: { width: 1440, height: 900 },
 };
 
 async function loginAdmin(page) {
@@ -42,10 +42,19 @@ function getFileSHA256(data) {
   return createHash('sha256').update(data).digest('hex');
 }
 
-async function captureScreenshot(browser, route, viewportWidth) {
-  const viewport = viewportSizes[viewportWidth];
+function getPNGDimensions(buffer) {
+  if (buffer.length < 24) return null;
+  const width = buffer.readUInt32BE(16);
+  const height = buffer.readUInt32BE(20);
+  return { width, height };
+}
+
+async function captureScreenshot(browser, route, viewportSize) {
+  const viewport = viewportSizes[viewportSize];
   const context = await browser.newContext({ viewport });
   const page = await context.newPage();
+  const results = [];
+  let hasError = false;
 
   try {
     if (route.auth) {
@@ -63,48 +72,101 @@ async function captureScreenshot(browser, route, viewportWidth) {
       throw new Error(`Page error detected on ${route.path}`);
     }
 
-    // Capture viewport-sized screenshot (not full-page)
-    const screenshotBuffer = await page.screenshot({ fullPage: false });
+    // Check for console errors
+    const consoleErrors = [];
+    page.on('console', msg => {
+      if (msg.type() === 'error') {
+        consoleErrors.push(msg.text());
+      }
+    });
 
-    const filename = `${route.name}-viewport-${viewport.width}x${viewport.height}.png`;
-    const filepath = join(outputDir, filename);
-    writeFileSync(filepath, screenshotBuffer);
+    // Capture viewport-sized screenshot
+    const viewportScreenshot = await page.screenshot({ fullPage: false });
+    const viewportDims = getPNGDimensions(viewportScreenshot);
+    if (!viewportDims || viewportDims.width !== viewport.width || viewportDims.height !== viewport.height) {
+      throw new Error(`Viewport dimensions mismatch: expected ${viewport.width}×${viewport.height}, got ${viewportDims?.width}×${viewportDims?.height}`);
+    }
 
-    const sha = getFileSHA256(screenshotBuffer);
-    console.log(`✓ ${filename} — ${sha}`);
+    const viewportFilename = `${route.name}-viewport-${viewport.width}x${viewport.height}.png`;
+    const viewportPath = join(outputDir, viewportFilename);
+    writeFileSync(viewportPath, viewportScreenshot);
+    const viewportSha = getFileSHA256(viewportScreenshot);
+    console.log(`✓ ${viewportFilename} (${viewportDims.width}×${viewportDims.height}) — ${viewportSha}`);
+    results.push({ filename: viewportFilename, sha: viewportSha, dimensions: `${viewportDims.width}×${viewportDims.height}`, type: 'viewport' });
 
-    return { filename, sha, dimensions: `${viewport.width}×${viewport.height}` };
+    // Capture full-page screenshot
+    const fullPageScreenshot = await page.screenshot({ fullPage: true });
+    const fullPageDims = getPNGDimensions(fullPageScreenshot);
+    const fullPageFilename = `${route.name}-full-${viewport.width}w.png`;
+    const fullPagePath = join(outputDir, fullPageFilename);
+    writeFileSync(fullPagePath, fullPageScreenshot);
+    const fullPageSha = getFileSHA256(fullPageScreenshot);
+    console.log(`✓ ${fullPageFilename} (${fullPageDims?.width}×${fullPageDims?.height}) — ${fullPageSha}`);
+    results.push({ filename: fullPageFilename, sha: fullPageSha, dimensions: `${fullPageDims?.width}×${fullPageDims?.height}`, type: 'full-page' });
+
+  } catch (err) {
+    console.error(`✗ ${route.name} (${viewportSize}): ${err.message}`);
+    hasError = true;
   } finally {
     await context.close();
   }
+
+  return { results, hasError };
 }
 
 async function main() {
   const browser = await chromium.launch();
-  const results = [];
+  const allResults = [];
+  let totalFailed = 0;
 
   console.log(`\nCapturing screenshots to: ${outputDir}\n`);
 
   for (const route of routes) {
-    for (const viewportWidth of route.viewports) {
-      try {
-        const result = await captureScreenshot(browser, route, viewportWidth);
-        results.push({ route: route.name, ...result });
-      } catch (err) {
-        console.error(`✗ ${route.name} (${viewportWidth}): ${err.message}`);
+    for (const size of route.sizes) {
+      const { results, hasError } = await captureScreenshot(browser, route, size);
+      if (hasError) {
+        totalFailed++;
+      } else {
+        allResults.push(...results.map(r => ({ route: route.name, ...r })));
       }
     }
   }
 
   await browser.close();
 
+  // Verify capture counts
+  const expectedViewportCount = routes.reduce((sum, r) => sum + r.sizes.length, 0);
+  const expectedFullPageCount = routes.reduce((sum, r) => sum + r.sizes.length, 0);
+  const totalExpected = expectedViewportCount + expectedFullPageCount;
+  const totalCaptured = allResults.length;
+
+  console.log(`\n## Screenshot Summary\n`);
+  console.log(`Expected captures: ${totalExpected} (${expectedViewportCount} viewport + ${expectedFullPageCount} full-page)`);
+  console.log(`Actual captures: ${totalCaptured}`);
+  console.log(`Failed routes: ${totalFailed}`);
+
+  if (totalFailed > 0) {
+    console.error(`\n❌ Screenshot generation failed: ${totalFailed} route(s) failed`);
+    process.exit(1);
+  }
+
+  if (totalCaptured !== totalExpected) {
+    console.error(`\n❌ Screenshot count mismatch: expected ${totalExpected}, got ${totalCaptured}`);
+    process.exit(1);
+  }
+
   // Print manifest table
   console.log('\n## Screenshot Manifest\n');
-  console.log('| Page | Viewport | Filename | SHA-256 |');
-  console.log('|---|---|---|---|');
-  for (const r of results) {
-    console.log(`| ${r.route} | ${r.dimensions} | ${r.filename} | ${r.sha} |`);
+  console.log('| Page | Type | Viewport | Filename | SHA-256 |');
+  console.log('|---|---|---|---|---|');
+  for (const r of allResults) {
+    console.log(`| ${r.route} | ${r.type} | ${r.dimensions} | ${r.filename} | ${r.sha} |`);
   }
+
+  console.log(`\n✅ All ${totalCaptured} screenshots captured successfully`);
 }
 
-main().catch(console.error);
+main().catch(err => {
+  console.error('Fatal error:', err);
+  process.exit(1);
+});

@@ -68,7 +68,7 @@ class E2eSeeder extends Seeder
             ['slug' => 'demo-volvo-xc90', 'title_fa' => 'ولوو XC90 B6', 'label' => 'Volvo XC90 B6', 'make' => 'volvo', 'model' => 'xc90', 'year' => 2024, 'price' => 295000, 'category' => 'c2500', 'km' => 15000, 'fuel' => 'بنزینی', 'color' => '#102240'],
         ];
 
-        foreach ($demoListings as $d) {
+        foreach ($demoListings as $idx => $d) {
             $listing = CarListing::updateOrCreate(
                 ['slug' => $d['slug']],
                 [
@@ -85,7 +85,7 @@ class E2eSeeder extends Seeder
                     'fuel_type' => $d['fuel'],
                     'transmission_type' => 'اتوماتیک',
                     'category_id' => $d['category'],
-                    'published_at' => now()->subDays(random_int(0, 10)),
+                    'published_at' => now()->subDays(5 + ($idx % 3)),
                 ],
             );
             $this->attachGallery($listing, $d['label'], $d['color']);
@@ -99,13 +99,25 @@ class E2eSeeder extends Seeder
         $stages = PipelineStage::where('is_active', true)->get();
         $stageCount = $stages->count();
         $requestIndex = 0;
+        $fixedHours = [9, 13, 15, 17, 11];  // Fixed time slots for deterministic scheduling
         for ($dayOffset = 13; $dayOffset >= 0; $dayOffset--) {
             $dayBase = now()->subDays($dayOffset)->startOfDay();
             $dailyCount = match ($dayOffset) {
                 0 => 5,     // today: 5 requests
                 1 => 3,     // yesterday: 3
                 2 => 4,     // 2 days ago: 4
-                default => random_int(2, 4),
+                3 => 3,     // 3 days ago: 3
+                4 => 2,     // 4 days ago: 2
+                5 => 4,     // 5 days ago: 4
+                6 => 3,     // 6 days ago: 3
+                7 => 2,     // 7 days ago: 2
+                8 => 3,     // 8 days ago: 3
+                9 => 4,     // 9 days ago: 4
+                10 => 2,    // 10 days ago: 2
+                11 => 3,    // 11 days ago: 3
+                12 => 2,    // 12 days ago: 2
+                13 => 3,    // 13 days ago: 3
+                default => 2,
             };
             for ($j = 0; $j < $dailyCount; $j++) {
                 $listingIdx = ($requestIndex + $j) % count($demoListings);
@@ -113,10 +125,12 @@ class E2eSeeder extends Seeder
                 $isHot = ($requestIndex + $j) % 3 === 0;
                 $nextCall = match ($dayOffset) {
                     0, 1 => null,
-                    2, 3 => $dayBase->copy()->addDays(random_int(1, 3))->toDateString(),
-                    default => $dayBase->copy()->subDays(random_int(1, 5))->toDateString(),
+                    2, 3 => $dayBase->copy()->addDays(2)->toDateString(),
+                    4, 5 => $dayBase->copy()->addDays(3)->toDateString(),
+                    default => $dayBase->copy()->addDays(1)->toDateString(),
                 };
                 $stageId = $stageCount > 0 ? $stages[($requestIndex + $j) % $stageCount]->id : null;
+                $hourOffset = $fixedHours[$j % count($fixedHours)];
                 QuoteRequest::create([
                     'name' => 'مشتری '.($requestIndex + $j + 1),
                     'phone' => '0912000'.str_pad((string) ($requestIndex + $j), 4, '0', STR_PAD_LEFT),
@@ -132,7 +146,7 @@ class E2eSeeder extends Seeder
                     'created_by' => $sales->id,
                     'current_stage_id' => $stageId,
                     'next_call_date' => $nextCall,
-                    'created_at' => $dayBase->copy()->addHours(random_int(8, 18))->addMinutes(random_int(0, 59)),
+                    'created_at' => $dayBase->copy()->addHours($hourOffset)->setMinute(0)->setSecond(0),
                 ]);
             }
             $requestIndex += $dailyCount;
@@ -141,17 +155,18 @@ class E2eSeeder extends Seeder
         // Rich calculation logs across categories for category distribution + top cars widgets
         $categoryList = array_values(array_unique(array_column($demoListings, 'category')));
         $carLabelList = array_column($demoListings, 'title_fa');
-        $calcIndex = 0;
+        $calcHours = [9, 11, 14, 16, 18, 10, 13, 17];  // Fixed time slots
         for ($i = 0; $i < 40; $i++) {
             $catIdx = $i % count($categoryList);
             $carIdx = ($i * 3) % count($carLabelList);
-            $dayOffset = random_int(0, 13);
+            $dayOffset = ($i * 2) % 14;  // Distribute across 14 days deterministically
             $carLabelIdx = array_search($carLabelList[$carIdx], array_column($demoListings, 'title_fa'));
+            $hourOffset = $calcHours[$i % count($calcHours)];
             CalculationLog::create([
                 'car_label' => $carLabelList[$carIdx],
                 'category' => $categoryList[$catIdx],
                 'real_price_aed' => $demoListings[$carLabelIdx]['price'],
-                'created_at' => now()->subDays($dayOffset)->addHours(random_int(8, 20))->addMinutes(random_int(0, 59)),
+                'created_at' => now()->subDays($dayOffset)->addHours($hourOffset)->setMinute(0)->setSecond(0),
             ]);
         }
 
