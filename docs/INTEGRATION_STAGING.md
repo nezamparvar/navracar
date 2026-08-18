@@ -135,7 +135,9 @@ pricing, quote request, requests, account, favorites, and mobile insights.
   a real notification.
 - A production Android release requires the owner-controlled signing key. It
   must never be committed or substituted with the debug key.
-- The pull request requires the repository's approving review before merge.
+- The pull request is technically mergeable, but remains open until the owner
+  accepts the stage-first result. That operational approval is intentionally
+  stricter than the repository's current zero-review branch setting.
 - The one observed packaging failure was a transient Packagist security-feed
   timeout; rerunning the same locked workflow and commit succeeded without
   weakening the audit.
@@ -143,7 +145,8 @@ pricing, quote request, requests, account, favorites, and mobile insights.
 ## Production promotion checklist
 
 - [ ] Owner accepts the integration staging UI and workflows.
-- [ ] PR `#46` receives the required independent approval and is merged.
+- [ ] After owner staging acceptance, PR `#46` is merged without bypassing its
+      required status checks or conversation-resolution rule.
 - [ ] All six CI jobs pass on the resulting exact `main` HEAD.
 - [ ] A new immutable candidate is built from that exact `main` HEAD.
 - [ ] The new main candidate is deployed to staging and the live matrix above
