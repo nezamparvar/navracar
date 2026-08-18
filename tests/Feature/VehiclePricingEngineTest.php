@@ -163,7 +163,12 @@ class VehiclePricingEngineTest extends TestCase
 
                 $this->assertEqualsWithDelta($legacyTotal, $result->totals['finalTotalToman'], 0.01, $categoryId.' @ '.$priceAed);
 
-                $listing = new CarListing(['price_aed' => $priceAed, 'category_id' => $categoryId]);
+                // customs_price_aed is set explicitly here (equal to $priceAed, matching $input
+                // above) so this stays a delegate-correctness check — without it,
+                // estimatedLandedCostToman() would correctly apply the default customs
+                // discount via suggestCustomsPrice(), which is a different, already-covered
+                // scenario (see PublicCostDisplayTest and the customs-price-default test above).
+                $listing = new CarListing(['price_aed' => $priceAed, 'customs_price_aed' => $priceAed, 'category_id' => $categoryId]);
                 $this->assertEqualsWithDelta(
                     $result->totals['finalTotalToman'],
                     $listing->estimatedLandedCostToman(50_000, 35_000),

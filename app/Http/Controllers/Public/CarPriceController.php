@@ -126,7 +126,7 @@ class CarPriceController extends Controller
             'specs' => $specs,
             'freeRate' => $freeRate,
             'customsRate' => $customsRate,
-            'pricingTotals' => $carListing->pricingTotals($freeRate, $customsRate),
+            'pricingSummary' => $carListing->publicPricingSummary($freeRate, $customsRate),
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
             'brandLabel' => $brandLabel,

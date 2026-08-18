@@ -217,10 +217,12 @@
         {{--
             Real 3-category summary only (DESIGN_SPEC.md §4): vehicle price / total customs
             clearance costs / plate costs. Values come straight from
-            CarListing::pricingTotals() -> VehiclePricingService, the single source of the
-            formula — nothing here recomputes anything. The service-fee row is never read from
-            $pricingTotals for display, matching the existing breakdownForDisplay() precedent
-            (see QuoteRequest::breakdownForDisplay). The full interactive multi-field calculator
+            CarListing::publicPricingSummary() -> VehiclePricingResult::publicDisplaySummary(),
+            the single tested contract for this exact 3-category public view (see
+            PublicCostDisplayTest) — nothing here recomputes anything. The service fee is folded
+            into the clearance-total row (never shown as its own line) so these 3 rows still sum
+            to the real grand total, matching the existing breakdownForDisplay() precedent (see
+            QuoteRequest::breakdownForDisplay). The full interactive multi-field calculator
             (x-car-calculator) is intentionally not embedded here — the reference and
             DESIGN_SPEC.md §4 show only this summary plus the "محاسبه هزینه" secondary CTA to the
             dedicated calculator page, which still owns the full interactive form.
@@ -229,9 +231,9 @@
             <x-card variant="v2" title="خلاصه هزینه‌های واردات (تقریبی)" icon="calculator" subtitle="بر اساس نرخ ارز امروز؛ برای محاسبه دقیق‌تر یا تغییر مفروضات از «محاسبه هزینه» استفاده کنید.">
                 @php
                     $costRows = [
-                        ['label' => 'قیمت خودرو', 'value' => $pricingTotals['realPriceToman'], 'color' => '#1677FF'],
-                        ['label' => 'جمع هزینه‌های ترخیص', 'value' => $pricingTotals['customsSubtotalToman'], 'color' => '#20C7E9'],
-                        ['label' => 'هزینه‌های پلاک', 'value' => $pricingTotals['plateSubtotalToman'], 'color' => '#8B5CF6'],
+                        ['label' => 'قیمت خودرو', 'value' => $pricingSummary['car_price_toman'], 'color' => '#1677FF'],
+                        ['label' => 'جمع هزینه‌های ترخیص', 'value' => $pricingSummary['clearance_total_toman'], 'color' => '#20C7E9'],
+                        ['label' => 'هزینه‌های پلاک', 'value' => $pricingSummary['plate_total_toman'], 'color' => '#8B5CF6'],
                     ];
                     $costTotal = max(1, array_sum(array_column($costRows, 'value')));
                 @endphp
