@@ -14,11 +14,14 @@ use Illuminate\Support\Carbon;
 class ContentDashboardController extends Controller
 {
     /**
-     * Required fields for the review-queue item quality score (§ round-4 content-dashboard
-     * remediation) — the same fields DESIGN_SPEC.md calls out for a marketplace-imported
-     * listing (title, brand/model, year, price, mileage, engine volume) plus at least one
-     * image. Deterministic: score = (present fields / count(self::QUALITY_FIELDS)) * 100,
-     * rounded. No randomness, no fabricated figures.
+     * The review-queue item quality score's text/numeric criteria — 7 of the 8 fields
+     * DESIGN_SPEC.md calls out for a marketplace-imported listing (title, brand/model, year,
+     * price, mileage, engine volume). The 8th criterion, "at least one image", is NOT a
+     * parsed_json key so it is checked separately (ImportQueueItem::images_imported > 0) in
+     * decorateQueueItem() — both are counted in the single formula there:
+     * score = (present criteria out of count(QUALITY_FIELDS) + 1 image criterion) * 100, rounded.
+     * Deterministic, no randomness, no fabricated figures. See ContentDashboardWidgetsTest for
+     * the exact contract this formula must match.
      */
     private const QUALITY_FIELDS = ['title', 'make', 'model', 'year', 'price_aed', 'mileage_km', 'engine_capacity_cc'];
 
@@ -93,7 +96,8 @@ class ContentDashboardController extends Controller
 
     /**
      * Per-item review-queue quality score from the real marketplace-import payload
-     * (parsed_json) — no fabricated numbers, see self::QUALITY_FIELDS.
+     * (parsed_json) plus the real imported-image count — no fabricated numbers, see
+     * self::QUALITY_FIELDS's doc comment for the exact 8-criterion formula.
      */
     private function decorateQueueItem(ImportQueueItem $item): array
     {
@@ -104,7 +108,12 @@ class ContentDashboardController extends Controller
                 $present++;
             }
         }
-        $score = (int) round($present / count(self::QUALITY_FIELDS) * 100);
+        $imagesImported = (int) $item->images_imported;
+        if ($imagesImported > 0) {
+            $present++;
+        }
+        $totalCriteria = count(self::QUALITY_FIELDS) + 1;
+        $score = (int) round($present / $totalCriteria * 100);
 
         $description = trim((string) ($data['description'] ?? ''));
         $metaState = $description === '' ? 'بدون متا' : (mb_strlen($description) < 80 ? 'نیازمند اصلاح' : 'کامل');
@@ -118,7 +127,7 @@ class ContentDashboardController extends Controller
                 'dubizzle' => 'Dubizzle',
                 default => $item->source_platform ?: 'دستی',
             },
-            'imagesImported' => (int) $item->images_imported,
+            'imagesImported' => $imagesImported,
             'score' => $score,
             'metaState' => $metaState,
         ];

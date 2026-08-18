@@ -74,7 +74,7 @@ class ContentDashboardWidgetsTest extends TestCase
             'images_imported' => 4,
         ]);
 
-        // Only 2 of the 7 quality fields present -> 2/7 rounded = 29%.
+        // Only 2 of the 7 text/numeric fields present, no images -> 2/8 = 25%.
         ImportQueueItem::create([
             'source' => 'html', 'source_platform' => 'yallamotor', 'capture_method' => 'paste',
             'source_url' => 'https://yallamotor.com/listing/2', 'status' => 'needs_review',
@@ -93,8 +93,32 @@ class ContentDashboardWidgetsTest extends TestCase
         $this->assertSame('کامل', $full['metaState']);
 
         $partial = collect($rows)->firstWhere('source', 'YallaMotor');
-        $this->assertSame((int) round(2 / 7 * 100), $partial['score']);
+        $this->assertSame((int) round(2 / 8 * 100), $partial['score']);
         $this->assertSame('بدون متا', $partial['metaState']);
+        $this->assertSame(0, $partial['imagesImported']);
+    }
+
+    public function test_quality_score_counts_images_as_the_8th_criterion(): void
+    {
+        $user = $this->contentManager();
+
+        // All 7 text/numeric fields present, but zero images -> 7/8 = 88%, not 100%.
+        ImportQueueItem::create([
+            'source' => 'html', 'source_platform' => 'dubicars', 'capture_method' => 'paste',
+            'source_url' => 'https://dubicars.com/listing/4', 'status' => 'needs_review',
+            'parsed_json' => [
+                'title' => 'Kia Sorento 2021', 'make' => 'kia', 'model' => 'sorento', 'year' => '2021',
+                'price_aed' => 90000, 'mileage_km' => 40000, 'engine_capacity_cc' => 2500,
+            ],
+            'images_imported' => 0,
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.content-dashboard'));
+        $response->assertOk();
+
+        $row = collect($response->viewData('reviewQueue'))->firstWhere('source', 'DubiCars');
+        $this->assertSame((int) round(7 / 8 * 100), $row['score']);
+        $this->assertLessThan(100, $row['score']);
     }
 
     public function test_content_health_is_the_average_of_real_field_completion_across_the_catalog(): void
