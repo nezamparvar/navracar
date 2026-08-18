@@ -18,6 +18,7 @@ const CONFIG = {
 };
 
 const CURRENT_CONFIG = CONFIG[EXTENSION_ENVIRONMENT];
+const CAPTURE_REQUEST_TIMEOUT_MS = 12000;
 
 // Listen for messages from content script and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -110,14 +111,32 @@ async function handleSendCapture(payload) {
   }
 
   try {
-    const response = await fetch(`${CURRENT_CONFIG.apiUrl}/browser-capture/v1/listings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token.token}`,
-      },
-      body: JSON.stringify(payload),
+    const controller = new AbortController();
+    let timeout;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeout = setTimeout(() => {
+        controller.abort();
+        reject(new Error('NavraCar API request timeout'));
+      }, CAPTURE_REQUEST_TIMEOUT_MS);
     });
+
+    let response;
+    try {
+      response = await Promise.race([
+        fetch(`${CURRENT_CONFIG.apiUrl}/browser-capture/v1/listings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token.token}`,
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        }),
+        timeoutPromise,
+      ]);
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const data = await parseApiResponse(response);
 
@@ -126,10 +145,16 @@ async function handleSendCapture(payload) {
       return { status: 'error', error: apiError(data, 'Failed to send capture') };
     }
 
-    // Open review page
-    if (data.review_url) {
-      chrome.tabs.create({ url: data.review_url });
+    if (data.status !== 'success' || !data.queue_item_id || !data.review_url) {
+      return { status: 'error', error: 'NavraCar did not confirm that the capture was queued.' };
     }
+
+    const reviewUrl = new URL(data.review_url, CURRENT_CONFIG.baseUrl);
+    if (reviewUrl.origin !== new URL(CURRENT_CONFIG.baseUrl).origin) {
+      return { status: 'error', error: 'NavraCar returned an invalid review URL.' };
+    }
+
+    chrome.tabs.create({ url: reviewUrl.href });
 
     return { status: 'success', data };
   } catch (error) {
@@ -242,32 +267,22 @@ async function handleKeyboardCapture() {
         return;
       }
 
-      // Listen for capture completion
-      const timeoutId = setTimeout(() => {
-        showNotification('خطا', 'زمان انتظار ختم شد');
-      }, 10000);
+      if (response?.status !== 'success' || !response.payload) {
+        showNotification('خطا', response?.error || 'اطلاعات آگهی استخراج نشد');
+        return;
+      }
 
-      const listener = (request) => {
-        if (request.action === 'sendCaptureToNavraCar') {
-          clearTimeout(timeoutId);
-          chrome.runtime.onMessage.removeListener(listener);
-
-          // Send capture
-          handleSendCapture(request.payload)
-            .then((result) => {
-              if (result.status === 'success') {
-                showNotification('موفقیت', 'خودرو با موفقیت ارسال شد');
-              } else {
-                showNotification('خطا', result.error || 'خطا در ارسال');
-              }
-            })
-            .catch((error) => {
-              showNotification('خطا', error.message);
-            });
-        }
-      };
-
-      chrome.runtime.onMessage.addListener(listener);
+      handleSendCapture(response.payload)
+        .then((result) => {
+          if (result.status === 'success') {
+            showNotification('موفقیت', 'خودرو با موفقیت ارسال شد');
+          } else {
+            showNotification('خطا', result.error || 'خطا در ارسال');
+          }
+        })
+        .catch((error) => {
+          showNotification('خطا', error.message);
+        });
     });
   } catch (error) {
     showNotification('خطا', error.message);

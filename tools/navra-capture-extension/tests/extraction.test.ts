@@ -6,11 +6,24 @@
 describe('Price Parsing', () => {
   const parsePrice = (text: string | null | undefined): number | null => {
     if (!text) return null;
-    const match = text.match(/[\d,]+/);
+
+    const lower = text.toLowerCase();
+
+    // Reject installment/monthly prices (key fix)
+    if (/(?:per\s+month|monthly|\/month|installment|aed\s*\d+\s*\/|monthly\s+payment|subscription)/i.test(lower)) {
+      return null;
+    }
+
+    const match = text.match(/[\d,]+(?:\.[\d]+)?/);
     if (!match) return null;
-    const numStr = match[0].replace(/,/g, '');
+
+    let numStr = match[0].replace(/,/g, '').replace(/\./g, '');
     const num = parseFloat(numStr);
-    return !isNaN(num) ? num : null;
+
+    // Sanity check: price between 500 and 5,000,000 AED
+    if (isNaN(num) || num < 500 || num > 5000000) return null;
+
+    return num;
   };
 
   it('should parse AED prices with thousands separator', () => {
@@ -29,11 +42,30 @@ describe('Price Parsing', () => {
     expect(parsePrice('50,000 AED')).toBe(50000);
   });
 
+  it('should REJECT monthly/installment prices', () => {
+    // Real world examples from DubiCars meta tags
+    expect(parsePrice('AED 18,082 Per Month')).toBeNull();
+    expect(parsePrice('Monthly: 50,000')).toBeNull();
+    expect(parsePrice('999,000/month')).toBeNull();
+    expect(parsePrice('50,000 monthly')).toBeNull();
+    expect(parsePrice('Installment: 15,000')).toBeNull();
+  });
+
   it('should return null for invalid prices', () => {
     expect(parsePrice(null)).toBeNull();
     expect(parsePrice(undefined)).toBeNull();
     expect(parsePrice('')).toBeNull();
     expect(parsePrice('no price here')).toBeNull();
+    expect(parsePrice('100')).toBeNull(); // Below minimum
+    expect(parsePrice('6000000')).toBeNull(); // Above maximum
+  });
+
+  it('should parse realistic vehicle prices', () => {
+    // Real-world examples
+    expect(parsePrice('AED 999,000')).toBe(999000);
+    expect(parsePrice('1,350,000 AED')).toBe(1350000);
+    expect(parsePrice('250000 AED')).toBe(250000);
+    expect(parsePrice('2,500,000')).toBe(2500000);
   });
 });
 

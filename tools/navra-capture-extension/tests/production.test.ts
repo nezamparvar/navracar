@@ -8,6 +8,10 @@ import { DubizzleAdapter } from '../src/adapters/dubizzle-adapter';
 import { DubiCarsAdapter } from '../src/adapters/dubicars-adapter';
 import { YallaMotorAdapter } from '../src/adapters/yallamotor-adapter';
 import { AdapterRegistry } from '../src/adapters/adapter-registry';
+import fs from 'fs';
+import path from 'path';
+
+const extensionRoot = path.join(__dirname, '..');
 
 /**
  * Adapter Registry: Production Usage
@@ -272,6 +276,16 @@ describe('Message Listener Management', () => {
     // captureCurrentPage() creates listener and removes after use
     // Not addListener() in loop without removal
     expect(true).toBe(true); // Verified in popup.js fix
+  });
+
+  it('binds delegated popup actions before asynchronous initialization', () => {
+    const popup = fs.readFileSync(path.join(extensionRoot, 'src/popup/popup.js'), 'utf8');
+
+    expect(popup.indexOf('setupAuthenticatedListeners()'))
+      .toBeLessThan(popup.indexOf("document.addEventListener('DOMContentLoaded'"));
+    expect(popup).toContain("document.addEventListener('click'");
+    expect(popup).toContain('chrome.runtime.lastError');
+    expect(popup).toContain('Message timeout');
   });
 
   it('should handle timeout without leaving listener dangling', () => {

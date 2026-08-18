@@ -88,4 +88,29 @@ class CarListingFlowTest extends TestCase
         $index->assertOk();
         $index->assertSee($listing->title_fa, false);
     }
+
+    public function test_publishing_backfills_empty_seo_metadata_without_overwriting_manual_values(): void
+    {
+        $admin = $this->admin();
+        $listing = CarListing::create([
+            'title_fa' => 'تویوتا کمری مدل ۲۰۲۴',
+            'slug' => 'toyota-camry-2024-test',
+            'source_url' => '',
+            'source_site' => 'manual',
+            'price_aed' => 50000,
+            'category_id' => 'c2000',
+            'delivery_days' => 30,
+            'meta_title' => null,
+            'meta_description' => null,
+            'status' => 'draft',
+            'created_by' => $admin->id,
+        ]);
+
+        $this->actingAs($admin)->post(route('admin.car-listings.publish', $listing))->assertRedirect();
+
+        $listing->refresh();
+        $this->assertSame('تویوتا کمری مدل ۲۰۲۴ | ناوراکار', $listing->meta_title);
+        $this->assertNotEmpty($listing->meta_description);
+        $this->assertStringContainsString('تویوتا کمری مدل ۲۰۲۴', $listing->meta_description);
+    }
 }

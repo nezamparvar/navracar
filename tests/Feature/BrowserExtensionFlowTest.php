@@ -13,6 +13,12 @@ class BrowserExtensionFlowTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->withoutVite();
+    }
+
     private function makeUser(string $role): AdminUser
     {
         return AdminUser::create([
@@ -121,6 +127,11 @@ class BrowserExtensionFlowTest extends TestCase
         $this->assertSame('draft', $listing->status);
         $this->assertNull($listing->customs_price_aed);
         $this->assertSame(50000.0, (float) $listing->price_aed);
+        $this->assertSame('Toyota Camry 2020', $listing->title_en);
+        $this->assertSame('تویوتا کمری مدل ۲۰۲۰', $listing->title_fa);
+        $this->assertSame('تویوتا کمری مدل ۲۰۲۰ | ناوراکار', $listing->meta_title);
+        $this->assertNotEmpty($listing->meta_description);
+        $this->assertStringContainsString('تویوتا کمری مدل ۲۰۲۰', $listing->meta_description);
     }
 
     public function test_sales_user_cannot_manage_pairings_or_import_queue(): void
