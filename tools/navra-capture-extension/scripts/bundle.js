@@ -24,7 +24,6 @@ function createEnvironmentBuild(environment) {
   // Copy manifest
   let manifest = fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8');
   const manifestObj = JSON.parse(manifest);
-  manifestObj.version = '1.0.0';
   const apiHostPermissions = new Set(Object.values(API_HOST_PERMISSIONS));
   manifestObj.host_permissions = manifestObj.host_permissions.filter(
     (permission) => !apiHostPermissions.has(permission),
