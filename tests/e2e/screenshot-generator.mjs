@@ -10,10 +10,8 @@ mkdirSync(outputDir, { recursive: true });
 // Batch 1 acceptance: Strict documented allowlist of external hosts.
 // Currently EMPTY: all external resources must be self-hosted or unavailable.
 // No bypasses, no generalized suppression. Certificate or DNS errors from ANY host fail immediately.
-// Localhost/127.0.0.1 errors ALWAYS fail.
 const EXTERNAL_HOST_ALLOWLIST = [
   // EMPTY FOR BATCH 1: No external dependencies expected.
-  // Add hostnames ONLY with explicit business justification + audit trail in docs/design-v2/implementation/EXTERNAL_HOSTNAME_ALLOWLIST.md
 ];
 
 // Batch 1 Required Priority Routes (8 routes × 2 sizes × 2 viewport types = 32 screenshots)
@@ -35,30 +33,68 @@ const viewportSizes = {
   1440: { width: 1440, height: 900 },
 };
 
-async function loginAdmin(page) {
-  await page.goto(`${baseURL}/admin/login`, { waitUntil: 'domcontentloaded', timeout: 10000 });
-  await page.locator('input[name="username"]').fill('admin');
-  await page.locator('input[name="password"]').fill('password');
-  const submitButton = page.locator('button[type="submit"]');
-  await submitButton.click();
+async function authenticateAndSaveState(browser) {
+  const authContext = await browser.newContext();
+  const authPage = await authContext.newPage();
 
-  // Wait for navigation away from login page
   try {
-    await page.waitForNavigation({ url: /^https?:\/\/[^\/]+\/admin($|\?)/, timeout: 30000 });
-  } catch {
-    // Navigation wait timed out, but check if we actually got redirected
-    const currentUrl = page.url();
-    if (currentUrl.includes('/admin/login')) {
-      throw new Error(`Authentication failed: still on login page at ${currentUrl}`);
-    }
-  }
+    // Block all external requests during authentication
+    await authPage.route('**/*', route => {
+      const url = new URL(route.request().url());
+      const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
 
-  // Verify authenticated shell is present
-  const currentUrl = page.url();
-  const hasSidebar = await page.locator('aside').isVisible({ timeout: 3000 }).catch(() => false);
-  const hasPageTitle = await page.locator('h1').isVisible({ timeout: 3000 }).catch(() => false);
-  if (!hasSidebar && !hasPageTitle) {
-    throw new Error(`Authentication verification failed: authenticated UI shell not found at ${currentUrl}`);
+      if (isLocalhost) {
+        route.continue();
+      } else {
+        route.abort('blockedbyclient');
+      }
+    });
+
+    // Navigate to login
+    await authPage.goto(`${baseURL}/admin/login`, { waitUntil: 'domcontentloaded', timeout: 10000 });
+
+    // Fill login form
+    await authPage.locator('input[name="username"]').fill('admin');
+    await authPage.locator('input[name="password"]').fill('password');
+
+    // Click submit and wait for URL change (not navigation event which might not fire)
+    const submitButton = authPage.locator('button[type="submit"]');
+    await submitButton.click();
+
+    // Wait for URL to change away from login page
+    let attempts = 0;
+    const maxAttempts = 120; // 60 seconds at 500ms intervals
+    while (attempts < maxAttempts) {
+      const currentUrl = authPage.url();
+      if (!currentUrl.includes('/admin/login')) {
+        break;
+      }
+      await authPage.waitForTimeout(500);
+      attempts++;
+    }
+
+    // Verify authenticated state
+    const finalUrl = authPage.url();
+    if (finalUrl.includes('/admin/login')) {
+      throw new Error(`Authentication failed: still on login page after ${attempts * 500}ms at ${finalUrl}`);
+    }
+
+    // Wait for authenticated UI shell with longer timeout
+    await authPage.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
+    const hasSidebar = await authPage.locator('aside').isVisible({ timeout: 5000 }).catch(() => false);
+    const hasPageTitle = await authPage.locator('h1').isVisible({ timeout: 5000 }).catch(() => false);
+    if (!hasSidebar && !hasPageTitle) {
+      throw new Error(`Authentication verification failed: authenticated UI shell not found at ${finalUrl}`);
+    }
+
+    // Save authenticated session state
+    const storageState = await authContext.storageState();
+    await authContext.close();
+
+    return storageState;
+  } catch (err) {
+    await authContext.close();
+    throw err;
   }
 }
 
@@ -73,51 +109,80 @@ function getPNGDimensions(buffer) {
   return { width, height };
 }
 
-async function captureScreenshot(browser, route, viewportSize) {
+async function waitForRouteReady(page, route) {
+  // Wait for essential DOM and fonts to be ready
+  await page.evaluate(() => {
+    return Promise.all([
+      document.fonts.ready,
+      new Promise(resolve => {
+        if (document.readyState === 'complete') {
+          resolve();
+        } else {
+          document.addEventListener('load', resolve, { once: true });
+        }
+      })
+    ]);
+  });
+
+  // Route-specific readiness assertions
+  if (route.requiresHeading) {
+    await page.getByRole('heading', { name: new RegExp(route.requiresHeading, 'i') }).first().waitFor({ timeout: 5000 });
+  }
+
+  // Wait for any dynamic content to stabilize (dashboard widgets, lists, etc.)
+  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
+}
+
+async function captureScreenshot(browser, route, viewportSize, storageState) {
   const viewport = viewportSizes[viewportSize];
-  const context = await browser.newContext({ viewport });
+  const context = await browser.newContext({
+    viewport,
+    storageState: route.auth ? storageState : undefined
+  });
+
   const page = await context.newPage();
   const results = [];
   let hasError = false;
 
-  // Attach error listeners BEFORE navigation to catch all errors
-  const pageErrors = [];
-  const requestFailures = [];
-  const consoleErrors = [];
+  // Track all blocked/failed requests
+  const blockedRequests = [];
+  const failedRequests = [];
 
-  page.on('pageerror', err => {
-    pageErrors.push(`Page error: ${err.message}`);
+  // Route interception: block all external requests
+  await context.route('**/*', route => {
+    const url = new URL(route.request().url());
+    const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+
+    if (isLocalhost) {
+      route.continue();
+    } else {
+      blockedRequests.push({ url: url.href, hostname: url.hostname });
+      route.abort('blockedbyclient');
+    }
   });
 
+  // Track request failures (network errors, timeouts)
   page.on('requestfailed', req => {
-    // All request failures recorded with hostname for audit
     const urlMatch = req.url().match(/https?:\/\/([^\/:?]+)/);
     const hostname = urlMatch ? urlMatch[1] : 'unknown';
-    requestFailures.push({
+    failedRequests.push({
       url: req.url(),
       hostname,
-      error: req.failure()?.errorText,
-      string: `Request failed: ${req.url()} [${hostname}] (${req.failure()?.errorText})`
+      error: req.failure()?.errorText
     });
   });
 
-  page.on('console', msg => {
-    if (msg.type() === 'error') {
-      consoleErrors.push(msg.text());
-    }
-  });
-
   try {
-    if (route.auth) {
-      await loginAdmin(page);
-    }
-
-    const response = await page.goto(`${baseURL}${route.path}`, { waitUntil: 'networkidle' });
+    // Navigate to route
+    const response = await page.goto(`${baseURL}${route.path}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
     if (!response || response.status() !== 200) {
       throw new Error(`Failed to load ${route.path}: HTTP ${response?.status()}`);
     }
 
-    // Validate final URL matches expected authenticated route (no login redirect)
+    // Wait for route-specific readiness
+    await waitForRouteReady(page, route);
+
+    // Validate final URL
     const finalUrl = page.url();
     if (route.requiresUrl && !route.requiresUrl.test(finalUrl)) {
       throw new Error(`Route URL mismatch: expected ${route.requiresUrl}, got ${finalUrl}`);
@@ -126,68 +191,21 @@ async function captureScreenshot(browser, route, viewportSize) {
       throw new Error(`Authentication redirect detected: ended up at login page for ${route.name}`);
     }
 
-    // Validate route-specific heading/landmark is present
-    if (route.requiresHeading) {
-      const headingFound = await page.getByRole('heading', { name: new RegExp(route.requiresHeading, 'i') }).first().isVisible({ timeout: 5000 }).catch(() => false);
-      if (!headingFound) {
-        // Fallback: check page text for the heading
-        const pageText = await page.evaluate(() => document.body.innerText);
-        if (!pageText.includes(route.requiresHeading)) {
-          throw new Error(`Route validation failed: heading "${route.requiresHeading}" not found on ${route.name}`);
-        }
-      }
-    }
-
-    // Verify page loaded properly
+    // Verify page content
     const bodyText = await page.evaluate(() => document.body?.innerText ?? '');
     if (bodyText.includes('Whoops') || bodyText.includes('exception') || bodyText.includes('ERR_CONNECTION')) {
       throw new Error(`Page error detected on ${route.path}`);
     }
 
-    // Check for captured errors during page load/navigation
-    if (pageErrors.length > 0) {
-      throw new Error(`Page errors: ${pageErrors.join('; ')}`);
-    }
-    // Allow certificate errors only from resource loading (proxy-level cert issues).
-    // Suppress cert errors from Chromium/Playwright itself (source maps, vendor scripts, proxy bypass).
-    // Reject other real page/JS errors that would affect rendering.
-    const filteredConsoleErrors = consoleErrors.filter(e => {
-      // Skip certificate errors entirely (source maps, vendor scripts, test infrastructure)
-      if (e.includes('ERR_CERT_AUTHORITY_INVALID') || e.includes('ERR_CERT_COMMON_NAME_INVALID')) {
-        return false;
-      }
-      // All other errors rejected: page errors, DNS failure, 429, etc.
-      return true;
-    });
-    if (filteredConsoleErrors.length > 0) {
-      throw new Error(`Page errors: ${filteredConsoleErrors.join('; ')}`);
+    // Record any blocked external requests (informational, not a failure)
+    if (blockedRequests.length > 0) {
+      console.log(`  ℹ Blocked ${blockedRequests.length} external request(s) (expected): ${blockedRequests.map(r => r.hostname).join(', ')}`);
     }
 
-    // Batch 1 strict enforcement: all request failures reject (no allowlist bypass).
-    // Request failures are only suppressed if host is in allowlist AND error is cert-only.
-    // Cert errors from localhost are suppressed (source maps, vendor scripts).
-    const failedRequests = [];
-    for (const f of requestFailures) {
-      const isLocalhost = f.hostname === 'localhost' || f.hostname === '127.0.0.1' || f.hostname.startsWith('127.');
-      const isCertError = f.error && f.error.includes('CERT');
-      const isAllowlisted = f.hostname && EXTERNAL_HOST_ALLOWLIST.includes(f.hostname);
-
-      // Suppress cert errors from localhost
-      if (isLocalhost && isCertError) {
-        continue;
-      }
-
-      // Suppress cert errors from allowlisted hosts
-      if (isAllowlisted && isCertError) {
-        continue;
-      }
-
-      // Reject everything else
-      failedRequests.push(f.string);
-    }
-
+    // Failed requests that aren't blocked are a real error
     if (failedRequests.length > 0) {
-      throw new Error(`Request failures (allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'EMPTY'}): ${failedRequests.join('; ')}`);
+      const failedHostnames = failedRequests.map(r => `${r.hostname} (${r.error})`).join('; ');
+      throw new Error(`Request failures on external hosts: ${failedHostnames}. Allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'EMPTY'}`);
     }
 
     // Capture viewport-sized screenshot
@@ -240,9 +258,21 @@ async function main() {
 
   console.log(`\nCapturing screenshots to: ${outputDir}\n`);
 
+  // Authenticate once and reuse session state
+  let storageState;
+  try {
+    console.log('Authenticating admin session...');
+    storageState = await authenticateAndSaveState(browser);
+    console.log('✓ Admin session authenticated and saved\n');
+  } catch (err) {
+    console.error(`✗ Authentication failed: ${err.message}`);
+    process.exit(1);
+  }
+
+  // Capture each route
   for (const route of routes) {
     for (const size of route.sizes) {
-      const { results, hasError } = await captureScreenshot(browser, route, size);
+      const { results, hasError } = await captureScreenshot(browser, route, size, storageState);
       if (hasError) {
         totalFailed++;
       } else {

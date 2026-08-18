@@ -190,14 +190,14 @@ class ContentDashboardWidgetsTest extends TestCase
             'title' => 'Test Post 1',
             'slug' => 'test-post-1',
             'status' => 'published',
-            'content' => 'Test content',
+            'body' => 'Test content',
         ]);
 
         Post::create([
             'title' => 'Test Post 2',
             'slug' => 'test-post-2',
             'status' => 'published',
-            'content' => 'Test content',
+            'body' => 'Test content',
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.content-dashboard'));
@@ -224,14 +224,14 @@ class ContentDashboardWidgetsTest extends TestCase
             'title' => 'Published Article',
             'slug' => 'published-article',
             'status' => 'published',
-            'content' => 'Article content',
+            'body' => 'Article content',
         ]);
 
         Post::create([
             'title' => 'Draft Article',
             'slug' => 'draft-article',
             'status' => 'draft',
-            'content' => 'Draft content',
+            'body' => 'Draft content',
         ]);
 
         $response = $this->actingAs($user)->get(route('admin.content-dashboard'));
