@@ -59,7 +59,17 @@ Living document. Each entry: what the design wants, what the repo currently has,
 
 **Design wants:** a single search box (search by brand/model/code) plus brand/model/year/engine-volume/fuel-type/price-range as **combinable** filters with sort, on the vehicle list page (DESIGN_SPEC.md §4 "فهرست خودروها", `01-public-desktop-system.png` right panel).
 **Repo has:** `CarPriceController` exposes brand/category/price-bracket only as **separate routes** (`/car-prices/brand/{make}`, `/car-prices/category/{id}`, `/car-prices/price/{bracket}`), not as combinable query-string filters, and has no free-text search, no year/engine/fuel filters, and no sort parameter at all.
-**Implemented (Phase 3 remediation):** `car-prices/index.blade.php` was restyled to V2 tokens using exactly the filter chips that exist today (brand, category, price bracket) in the reference's chip visual style. No search input or extra filter dropdowns were added to the markup, since they would submit to nothing.
-**Genuinely missing:** real controller support for combinable query-string filtering, free-text search, and sorting — this is the actual scope of DESIGN_SPEC §4's "فهرست خودروها" requirement and is real Phase 4 backend+UI work, not a restyle.
-**Evidence:** `app/Http/Controllers/Public/CarPriceController.php` (full read, Phase 1 and this remediation), `routes/public.php`.
-**Follow-up:** build in Phase 4 as originally planned — this gap was surfaced now only because the owner asked for full page-content parity on this specific page as part of the Phase 3 correction; the filter/search backend itself was correctly out of scope for that correction and remains Phase 4.
+**Implemented (Phase 3 round 2):** `car-prices/index.blade.php` was restyled to V2 tokens using exactly the filter chips that exist today (brand, category, price bracket) in the reference's chip visual style. No search input or extra filter dropdowns were added to the markup, since they would submit to nothing.
+**Implemented (Phase 3 round 3 — RESOLVED for search + sort):** the owner's round-2 rejection specifically flagged the missing search/sort bar as a structural gap on this page, so it was built for real: `CarPriceController::renderIndex` now accepts `q` (matches title_fa/make/model/slug) and `sort` (newest/price_asc/price_desc) query params, and the view has a real search input + sort `<select>` wired to them. This works on the base index and on the brand/category/price-bracket filtered variants via `withQueryString()`.
+**Still genuinely missing:** year/engine-volume/fuel-type as combinable filters — `CarListing` has no dedicated indexed columns wired for this kind of query yet (fuel_type exists as a free-text field, not a filterable enum with a UI dropdown), and building that combinable multi-dimension filter bar (plus deciding how it interacts with the existing brand/category/price *routes*, which are a different mechanism) is real Phase 4 scope, not a quick addition.
+**Evidence:** `app/Http/Controllers/Public/CarPriceController.php`, `routes/public.php`.
+**Follow-up:** the remaining filter dimensions are Phase 4 scope as originally planned.
+
+## 8. Admin dashboard: no sales-pipeline mini-view
+
+**Design wants:** the main admin dashboard (`02-admin-dashboard-calendar.png`) includes a condensed sales-pipeline column view (stage counts + a few request cards per stage) alongside the KPIs and calendar.
+**Repo has:** the full pipeline view already exists as its own page (`admin.kanban` / `KanbanController`), using real `PipelineStage`/`QuoteRequest` data — it's just not summarized anywhere on the dashboard itself.
+**Implemented:** not yet — round 3 prioritized the calendar-adjacent widgets that were fastest to build correctly with real data (import status, today's rates) plus the vehicle-list/detail rebuild the owner also required. This one is next in line.
+**Genuinely missing:** nothing data-wise — this is UI work reusing existing `KanbanController`/`PipelineStage` queries in a condensed form, not a new subsystem.
+**Evidence:** `app/Http/Controllers/Admin/KanbanController.php`, `resources/views/admin/kanban.blade.php`.
+**Follow-up:** build in the next remediation pass — flagged here explicitly rather than left unmentioned.

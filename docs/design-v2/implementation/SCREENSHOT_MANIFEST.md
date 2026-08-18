@@ -48,3 +48,38 @@ Directory: `docs/design-v2/implementation/screenshots/phase3-remediation/side-by
 ## Capture method
 
 Both sets used the repo's own e2e seed/server bootstrap (`tests/e2e/serve.mjs`, `php artisan migrate:fresh --seed` + `E2eSeeder`) and Playwright Chromium, with a local, **uncommitted** `launchOptions.executablePath` override in `playwright.config.js` to work around this sandbox's pre-installed-browser-revision mismatch (Playwright expects `chromium_headless_shell-1234`, the sandbox ships `1194`) — reverted after each capture session, never part of any commit. See `PAGE_INVENTORY.md`'s baseline section for the original diagnosis.
+
+## Phase 3 remediation, round 3 (structural rebuild after the round-2 rejection)
+
+Directory: `docs/design-v2/implementation/screenshots/phase3-remediation-r2/`
+
+| File | Route | Viewport | Role | State | SHA-256 |
+|---|---|---|---|---|---|
+| `vehicle-list-desktop-1440x900.png` | `/car-prices` | 1440×900 | public | populated, 8 listings, real search+sort UI, 4-col grid | `73bb6397ca0a601498b8e6f11d1cc33fb628d1e586499b16698b27c25af42d46` |
+| `vehicle-detail-desktop-1440x900.png` | `/car-prices/{slug}` | 1440×900 | public | populated, real 3-category cost summary | `32832ad32c9103c1b200ba0fdf621296911ad8a5731b99321f999026c34d9f74` |
+| `admin-desktop-1440x900-full.png` | `/admin` (dashboard) | 1440×900, full page | admin | populated (real seeded requests/calcs/rates/import status) | `b66f9a00078c7a6dfb70f191ea53b26ced2b474e70847ebf7dbf5cf01d5e015e` |
+| `public-mobile-list-390x844.png` | `/car-prices` | 390×844 | public | populated | `a70d486a5822aca9e87f543ab5c0086f01de8d731c987c7e4e352782cf33eedf` |
+| `public-mobile-detail-390x844.png` | `/car-prices/{slug}` | 390×844 | public | populated | `0a5a78c1e5431fc2716212bb501e1c77073bcf6829433a5073f32f7ebdfb094d` |
+| `public-mobile-calculator-390x844.png` | `/calculator` | 390×844 | public | initial form (unchanged — not rewritten) | `464e00d8b15bec629130cd142614d0b6b7375265c1e136fb863b4bd74d8cb089` |
+| `public-mobile-request-390x844.png` | `/lead-form` | 390×844 | public | form (closest real page to "request"; no tracking page yet) | `4be1c4626137ca63dd84aab549bcf5fe3c68c2f8d78232649236dca011d9bc61` |
+| `admin-mobile-dashboard-390x844.png` | `/admin` (dashboard) | 390×844 | admin | populated, bottom nav visible | `bd3eef44235b04356de2105f55c0f631f2950abd0a3884621f439529644abb65` |
+| `admin-mobile-sales-390x844.png` | `/admin/kanban` | 390×844 | admin | populated pipeline | `7d7e44203d725b695e264fc634867cc91ad3da3f7f0f2c036f833452f3e01911` |
+| `admin-mobile-content-390x844.png` | `/admin/car-listings` | 390×844 | admin | populated listing queue | `ea8f989bbf0e095733df6caaab0a2a567af3c3cbd0dda2bfcd4ccb5b68665f1d` |
+
+### Reference-crop / implementation / overlay triads
+
+Directory: `docs/design-v2/implementation/screenshots/phase3-remediation-r2/triads/`
+
+Per the owner's explicit instruction: each triad crops the exact matching panel out of the composite reference PNG, places it beside a same-content implementation screenshot, and adds a 50%-opacity overlay blend so misalignment is visible directly rather than asserted.
+
+| File | Reference panel | Implementation | SHA-256 |
+|---|---|---|---|
+| `vehicle-list-triad.png` | `01-public-desktop-system.png`, right panel (x∈[836,1672], y∈[0,941]) | `vehicle-list-desktop-1440x900.png` | `97b81a2b06be12c0e44b144eb19dbc324a64763b6ddcbaf67fe1362a9fac7148` |
+| `vehicle-detail-triad.png` | `01-public-desktop-system.png`, left panel (x∈[0,836], y∈[0,941]) | `vehicle-detail-desktop-1440x900.png` | `2d525918a07a5694c0651e3492d622a70451a3566610e8102f029abbbb5630ed` |
+| `admin-dashboard-triad.png` | `02-admin-dashboard-calendar.png`, full canvas | `admin-desktop-1440x900-full.png` (fullPage capture) | `92e08c8929a8e00a0a32d019feb9a6bf4d66a07b0f1d4c87cca75634902288c3` |
+
+No triad was built for the mobile composites (`05-public-mobile.png`, `06-admin-mobile.png`): those references tile 4-6 separate phone screens onto one 1672×941 canvas at a scale where cropping one panel and aligning it 1:1 against a 390×844 screenshot wouldn't produce a meaningful overlay (the reference panels are ~330px wide phone mockups, not full-resolution screens). The direct mobile screenshots above are the honest deliverable for those; forcing them into a triad format would look rigorous without actually being so.
+
+### Known, disclosed limitation: placeholder vehicle images
+
+All car photos in these screenshots are locally generated placeholders (solid color + simple car-silhouette shape + English make/model text), created by `E2eSeeder`. This sandbox has no outbound network access to real photo hosts, so real Dubizzle-sourced images cannot be fetched here under any implementation. The image-rendering code path (`CarListing::coverImage()` → `CarListingImage::url()` → `Storage::disk('public')`) is unchanged and will render real photos identically once real `source_url` images are imported through the existing Dubizzle/YallaMotor pipeline in an environment with network access.
