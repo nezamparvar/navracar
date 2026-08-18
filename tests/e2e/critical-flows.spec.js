@@ -19,12 +19,14 @@ test('standalone calculator renders the authoritative backend total', async ({ p
     test.skip(testInfo.project.use.viewport.width !== 375, 'One viewport covers the shared pricing API contract.');
 
     await page.goto('/calculator');
-    const result = await page.evaluate(async () => {
-        document.getElementById('realPriceAED').value = '100,000';
-        document.getElementById('customsPriceAED').value = '80,000';
-        selectCategoryById('c2000');
-        return await calc();
-    });
+    await page.click('[data-mode="cc"]');
+    await page.click('[data-category-id="c2000"]');
+    await page.click('#wizNextBtn');
+    await page.fill('#realPriceAED', '100000');
+    await page.fill('#customsPriceAED', '80000');
+    await page.click('#wizNextBtn');
+    await page.waitForSelector('.wiz-step[data-step="result"].active');
+    const result = await page.evaluate(() => lastPricingResult);
 
     expect(result.category.id).toBe('c2000');
     expect(result.settingsSnapshot.categories).toHaveProperty('phev');

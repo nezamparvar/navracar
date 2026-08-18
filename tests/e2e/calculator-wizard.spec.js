@@ -113,9 +113,9 @@ test.describe('3-Step Calculator Wizard', () => {
 
     // Intercept the authoritative calculation triggered by navigation.
     const [calcResponse] = await Promise.all([
-      page.waitForResponse(response =>
-        response.url().includes('/vehicle-pricing/calculate') && response.ok()
-      ),
+      page.waitForResponse(response => response.url().includes('/vehicle-pricing/calculate')
+        && response.ok()
+        && response.request().postData()?.includes('c2000')),
       page.click('#wizNextBtn'),
     ]);
 
@@ -240,6 +240,14 @@ test.describe('3-Step Calculator Wizard', () => {
   });
 
   test('print report hides the service fee row while preserving the fee in the final total', async ({ page }) => {
+    await page.click('[data-mode="cc"]');
+    await page.click('[data-category-id="c2000"]');
+    await page.click('#wizNextBtn');
+    await page.fill('#realPriceAED', '100000');
+    await page.fill('#customsPriceAED', '80000');
+    await page.click('#wizNextBtn');
+    await page.waitForSelector('.wiz-step[data-step="result"].active');
+
     const pricing = await page.evaluate(async () => {
       const built = await buildPrintSheet();
 
