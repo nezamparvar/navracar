@@ -5,29 +5,26 @@ Living document. Each entry: what the design wants, what the repo currently has,
 ## 1. Public nav: "درخواست‌ها" (my requests) and "حساب" (account)
 
 **Design wants:** public desktop/mobile nav with خودروها / محاسبه هزینه / درخواست‌ها / تماس با ما / حساب (DESIGN_SPEC.md §3, all reference screenshots).
-**Repo has:** no public user-authentication system at all (only staff `AdminUser`; "no public registration" is an explicit existing business rule per `AGENTS.md`), and no request-tracking-by-number lookup page — `public.lead-form` only *submits* a request, it doesn't look one up.
-**Implemented (Phase 3):** the shell nav links to the four real destinations that exist — خودروها (`public.car-prices.index`), محاسبه هزینه (`public.calculator`), a real "ثبت درخواست" link (`public.lead-form`, submit — not track), and وبلاگ (`public.blog.index`). "تماس با ما" links to a real `#contact` anchor in the footer (existing phone numbers), not a fabricated page. "حساب" was **not** added — there is nothing to link it to.
-**Genuinely missing:** (a) a request-tracking page/route (`GET /quote-requests/{number}` equivalent, public-facing, showing status/timeline like the reference's "درخواست‌ها" panel) — this needs a new controller + view, not just a restyle, since no such route exists in `routes/public.php`. (b) a public account/auth subsystem — this is a new subsystem (registration/login/session for end users), explicitly out of scope to invent under the existing "no public registration" rule without separate authorization.
-**Evidence:** `routes/public.php` (read in full during Phase 1 inventory), `AGENTS.md` "no public registration" line, `docs/design-v2/implementation/PAGE_INVENTORY.md` section A.
-**Follow-up:** building the request-tracking page is realistic scope for Phase 4 (it reuses existing `QuoteRequest` data — no new subsystem, just a new route + controller + view) and will be added there. Public accounts are a genuinely separate initiative (auth, registration flow, security review) that needs explicit product/business authorization before any implementation — not assumed here.
+**Repo has:** no public user-authentication system at all (only staff `AdminUser`; "no public registration" is an explicit existing business rule per `AGENTS.md`).
+**RESOLVED (round 4, commit `b9df433`):** a real request-tracking-by-number page now exists — `GET /track` (lookup form: request number + phone) and `GET /track/{quoteRequest}` (vehicle, current pipeline stage, latest invoice/payment status, a real timeline built from creation+invoice timestamps). Lookup requires the exact phone number submitted with the original request (two-factor, same pattern couriers use), so it cannot be used to enumerate other customers' requests. Linked from the public footer rather than the header nav, so the reference's exact header nav item set is left unchanged. 6 Feature tests cover it (`RequestTrackingTest.php`).
+**Still genuinely missing:** a public account/auth subsystem (registration/login/session for end users) — this remains a new subsystem, explicitly out of scope to invent under the existing "no public registration" rule without separate authorization. "حساب" stays a disabled nav placeholder with a reason.
+**Evidence:** `routes/public.php`, `app/Http/Controllers/Public/RequestTrackingController.php`, `tests/Feature/RequestTrackingTest.php`.
+**Follow-up:** public accounts remain a genuinely separate initiative (auth, registration flow, security review) that needs explicit product/business authorization before any implementation.
 
 ## 2. Admin dashboard calendar (meetings & calls)
 
 **Design wants:** day/week/upcoming-list calendar of meetings/calls, prominent on both the admin and sales dashboards (DESIGN_SPEC.md §5, `02-admin-dashboard-calendar.png`).
-**Repo has:** no calendar/event/meeting model, controller, or view anywhere. `LeadActivity` logs past actions on a lead; it is not a schedulable calendar event with a time slot, type, or conflict rules.
-**Implemented:** nothing yet — this is shell/nav phase; the dashboards themselves are Phase 5.
-**Genuinely missing:** the entire calendar subsystem — a migration for an events table (type, request link, owner, time, status, notes), a controller (day/week/list views, create/edit/reschedule/cancel/complete, conflict detection, timezone display), and views for both admin and mobile. This is a real new feature, not a UI restyle.
-**Evidence:** `app/Models/*` (full listing, Phase 1), `routes/admin.php` (no calendar routes), `PAGE_INVENTORY.md` section C.
-**Follow-up:** out of scope for this UI-implementation mission to invent unilaterally — it's a genuine new backend subsystem (data model + business rules like conflict prevention) that needs its own design/authorization pass, not something a UI mission should silently create. Recommend a separate, explicitly-scoped follow-up task once the product owner confirms the calendar's data model and conflict rules.
+**RESOLVED (round 4, commit `ef9d971`, explicitly authorized by the owner):** a real calendar subsystem now exists — `calendar_events` migration/`CalendarEvent` model (type, quote-request link, assignee, creator, start/end time, timezone, status, notes), `CalendarEventPolicy`, `CalendarController` (day/week/list views, create/reschedule/complete/cancel, overlap validation via `CalendarEvent::overlapping()`), and views for admin/sales. Embedded as a 7-day mini-widget on the admin dashboard and linked from the sidebar and mobile bottom nav. 15 Feature tests (`CalendarEventTest.php`) plus 1 Playwright E2E test (create-event flow, `critical-flows.spec.js`) cover it. No pricing/financial rules were touched building this, per the explicit constraint given alongside the authorization.
+**Evidence:** `app/Models/CalendarEvent.php`, `app/Http/Controllers/Admin/CalendarController.php`, `resources/views/admin/calendar/*`, `tests/Feature/CalendarEventTest.php`.
+**Follow-up:** none outstanding for the core subsystem.
 
 ## 3. Content-manager dashboard
 
 **Design wants:** a content dashboard with KPIs (pending review, active listings, incomplete metadata, import errors) and a per-source review queue (DESIGN_SPEC.md §5, `04-content-dashboard.png`).
-**Repo has:** `admin.dashboard` (the only dashboard route) is gated by `sales.role` middleware, which `content_manager` does not satisfy (`AdminUser::canManageSales()` is `isAdmin() || isSales()`) — a content_manager hitting `/admin/` gets a 403 today, V1 and V2 alike. `CarListingController`/`ImportQueueController` exist and have the underlying data to power the KPIs.
-**Implemented:** nothing yet — Phase 5 scope.
-**Genuinely missing:** a new `content.role`-gated dashboard route/controller/view. Unlike the calendar, this does **not** require new data — `CarListing` and `ImportQueueItem` already carry everything the KPIs need (status, meta fields, import errors), so this is buildable as a real UI+controller feature in Phase 5, not a new subsystem.
-**Evidence:** `routes/admin.php`, `app/Http/Middleware/EnsureContentManagerRole.php`, `app/Models/AdminUser.php`.
-**Follow-up:** build in Phase 5 alongside the other dashboards.
+**RESOLVED (round 4, commit `71362bd`):** a new `content.role`-gated `ContentDashboardController`/`admin.content-dashboard` route/view now exists, with real KPIs from existing data (published/draft `CarListing` counts, `ImportQueueItem` counts needing review or failed, published/draft `Post` counts, active `HomeSlide` count) and recent-listings/recent-posts lists. Content managers now land here after login (previously they landed directly on the car-listings table with no overview at all) and it's linked from the sidebar.
+**Same round, also resolved:** sales users previously landed on the raw requests list after login, bypassing `admin.dashboard` entirely even though it was already correctly data-scoped for them (per `SalesDashboardScopingTest`). Sales now lands on `admin.dashboard` after login too — see the "Admin dashboard: no sales-pipeline mini-view" entry below for the dashboard content itself.
+**Evidence:** `app/Http/Controllers/Admin/ContentDashboardController.php`, `resources/views/admin/content-dashboard.blade.php`, `app/Http/Controllers/Auth/AuthenticatedSessionController.php`.
+**Follow-up:** none outstanding.
 
 ## 4. Android app is a Capacitor WebView, not a native Material 3 UI
 
@@ -68,8 +65,17 @@ Living document. Each entry: what the design wants, what the repo currently has,
 ## 8. Admin dashboard: no sales-pipeline mini-view
 
 **Design wants:** the main admin dashboard (`02-admin-dashboard-calendar.png`) includes a condensed sales-pipeline column view (stage counts + a few request cards per stage) alongside the KPIs and calendar.
-**Repo has:** the full pipeline view already exists as its own page (`admin.kanban` / `KanbanController`), using real `PipelineStage`/`QuoteRequest` data — it's just not summarized anywhere on the dashboard itself.
-**Implemented:** not yet — round 3 prioritized the calendar-adjacent widgets that were fastest to build correctly with real data (import status, today's rates) plus the vehicle-list/detail rebuild the owner also required. This one is next in line.
-**Genuinely missing:** nothing data-wise — this is UI work reusing existing `KanbanController`/`PipelineStage` queries in a condensed form, not a new subsystem.
-**Evidence:** `app/Http/Controllers/Admin/KanbanController.php`, `resources/views/admin/kanban.blade.php`.
-**Follow-up:** build in the next remediation pass — flagged here explicitly rather than left unmentioned.
+**RESOLVED (round 4, commit `bf0225b`):** `DashboardController` now computes `pipelineByStage` (real `PipelineStage`/`QuoteRequest` data, scoped the same way as the kanban page, grouped to stage counts + first 3 sample leads per non-empty stage), rendered as a horizontal mini-kanban card on the dashboard linking to the full `/admin/kanban`. The unreferenced "فرم عمومی ثبت تماس فروش" CTA banner (not present in the reference composition) was also removed from the top of the dashboard in the same pass — the link remains in the sidebar footer.
+**Evidence:** `app/Http/Controllers/Admin/DashboardController.php`, `resources/views/admin/dashboard.blade.php`.
+**Follow-up:** none outstanding.
+
+## 9. Pricing bug found and fixed during round-4 re-verification (self-disclosed)
+
+While re-verifying the vehicle-detail page against `DESIGN_SPEC.md`'s "only 3 cost categories" rule, two real correctness bugs from the round-3 redesign were found and fixed in the same round (commit `419a872`), not carried forward silently:
+
+1. `CarListing::pricingTotals()` constructed `VehiclePricingInput` directly with `customsPriceAed` hardcoded to the full `price_aed` (i.e. 0% discount), instead of going through `VehiclePricingService::inputFromArray()`, which applies the real `suggestCustomsPrice()` default discount when a listing has no explicit `customs_price_aed`. This overstated the estimated landed cost shown on both the vehicle-list and vehicle-detail pages for every listing without an explicit customs price (which is most seeded/imported listings).
+2. The vehicle-detail page's 3-category cost summary read the raw `customsSubtotalToman` (service fee excluded entirely) instead of `VehiclePricingResult::publicDisplaySummary()`, the tested contract (`PublicCostDisplayTest`) that folds the service fee into the clearance-total row so the 3 publicly-shown categories still sum to the real grand total. The previous number under-stated the clearance-cost category by the hidden service-fee amount.
+
+**Fix:** `CarListing::pricingTotals()` now goes through `inputFromArray()` (fixes bug 1); a new `CarListing::publicPricingSummary()` wraps `publicDisplaySummary()` and is now what the vehicle-detail page reads (fixes bug 2). Verified with a live curl check comparing the rendered page's numbers against an independent `tinker` computation using the same real listing/settings, plus the full PHPUnit and Playwright suites (both green).
+**Evidence:** `app/Models/CarListing.php`, `app/Services/VehiclePricing/VehiclePricingResult.php`, `tests/Feature/PublicCostDisplayTest.php`, `tests/Feature/VehiclePricingEngineTest.php`.
+**Follow-up:** none outstanding — flagged here per the standing "never silently duplicate or drift from `VehiclePricingService`" rule, since this is exactly the kind of drift that rule exists to catch.
