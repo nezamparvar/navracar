@@ -7,6 +7,20 @@ window.Alpine = Alpine;
 
 Alpine.data('adminShell', () => ({ sidebarOpen: false }));
 Alpine.data('publicHeader', () => ({ mobileMenuOpen: false }));
+Alpine.data('adminMobileInsights', () => ({
+    onlineNow: 0,
+    timer: null,
+    init() {
+        this.onlineNow = Number(this.$el.dataset.onlineNow || 0);
+        const refresh = async () => {
+            try {
+                const response = await fetch(this.$el.dataset.summaryUrl, { headers: { Accept: 'application/json' } });
+                if (response.ok) this.onlineNow = Number((await response.json()).online_now || 0);
+            } catch (_) {}
+        };
+        this.timer = setInterval(refresh, 30000);
+    },
+}));
 Alpine.data('homeSlider', () => ({
     active: 0,
     count: 0,
@@ -103,4 +117,3 @@ Alpine.start();
 installMoneyInputs();
 
 window.pushToast = (message, type = 'info') => Alpine.store('toasts').push(message, type);
-
