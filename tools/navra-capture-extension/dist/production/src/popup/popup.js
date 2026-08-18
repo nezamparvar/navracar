@@ -1,4 +1,9 @@
 let currentCapture = null;
+let sendInProgress = false;
+
+// Bind once at the stable document boundary. Buttons may be recreated by the
+// popup UI without losing their actions.
+setupAuthenticatedListeners();
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
@@ -6,10 +11,8 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   if (!authenticated) {
     showAuthState();
-    setupAuthListeners();
   } else {
     showAuthenticatedState();
-    setupAuthenticatedListeners();
     await checkCurrentPage();
   }
 });
@@ -41,10 +44,6 @@ function showAuthenticatedState() {
   document.getElementById('authenticated-state').style.display = 'block';
 }
 
-function setupAuthListeners() {
-  document.getElementById('connect-btn').addEventListener('click', connectToNavraCar);
-}
-
 async function connectToNavraCar() {
   const pairingCode = document.getElementById('pairing-code').value.trim();
 
@@ -71,7 +70,6 @@ async function connectToNavraCar() {
     document.getElementById('auth-error').classList.remove('show');
 
     showAuthenticatedState();
-    setupAuthenticatedListeners();
     await checkCurrentPage();
   } catch (error) {
     showAuthError('خطا در اتصال: ' + error.message);
@@ -191,25 +189,33 @@ function checkMissingFields(capture) {
 }
 
 function setupAuthenticatedListeners() {
-  const listeners = [
-    ['send-btn', sendCapture],
-    ['preview-btn', showFullPreview],
-    ['settings-btn', showSettings],
-    ['disconnect-btn', disconnect],
-    ['back-btn', hideSettings],
-    ['clear-history-btn', clearHistory],
-    ['batch-btn', showBatchCapture],
-    ['batch-back-btn', hideBatchCapture],
-    ['batch-cancel-btn', hideBatchCapture],
-    ['batch-send-btn', sendBatchCapture],
-  ];
+  if (document.documentElement.dataset.navraPopupBound === 'true') return;
 
-  listeners.forEach(([id, handler]) => {
-    const element = document.getElementById(id);
-    if (!element || element.dataset.navraListenerBound === 'true') return;
-    element.addEventListener('click', handler);
-    element.dataset.navraListenerBound = 'true';
+  const actions = {
+    'connect-btn': connectToNavraCar,
+    'send-btn': sendCapture,
+    'preview-btn': showFullPreview,
+    'settings-btn': showSettings,
+    'disconnect-btn': disconnect,
+    'back-btn': hideSettings,
+    'clear-history-btn': clearHistory,
+    'batch-btn': showBatchCapture,
+    'batch-back-btn': hideBatchCapture,
+    'batch-cancel-btn': hideBatchCapture,
+    'batch-send-btn': sendBatchCapture,
+  };
+
+  document.addEventListener('click', (event) => {
+    const button = event.target.closest('button[id]');
+    const action = button ? actions[button.id] : null;
+    if (!action) return;
+
+    event.preventDefault();
+    Promise.resolve(action()).catch((error) => {
+      alert('خطا: ' + (error?.message || 'عملیات افزونه ناموفق بود.'));
+    });
   });
+  document.documentElement.dataset.navraPopupBound = 'true';
 }
 
 function sendRuntimeMessage(message, timeoutMs = 15000) {
@@ -235,10 +241,12 @@ function sendRuntimeMessage(message, timeoutMs = 15000) {
 }
 
 async function sendCapture() {
-  if (!currentCapture) return;
+  if (!currentCapture || sendInProgress) return;
 
   const btn = document.getElementById('send-btn');
+  sendInProgress = true;
   btn.classList.add('loading');
+  btn.disabled = true;
 
   try {
     const response = await sendRuntimeMessage({
@@ -255,7 +263,9 @@ async function sendCapture() {
   } catch (error) {
     alert('خطا: ' + error.message);
   } finally {
+    sendInProgress = false;
     btn.classList.remove('loading');
+    btn.disabled = false;
   }
 }
 
@@ -300,7 +310,6 @@ async function disconnect() {
 
     hideSettings();
     showAuthState();
-    setupAuthListeners();
   }
 }
 
