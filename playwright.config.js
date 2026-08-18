@@ -24,12 +24,20 @@ export default defineConfig({
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
     },
-    webServer: {
-        command: 'node tests/e2e/serve.mjs',
-        url: 'http://127.0.0.1:8000/up',
-        reuseExistingServer: false,
-        timeout: 120_000,
-    },
+    webServer: [
+        {
+            command: 'node tests/e2e/serve.mjs',
+            url: 'http://127.0.0.1:8000/up',
+            reuseExistingServer: false,
+            timeout: 120_000,
+        },
+        {
+            command: 'php -S 127.0.0.1:4173 -t mobile',
+            url: 'http://127.0.0.1:4173/index.html',
+            reuseExistingServer: false,
+            timeout: 30_000,
+        },
+    ],
     projects: [
         {
             name: 'functional-mobile',
@@ -50,6 +58,11 @@ export default defineConfig({
             name: 'accessibility-desktop',
             testMatch: /accessibility\.spec\.js/,
             use: { browserName: 'chromium', viewport: { width: 1280, height: 800 } },
+        },
+        {
+            name: 'android-v1',
+            testMatch: /android-v1\.spec\.js/,
+            use: { browserName: 'chromium', viewport: { width: 390, height: 844 } },
         },
         ...responsiveViewports.map(([name, width, height]) => ({
             name: `responsive-${name}`,

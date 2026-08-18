@@ -32,6 +32,7 @@
         ['route' => 'admin.menu-items.index', 'label' => 'منوی سایت', 'icon' => 'menu'],
     ];
     $adminNavItems = [
+        ['route' => 'admin.mobile-insights.index', 'label' => 'آمار و اعلان اپ', 'icon' => 'dashboard'],
         ['route' => 'admin.import-queue.index', 'label' => 'صف ایمپورت', 'icon' => 'inbox'],
         ['route' => 'admin.extension-pairing.index', 'label' => 'اتصال افزونه', 'icon' => 'link'],
         ['route' => 'admin.settings.edit', 'label' => 'تنظیمات نرخ ارز', 'icon' => 'target'],

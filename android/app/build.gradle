@@ -1,14 +1,17 @@
 apply plugin: 'com.android.application'
 
+def stagingBuild = project.hasProperty('stagingBuild') && project.property('stagingBuild').toString().toBoolean()
+
 android {
     namespace = "com.navracar.mobile"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.navracar.mobile"
+        applicationId stagingBuild ? "com.navracar.mobile.staging" : "com.navracar.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName stagingBuild ? "1.1.0-staging" : "1.1.0"
+        manifestPlaceholders = [appLabel: stagingBuild ? "ناوراکار Staging" : "ناوراکار"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

@@ -1,30 +1,33 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivityLogController;
+use App\Http\Controllers\Admin\BrowserCaptureController;
 use App\Http\Controllers\Admin\CalculationLogController;
 use App\Http\Controllers\Admin\CarListingController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\ExtensionPairingController;
 use App\Http\Controllers\Admin\HomeSlideController;
-use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\ImportQueueController;
+use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\KanbanController;
 use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\MessageTemplateController;
+use App\Http\Controllers\Admin\MobileInsightsController;
+use App\Http\Controllers\Admin\MobilePushController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\RequestController;
 use App\Http\Controllers\Admin\SettingController;
-use App\Http\Controllers\Admin\BrowserCaptureController;
 use App\Http\Controllers\Admin\TemplateUseController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VinCheckController;
+use App\Models\QuoteRequest;
 use Illuminate\Support\Facades\Route;
 
 // Only recovery routes may resolve soft-deleted leads. Normal CRM routes keep
 // Laravel's default binding so deleted records remain inaccessible.
 Route::bind('deletedLead', function ($value) {
-    return \App\Models\QuoteRequest::withTrashed()->findOrFail($value);
+    return QuoteRequest::withTrashed()->findOrFail($value);
 });
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
@@ -122,6 +125,9 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
         Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');
+        Route::get('/mobile-insights', [MobileInsightsController::class, 'index'])->name('mobile-insights.index');
+        Route::get('/mobile-insights/summary', [MobileInsightsController::class, 'summary'])->name('mobile-insights.summary');
+        Route::post('/mobile-insights/push', [MobilePushController::class, 'store'])->name('mobile-insights.push.store');
 
         Route::prefix('templates')->name('templates.')->group(function () {
             Route::get('/', [MessageTemplateController::class, 'index'])->name('index');

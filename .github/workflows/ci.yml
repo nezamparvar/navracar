@@ -61,7 +61,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: composer install --no-interaction --prefer-source --no-progress
+      - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm ci
       - run: npm run build
       - run: cp .env.example .env
@@ -95,6 +95,7 @@ jobs:
       - run: npm ci
       - run: npm audit --audit-level=high
       - run: npm run build
+      - run: npm run test:mobile
 
   browser:
     name: Browser QA
@@ -113,7 +114,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: composer install --no-interaction --prefer-source --no-progress
+      - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium
@@ -148,9 +149,10 @@ jobs:
       - run: bash tools/build-android-variants.sh
       - uses: actions/upload-artifact@v4
         with:
-          name: navracar-android-debug
+          name: navracar-android-builds
           path: |
             android/app/build/outputs/navracar-staging-debug.apk
+            android/app/build/outputs/navracar-staging-release-unsigned.apk
             android/app/build/outputs/navracar-production-debug.apk
           retention-days: 14
 

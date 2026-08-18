@@ -3,45 +3,34 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="theme-color" content="#2d2657">
+  <meta name="theme-color" content="#020B18">
+  <meta name="color-scheme" content="dark">
   <meta name="navracar-api-base" content="https://navracar.com">
   <meta name="navracar-environment" content="production">
+  <meta name="navracar-app-version" content="1.1.0">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https://navracar.com https://staging.nezamparvar.com; img-src 'self' data: https:; style-src 'self'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
   <title>ناوراکار</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="header">
-    <div class="brand-mark" aria-hidden="true">ن</div>
-    <div><strong>ناوراکار</strong><small id="environment-label">محاسبه هزینه واردات خودرو</small></div>
+  <a class="skip-link" href="#app">پرش به محتوا</a>
+  <header class="topbar">
+    <div class="topbar__brand"><span class="logo" aria-hidden="true">ن</span><div><strong>ناوراکار</strong><small id="environment-label">Android</small></div></div>
+    <div class="network-pill" id="network-status" role="status"><span></span><b>آنلاین</b></div>
   </header>
-  <main>
-    <section class="card" aria-labelledby="calculator-title">
-      <h1 id="calculator-title">محاسبه‌گر خودرو</h1>
-      <p class="intro">قیمت واقعی خودرو را وارد کنید. قیمت گمرکی پیشنهادی و تمام هزینه‌ها از تنظیمات مرکزی ناوراکار محاسبه می‌شوند.</p>
-      <form id="pricing-form">
-        <label>نام خودرو<input id="car-label" autocomplete="off" maxlength="120" placeholder="مثلاً Toyota Camry"></label>
-        <div class="grid">
-          <label>سال ساخت<input id="year" inputmode="numeric" type="number" min="1990" max="2100"></label>
-          <label>دسته‌بندی<select id="category" required>
-            <option value="ev">تمام برقی</option><option value="phev">پلاگین هیبرید</option>
-            <option value="hybrid">هیبرید</option><option value="c1500">بنزینی تا ۱۵۰۰ سی‌سی</option>
-            <option value="c2000" selected>بنزینی ۱۵۰۰ تا ۲۰۰۰ سی‌سی</option>
-            <option value="c2500">بنزینی ۲۰۰۰ تا ۲۵۰۰ سی‌سی</option>
-            <option value="c3000">بنزینی ۲۵۰۰ تا ۳۰۰۰ سی‌سی</option>
-            <option value="c3001">بنزینی بالای ۳۰۰۰ سی‌سی</option>
-          </select></label>
-        </div>
-        <label>قیمت واقعی (درهم)<input id="real-price" inputmode="decimal" type="number" min="0" step="0.01" required placeholder="400000"></label>
-        <button id="submit" type="submit">محاسبه هزینه</button>
-      </form>
-      <div id="message" class="message" role="status" aria-live="polite"></div>
-      <section id="result" class="result" hidden>
-        <span>جمع کل برآوردشده</span><strong id="total"></strong>
-        <small id="customs-price"></small>
-      </section>
-    </section>
-    <section class="card"><h2>تاریخچه محاسبات</h2><div id="history" class="history"><p class="empty">هنوز محاسبه‌ای ثبت نشده است.</p></div></section>
-  </main>
-  <script src="app.js" defer></script>
+  <main id="app" tabindex="-1" aria-live="polite"></main>
+  <nav class="bottom-nav" aria-label="ناوبری اصلی">
+    <a href="#/home" data-nav="home" aria-label="خانه"><span aria-hidden="true">⌂</span><b>خانه</b></a>
+    <a href="#/vehicles" data-nav="vehicles" aria-label="خودروها"><span aria-hidden="true">▱</span><b>خودروها</b></a>
+    <a href="#/requests" data-nav="requests" aria-label="درخواست‌ها"><span aria-hidden="true">✓</span><b>درخواست‌ها</b></a>
+    <a href="#/account" data-nav="account" aria-label="حساب"><span aria-hidden="true">♙</span><b>حساب</b></a>
+  </nav>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <aside id="privacy-notice" class="privacy-notice" aria-labelledby="privacy-title" hidden>
+    <strong id="privacy-title">آمار ناشناس برای بهتر شدن اپ</strong>
+    <p>با اجازه شما فقط صفحه‌ها، جستجوی خودرو، مدل گوشی و شهر/کشور تقریبی ثبت می‌شود؛ شماره، ایمیل، VIN، GPS و مخاطبین جمع‌آوری نمی‌شوند.</p>
+    <div><button class="btn btn-primary" data-privacy-choice="accept">موافقم</button><button class="btn btn-secondary" data-privacy-choice="decline">فعلاً نه</button></div>
+  </aside>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
