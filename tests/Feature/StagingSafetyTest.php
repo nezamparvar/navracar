@@ -15,6 +15,18 @@ class StagingSafetyTest extends TestCase
         $this->assertStringNotContainsString("build_variant staging 'https://navracar.com/staging'", $builder);
     }
 
+    public function test_staging_candidate_can_use_an_exact_green_branch_head_without_unlocking_production(): void
+    {
+        $stagingWorkflow = file_get_contents(base_path('.github/workflows/cpanel-staging.yml'));
+        $promotionWorkflow = file_get_contents(base_path('.github/workflows/cpanel-promote.yml'));
+
+        $this->assertStringContainsString('SOURCE_REF: ${{ github.ref_name }}', $stagingWorkflow);
+        $this->assertStringContainsString('[[ "$INPUT_COMMIT" == "$BRANCH_HEAD" ]]', $stagingWorkflow);
+        $this->assertStringContainsString('ref: ${{ needs.verify-source.outputs.source_commit }}', $stagingWorkflow);
+        $this->assertStringContainsString("if: github.ref == 'refs/heads/main'", $promotionWorkflow);
+        $this->assertStringContainsString('Release tag does not identify the supplied source commit.', $promotionWorkflow);
+    }
+
     public function test_cpanel_staging_deployment_repairs_schema_and_pdf_runtime_without_terminal(): void
     {
         $runtimeHelper = file_get_contents(base_path('deployment/cpanel-staging/ensure-runtime.sh'));

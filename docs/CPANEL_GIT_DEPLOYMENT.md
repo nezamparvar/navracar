@@ -18,7 +18,7 @@ feature branch
   → smoke test
 ```
 
-The candidate workflow is `.github/workflows/cpanel-staging.yml`. It accepts only a manually supplied `rc-vX.Y.Z-N` candidate and full merged-main commit, verifies the four protected checks, builds once, and publishes `cpanel-staging`. The production workflow `.github/workflows/cpanel-promote.yml` is manual-only and requires the owner-supplied candidate commit, artifact ID, source commit, release tag, and acceptance decision. It copies the already-built candidate payload; it does not run Composer, npm, or a second frontend build.
+The candidate workflow is `.github/workflows/cpanel-staging.yml`. It accepts only a manually supplied `rc-vX.Y.Z-N` candidate and the full commit at the exact head of the selected branch, verifies all protected checks, builds once, and publishes `cpanel-staging`. This permits a feature branch to be exercised on isolated Staging before merge. The production workflow `.github/workflows/cpanel-promote.yml` remains manual-only and main/tag-locked: a feature-branch candidate cannot be promoted. After acceptance and merge, publish and accept a main candidate before any production promotion. Promotion requires the owner-supplied candidate commit, artifact ID, source commit, release tag, and acceptance decision. It copies the already-built candidate payload; it does not run Composer, npm, or a second frontend build.
 
 ## Artifact identity and promotion
 
@@ -111,7 +111,7 @@ Follow `docs/STAGING_SETUP_CPANEL.md`. Staging uses a separate Git clone, Larave
 ## Staging candidate workflow
 
 1. Merge the approved PR into protected `main`.
-2. Dispatch **cPanel staging candidate** from `main` with the merged source SHA and a candidate such as `rc-v1.3.0-1`.
+2. Dispatch **cPanel staging candidate** from the exact branch being tested with its current full HEAD SHA and a candidate such as `rc-v1.3.0-1`.
 3. Verify the workflow summary, artifact, `DEPLOYMENT-METADATA.json`, and `cpanel-staging` HEAD.
 4. In the staging cPanel clone, click **Update from Remote**, verify the candidate commit, then click **Deploy HEAD Commit**.
 5. Complete `docs/STAGING_ACCEPTANCE_CHECKLIST.md`.
