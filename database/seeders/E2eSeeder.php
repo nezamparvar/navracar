@@ -9,12 +9,15 @@ use App\Models\CarListing;
 use App\Models\CarListingImage;
 use App\Models\HomeSlide;
 use App\Models\ImportQueueItem;
+use App\Models\Invoice;
 use App\Models\PipelineStage;
+use App\Models\Post;
 use App\Models\QuoteRequest;
 use App\Models\VinCheck;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 /**
  * Local/E2E fixture data only (guarded by app()->environment('local'), same as before).
@@ -254,6 +257,65 @@ class E2eSeeder extends Seeder
                 'cta_label' => $slide['cta'],
                 'cta_url' => $slide['url'],
                 'is_active' => true,
+            ]);
+        }
+
+        // Blog posts for content dashboard and public blog: 3-5 recent posts
+        Post::truncate();
+        $blogPosts = [
+            ['title' => 'نکات مهم در واردات خودرو', 'excerpt' => 'راهنمای جامع برای خریداران خودروی وارداتی و مراحل انجام کار', 'status' => 'published', 'day' => 0],
+            ['title' => 'مقایسه هزینه‌های ترخیص گمرکی', 'excerpt' => 'درک کامل عوارض و هزینه‌های اضافی در واردات خودرو', 'status' => 'published', 'day' => 2],
+            ['title' => 'بهترین خودروهای وارداتی سال جاری', 'excerpt' => 'معرفی برترین مدل‌های موجود در بازار وارداتی', 'status' => 'published', 'day' => 5],
+            ['title' => 'پرسش‌های متکرر درباره خودروی وارداتی', 'excerpt' => 'پاسخ به سوالات رایج خریداران و صادرکنندگان', 'status' => 'published', 'day' => 7],
+            ['title' => 'قوانین جدید واردات خودرو', 'excerpt' => 'تغییرات اخیر در مقررات و الگوی واردات خودروی شخصی', 'status' => 'draft', 'day' => 1],
+        ];
+
+        foreach ($blogPosts as $post) {
+            $imagePath = 'blog-covers/post-'.Str::slug($post['title']).'.png';
+            if (! Storage::disk('public')->exists($imagePath)) {
+                Storage::disk('public')->put($imagePath, $this->placeholderImage($post['title'], 'Blog', '#20C7E9'));
+            }
+            Post::create([
+                'title' => $post['title'],
+                'slug' => Post::slugify($post['title']),
+                'excerpt' => $post['excerpt'],
+                'body' => '<p>' . $post['excerpt'] . '</p><p>محتوای کامل پست اینجا قرار می‌گیرد.</p>',
+                'cover_image_path' => $imagePath,
+                'status' => $post['status'],
+                'meta_title' => $post['title'],
+                'meta_description' => $post['excerpt'],
+                'created_by' => $sales->id,
+                'published_at' => $post['status'] === 'published' ? today()->subDays(7 - $post['day']) : null,
+            ]);
+        }
+
+        // Invoices/proformas linked to quote requests: 3-5 recent, varied statuses
+        $requests = QuoteRequest::limit(10)->get();
+        $invoiceStatuses = ['draft', 'sent', 'viewed', 'paid', 'expired'];
+        foreach (array_slice($requests->all(), 0, 5) as $idx => $request) {
+            $status = $invoiceStatuses[$idx % count($invoiceStatuses)];
+            Invoice::create([
+                'request_id' => $request->id,
+                'invoice_number' => 'INV-' . str_pad((string) ($idx + 1), 4, '0', STR_PAD_LEFT),
+                'customer_name' => $request->name,
+                'customer_phone' => $request->phone,
+                'customer_email' => 'customer' . ($idx + 1) . '@example.test',
+                'car_label' => $request->car_label,
+                'category' => $request->category,
+                'breakdown_json' => json_encode(['rows' => [
+                    ['key' => 'vehicle_price', 'label' => 'قیمت خودرو', 'amount' => $request->total_with_profit / 55000],
+                    ['key' => 'customs_duty', 'label' => 'عوارض گمرکی', 'amount' => $request->total_with_profit / 55000 * 0.15],
+                    ['key' => 'registration_fee', 'label' => 'هزینه پلاک', 'amount' => 500000],
+                ]]),
+                'total_amount' => $request->total_with_profit,
+                'discount_amount' => $status === 'paid' ? $request->total_with_profit * 0.05 : 0,
+                'currency' => 'toman',
+                'exchange_rate' => 55000,
+                'valid_until' => today()->addDays(30),
+                'payment_terms' => 'بانکی',
+                'invoice_type' => 'proforma',
+                'status' => $status,
+                'created_by' => $sales->id,
             ]);
         }
 
