@@ -44,6 +44,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('quote_requests', function (Blueprint $table) {
+            $table->dropIndex(['mobile_customer_id', 'created_at']);
             $table->dropConstrainedForeignId('mobile_customer_id');
         });
         Schema::dropIfExists('mobile_favorites');
