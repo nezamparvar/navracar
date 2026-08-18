@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 const responsiveViewports = [
+    ['320x568', 320, 568],
     ['360x800', 360, 800],
     ['375x812', 375, 812],
     ['390x844', 390, 844],

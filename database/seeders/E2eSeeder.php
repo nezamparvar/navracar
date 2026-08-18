@@ -184,9 +184,10 @@ class E2eSeeder extends Seeder
     {
         // GD's built-in bitmap font only supports Latin-1, so all drawn text must be ASCII
         // (the English make/model and angle name, never title_fa) — Persian text renders as
-        // garbage otherwise.
-        $width = 800;
-        $height = 600;
+        // garbage otherwise. Canvas is 1200x630 (~19:10) to match the card's real display
+        // aspect ratio, so object-cover doesn't need to crop the silhouette awkwardly.
+        $width = 1200;
+        $height = 630;
         $image = imagecreatetruecolor($width, $height);
 
         [$r, $g, $b] = sscanf($hexColor, '#%02x%02x%02x');
@@ -208,19 +209,43 @@ class E2eSeeder extends Seeder
         }
 
         // Studio "floor" shadow ellipse under the car.
+        $cx = $width * 0.5;
+        $cy = $height * 0.58;
         $shadow = imagecolorallocatealpha($image, 0, 0, 0, 55);
-        imagefilledellipse($image, (int) ($width / 2), (int) ($height * 0.78), 560, 60, $shadow);
+        imagefilledellipse($image, (int) $cx, (int) ($height * 0.86), 780, 50, $shadow);
 
-        // A simple car-body silhouette so the placeholder reads as "a car photo slot",
-        // not just a color swatch — cabin + body + two wheels.
-        $silhouette = imagecolorallocatealpha($image, 255, 255, 255, 90);
-        $cx = $width / 2;
-        $cy = $height * 0.55;
-        imagefilledellipse($image, (int) $cx, (int) $cy + 10, 520, 170, $silhouette);
-        imagefilledrectangle($image, (int) $cx - 140, (int) $cy - 80, (int) $cx + 140, (int) $cy + 20, $silhouette);
-        $wheel = imagecolorallocatealpha($image, 2, 11, 24, 35);
-        imagefilledellipse($image, (int) $cx - 165, (int) $cy + 70, 90, 90, $wheel);
-        imagefilledellipse($image, (int) $cx + 165, (int) $cy + 70, 90, 90, $wheel);
+        // A side-profile car-body silhouette (polygon, not a raw rectangle) so the placeholder
+        // reads as an actual vehicle shape — sloped hood/roof/trunk line, cabin, two wheels.
+        $silhouette = imagecolorallocatealpha($image, 255, 255, 255, 88);
+        $bodyTop = $cy - 90;
+        $bodyBottom = $cy + 40;
+        $points = [
+            $cx - 380, $bodyBottom,
+            $cx - 380, $cy - 10,
+            $cx - 280, $cy - 10,
+            $cx - 210, $bodyTop + 15,
+            $cx - 60, $bodyTop,
+            $cx + 90, $bodyTop,
+            $cx + 220, $cy - 20,
+            $cx + 380, $cy - 10,
+            $cx + 380, $bodyBottom,
+        ];
+        imagefilledpolygon($image, $points, $silhouette);
+        $wheel = imagecolorallocatealpha($image, 2, 11, 24, 30);
+        imagefilledellipse($image, (int) ($cx - 220), (int) ($bodyBottom + 5), 110, 110, $wheel);
+        imagefilledellipse($image, (int) ($cx + 220), (int) ($bodyBottom + 5), 110, 110, $wheel);
+        $hub = imagecolorallocatealpha($image, 180, 190, 205, 60);
+        imagefilledellipse($image, (int) ($cx - 220), (int) ($bodyBottom + 5), 44, 44, $hub);
+        imagefilledellipse($image, (int) ($cx + 220), (int) ($bodyBottom + 5), 44, 44, $hub);
+
+        // Windshield/window band on the cabin, slightly darker than the body silhouette.
+        $glass = imagecolorallocatealpha($image, 10, 20, 35, 70);
+        imagefilledpolygon($image, [
+            $cx - 185, $cy - 15,
+            $cx - 130, $bodyTop + 20,
+            $cx + 60, $bodyTop + 20,
+            $cx + 150, $cy - 15,
+        ], $glass);
 
         $accent = imagecolorallocate($image, 22, 119, 255);
         imagefilledrectangle($image, 0, $height - 14, $width, $height, $accent);

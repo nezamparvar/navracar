@@ -16,6 +16,7 @@ use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\MessageTemplateController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\RequestController;
+use App\Http\Controllers\Admin\SalesDashboardController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\BrowserCaptureController;
 use App\Http\Controllers\Admin\TemplateUseController;
@@ -35,6 +36,7 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // دقیق‌تر داخل خود کنترلرهاست).
     Route::middleware('sales.role')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+        Route::get('/sales-dashboard', SalesDashboardController::class)->name('sales-dashboard');
         Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban');
         Route::post('/kanban/change-stage', [KanbanController::class, 'updateStage'])->name('kanban.change-stage');
 

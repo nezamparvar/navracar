@@ -83,7 +83,17 @@ No triad was built for the mobile composites (`05-public-mobile.png`, `06-admin-
 
 All car photos in these screenshots are locally generated placeholders (solid color + simple car-silhouette shape + English make/model text), created by `E2eSeeder`. This sandbox has no outbound network access to real photo hosts, so real Dubizzle-sourced images cannot be fetched here under any implementation. The image-rendering code path (`CarListing::coverImage()` → `CarListingImage::url()` → `Storage::disk('public')`) is unchanged and will render real photos identically once real `source_url` images are imported through the existing Dubizzle/YallaMotor pipeline in an environment with network access.
 
-## Round 4 remediation (post round-3 review — see `QA_REPORT.md`'s "Round 4 remediation" section)
+## Rejected / Archive
+
+The sections below were captured against implementations that the owner's Round 4 review (see
+`QA_REPORT.md`) explicitly rejected for visual parity and responsive defects, or that were
+superseded by structural fixes made in direct response to that review (card component syntax
+bug, calculator navy re-migration, vehicle list/detail layout, calendar hour-grid rebuild, kanban
+snap-scroll, request-tracking stepper/footer spacing, sales/content dashboard rebuilds). They are
+kept for history, not as current evidence — do not cite these against the current implementation.
+The "Round 4 remediation, round 2" section below (after this archive) is the current evidence.
+
+### Round 4 remediation (post round-3 review — see `QA_REPORT.md`'s "Round 4 remediation" section) — REJECTED
 
 Directory: `docs/design-v2/implementation/screenshots/round4/`
 

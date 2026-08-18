@@ -52,14 +52,16 @@
         @enderror
     @endif
 
-    <div
-        x-data="kanbanBoard"
-        class="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4"
-    >
+    <div x-data="kanbanBoard" x-init="initScrollTracking($refs.strip, {{ count($stages) }})">
+        <div
+            x-ref="strip"
+            @scroll.passive="onStripScroll($refs.strip)"
+            class="flex snap-x snap-mandatory gap-4 overflow-x-auto pb-4"
+        >
         @foreach ($stages as $stage)
             @php $leads = $leadsByStage[$stage->id]; @endphp
             <div
-                class="w-[85vw] shrink-0 snap-start rounded-2xl border border-v2-border bg-v2-surface p-3 sm:w-72"
+                class="w-[calc(100vw-2rem)] shrink-0 snap-center snap-always rounded-2xl border border-v2-border bg-v2-surface p-3 sm:w-72"
                 data-stage-id="{{ $stage->id }}"
                 data-stage-slug="{{ $stage->slug }}"
                 data-stage-name="{{ $stage->name }}"
@@ -119,6 +121,20 @@
                 </div>
             </div>
         @endforeach
+        </div>
+
+        {{--
+            Mobile swipe affordance: dot indicators + a hint on first load, so "move between
+            columns" is discoverable rather than only guessable from the small edge-peek.
+        --}}
+        <div class="mt-1 flex items-center justify-center gap-1.5 sm:hidden">
+            @foreach ($stages as $i => $stage)
+                <span class="h-1.5 rounded-full transition-all" :class="activeIndex === {{ $i }} ? 'w-5 bg-v2-primary' : 'w-1.5 bg-v2-border'"></span>
+            @endforeach
+        </div>
+        <p class="mt-1 text-center text-[11px] text-v2-text-muted sm:hidden">
+            <x-icon name="chevron-left" class="inline w-3 h-3" /> برای دیدن مراحل دیگر پایپ‌لاین بکشید
+        </p>
 
         {{-- Loss-reason modal (replaces window.prompt) --}}
         <div x-show="modalOpen" x-cloak class="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 p-4" @keydown.escape.window="cancelMove">
@@ -160,7 +176,18 @@
                 dragging: false, draggedEl: null,
                 modalOpen: false, selectedReason: '', pendingCol: null,
                 editModalOpen: false, editStageId: null, stageNameInput: '',
+                activeIndex: 0, stripEl: null,
                 lossReasons,
+                initScrollTracking(stripEl) {
+                    this.stripEl = stripEl;
+                },
+                onStripScroll(stripEl) {
+                    if (!stripEl || !stripEl.firstElementChild) return;
+                    const colWidth = stripEl.firstElementChild.offsetWidth + 16;
+                    // RTL scrollLeft sign convention differs by browser engine — use the
+                    // absolute value so the index calculation works either way.
+                    this.activeIndex = Math.round(Math.abs(stripEl.scrollLeft) / colWidth);
+                },
                 dragStart(e) { this.dragging = true; this.draggedEl = e.currentTarget; e.currentTarget.classList.add('opacity-40'); },
                 dragEnd(e) { e.currentTarget.classList.remove('opacity-40'); setTimeout(() => { this.dragging = false; }, 50); },
                 dragOver(e) { e.currentTarget.classList.add('ring-2', 'ring-v2-primary'); },

@@ -61,6 +61,12 @@
                 @endif
             </x-card>
         @else
+            {{--
+                Real hour-grid time view (day: 1 column, week: 7 columns), not a row of small
+                day-cards — matches 02-admin-dashboard-calendar.png's calendar composition (a
+                time gutter + day columns, events positioned at their real start time/duration),
+                and fills the page's main content area on desktop instead of a short strip.
+            --}}
             @php
                 $days = [];
                 $cursor = $rangeStart->copy();
@@ -69,23 +75,53 @@
                     $cursor->addDay();
                 }
                 $eventsByDay = $events->groupBy(fn ($e) => $e->starts_at->toDateString());
+                $hourStart = 8;
+                $hourEnd = 20;
+                $rowHeight = 56;
+                $hours = range($hourStart, $hourEnd - 1);
+                $gridHeight = count($hours) * $rowHeight;
             @endphp
-            <div class="grid gap-3" style="grid-template-columns: repeat({{ count($days) }}, minmax(0, 1fr));">
-                @foreach ($days as $day)
-                    <div class="rounded-xl border border-v2-border bg-v2-surface p-2.5 {{ $day->isToday() ? 'ring-2 ring-v2-primary' : '' }}">
-                        <div class="mb-2 text-center">
+            <div class="overflow-x-auto rounded-xl border border-v2-border bg-v2-surface">
+                <div class="grid" style="min-width: {{ 56 + count($days) * 140 }}px; grid-template-columns: 56px repeat({{ count($days) }}, minmax(140px, 1fr));">
+                    <div class="border-b border-e border-v2-border"></div>
+                    @foreach ($days as $day)
+                        <div class="border-b border-e border-v2-border p-2 text-center last:border-e-0 {{ $day->isToday() ? 'bg-v2-primary/10' : '' }}">
                             <div class="text-[11px] font-bold text-v2-text-muted">{{ $day->translatedFormat('D') }}</div>
-                            <div class="num-font text-sm font-black text-v2-text">{{ $day->translatedFormat('j') }}</div>
+                            <div class="num-font text-sm font-black {{ $day->isToday() ? 'text-v2-primary' : 'text-v2-text' }}">{{ $day->translatedFormat('j M') }}</div>
                         </div>
-                        <div class="space-y-1.5">
-                            @forelse ($eventsByDay->get($day->toDateString(), collect()) as $event)
-                                @include('admin.calendar._event-card', ['event' => $event])
-                            @empty
-                                <div class="rounded-lg py-3 text-center text-[11px] text-v2-text-muted/60">—</div>
-                            @endforelse
-                        </div>
+                    @endforeach
+
+                    <div class="relative border-e border-v2-border" style="height: {{ $gridHeight }}px;">
+                        @foreach ($hours as $h)
+                            <div class="absolute inset-x-0 -translate-y-1/2 px-1.5 text-[10px] font-bold text-v2-text-muted num-font" style="top: {{ ($h - $hourStart) * $rowHeight }}px;">{{ str_pad($h, 2, '0', STR_PAD_LEFT) }}:00</div>
+                        @endforeach
                     </div>
-                @endforeach
+
+                    @foreach ($days as $day)
+                        <div class="relative border-e border-v2-border last:border-e-0" style="height: {{ $gridHeight }}px;">
+                            @foreach ($hours as $h)
+                                <div class="absolute inset-x-0 border-t border-v2-border/60" style="top: {{ ($h - $hourStart) * $rowHeight }}px;"></div>
+                            @endforeach
+
+                            @foreach ($eventsByDay->get($day->toDateString(), collect()) as $event)
+                                @php
+                                    $startMinutes = max(0, $event->starts_at->hour * 60 + $event->starts_at->minute - $hourStart * 60);
+                                    $endMinutes = min($gridHeight / $rowHeight * 60, $event->ends_at->hour * 60 + $event->ends_at->minute - $hourStart * 60);
+                                    $top = ($startMinutes / 60) * $rowHeight;
+                                    $height = max(20, (($endMinutes - $startMinutes) / 60) * $rowHeight - 2);
+                                @endphp
+                                @if ($endMinutes > 0 && $startMinutes < $gridHeight / $rowHeight * 60)
+                                    <a href="{{ $event->quote_request_id ? route('admin.requests.show', $event->quote_request_id) : route('admin.calendar.index', ['view' => $view, 'date' => $anchor->toDateString()]) }}"
+                                       class="absolute inset-x-0.5 overflow-hidden rounded-md px-1.5 py-0.5 text-[10px] font-bold leading-tight
+                                       {{ $event->status === \App\Models\CalendarEvent::STATUS_COMPLETED ? 'bg-v2-success/20 text-v2-success' : ($event->status === \App\Models\CalendarEvent::STATUS_CANCELLED ? 'bg-v2-text-muted/20 text-v2-text-muted line-through' : 'bg-v2-primary/25 text-v2-primary') }}"
+                                       style="top: {{ $top }}px; height: {{ $height }}px;">
+                                        <span class="num-font">{{ $event->starts_at->format('H:i') }}</span> {{ $event->displayTitle() }}
+                                    </a>
+                                @endif
+                            @endforeach
+                        </div>
+                    @endforeach
+                </div>
             </div>
         @endif
 

@@ -21,6 +21,7 @@
         ['route' => 'admin.vin-checks.index', 'label' => 'شماره‌شاسی‌ها', 'icon' => 'vin'],
     ];
     $salesNavItems = [
+        ['route' => 'admin.sales-dashboard', 'label' => 'داشبورد فروش', 'icon' => 'target'],
         ['route' => 'admin.kanban', 'label' => 'پایپ‌لاین (کانبان)', 'icon' => 'kanban'],
         ['route' => 'admin.requests.index', 'label' => 'درخواست‌ها (لیست)', 'icon' => 'inbox'],
         ['route' => 'admin.invoices.index', 'label' => 'پیش‌فاکتورها', 'icon' => 'invoice'],
@@ -48,10 +49,26 @@
     <div x-show="sidebarOpen" x-transition.opacity @click="sidebarOpen = false"
          class="fixed inset-0 z-40 bg-black/60 lg:hidden" style="display: none;"></div>
 
-    {{-- Sidebar --}}
+    {{--
+        Sidebar. On mobile, x-show fully removes it from layout (display:none) when closed —
+        a translate-x-full "off-canvas" position:fixed box still contributes to
+        document.documentElement.scrollWidth even off-screen (a real, measurable horizontal-
+        overflow bug on narrow viewports, not just a visual one), so the closed state can't be
+        transform-only. x-transition keeps the same slide animation: Alpine holds the element in
+        the DOM (with the transform applied) for the transition's duration, then applies
+        display:none only once the leave transition finishes. lg:!flex forces it always-visible
+        on desktop regardless of sidebarOpen.
+    --}}
     <aside
-        :class="sidebarOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'"
-        class="fixed inset-y-0 right-0 z-50 flex w-72 shrink-0 flex-col border-e border-v2-border bg-v2-surface text-v2-text transition-transform duration-200 lg:static lg:translate-x-0"
+        x-show="sidebarOpen"
+        x-transition:enter="transition-transform duration-200 ease-out"
+        x-transition:enter-start="translate-x-full"
+        x-transition:enter-end="translate-x-0"
+        x-transition:leave="transition-transform duration-150 ease-in"
+        x-transition:leave-start="translate-x-0"
+        x-transition:leave-end="translate-x-full"
+        class="fixed inset-y-0 right-0 z-50 flex w-72 shrink-0 flex-col border-e border-v2-border bg-v2-surface text-v2-text lg:!flex lg:static lg:translate-x-0"
+        style="display: none;"
     >
         <div class="flex items-center gap-3 px-6 py-6">
             <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-v2-primary/15 text-v2-primary">
@@ -215,7 +232,7 @@
             </div>
         </header>
 
-        <main class="flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">
+        <main class="min-w-0 flex-1 px-4 py-6 pb-40 sm:px-6 lg:px-8 lg:pb-6">
             {{ $slot }}
         </main>
     </div>

@@ -54,27 +54,27 @@
         --}}
         @if (! $isLost && $stages->isNotEmpty())
             <x-card variant="v2" title="مراحل پیگیری" icon="list" class="mt-4">
-                <div class="flex overflow-x-auto pb-1">
+                <div class="flex snap-x snap-mandatory gap-1 overflow-x-auto px-1 pb-1">
                     @foreach ($stages as $i => $s)
                         @php
                             $done = $currentStageIndex !== null && $i < $currentStageIndex;
                             $current = $currentStageIndex !== null && $i === $currentStageIndex;
                         @endphp
-                        <div class="flex w-[110px] shrink-0 flex-col items-center text-center">
+                        <div class="flex w-[136px] shrink-0 snap-start flex-col items-center px-2 text-center">
                             <div class="flex w-full items-center">
                                 <div class="h-0.5 flex-1 {{ $i > 0 && $i <= $currentStageIndex ? 'bg-v2-success' : 'bg-v2-border' }} {{ $i === 0 ? 'invisible' : '' }}"></div>
-                                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-black num-font
-                                    {{ $done ? 'bg-v2-success text-white' : ($current ? 'bg-v2-primary text-white' : 'bg-v2-elevated text-v2-text-muted') }}">
+                                <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-black num-font
+                                    {{ $done ? 'bg-v2-success text-white' : ($current ? 'bg-v2-primary text-white ring-4 ring-v2-primary/20' : 'bg-v2-elevated text-v2-text-muted') }}">
                                     {{ $i + 1 }}
                                 </span>
                                 <div class="h-0.5 flex-1 {{ $i < $currentStageIndex ? 'bg-v2-success' : 'bg-v2-border' }} {{ $loop->last ? 'invisible' : '' }}"></div>
                             </div>
-                            <div class="mt-2 text-[11px] font-bold text-v2-text">{{ $s->name }}</div>
-                            <div class="mt-0.5 text-[10px] font-bold {{ $done ? 'text-v2-success' : ($current ? 'text-v2-primary' : 'text-v2-text-muted') }}">
+                            <div class="mt-3 min-h-[2.5rem] text-xs font-bold leading-snug text-v2-text">{{ $s->name }}</div>
+                            <div class="mt-1 text-[10px] font-bold {{ $done ? 'text-v2-success' : ($current ? 'text-v2-primary' : 'text-v2-text-muted') }}">
                                 {{ $done ? 'تکمیل شده' : ($current ? 'در حال انجام' : 'در انتظار') }}
                             </div>
                             @if ($i === 0)
-                                <div class="mt-0.5 text-[10px] text-v2-text-muted num-font">{{ $quoteRequest->created_at->format('Y-m-d') }}</div>
+                                <div class="mt-1 text-[10px] text-v2-text-muted num-font">{{ $quoteRequest->created_at->format('Y-m-d') }}</div>
                             @endif
                         </div>
                     @endforeach

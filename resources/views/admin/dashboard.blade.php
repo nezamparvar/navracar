@@ -18,7 +18,7 @@
 
     {{-- Calendar widget + monthly performance chart, matching 02-admin-dashboard-calendar.png row 2 --}}
     <div class="mb-6 grid gap-5 lg:grid-cols-[1.3fr_.7fr]">
-        <x-card variant="v2" title="تقویم جلسات و تماس‌ها" icon="calendar">
+        <x-card variant="v2" title="تقویم جلسات و تماس‌ها" icon="calendar" class="min-w-0">
             <x-slot:subtitle>هفته جاری — <a href="{{ route('admin.calendar.index') }}" class="text-v2-primary hover:underline">مشاهده تقویم کامل</a></x-slot:subtitle>
             @php
                 $weekDays = collect(range(0, 6))->map(fn ($i) => now()->startOfWeek(\Carbon\Carbon::SATURDAY)->addDays($i));
@@ -41,7 +41,7 @@
             </div>
         </x-card>
 
-        <x-card variant="v2" title="روند ۱۴ روز اخیر" icon="trend-up">
+        <x-card variant="v2" title="روند ۱۴ روز اخیر" icon="trend-up" class="min-w-0">
             @php $maxVal = max(1, collect($daily)->max(fn ($d) => max($d['requests'], $d['calcs']))); @endphp
             <div class="rounded-xl bg-v2-bg p-4">
                 <div class="space-y-2.5">
@@ -72,7 +72,7 @@
 
     {{-- Sales pipeline mini-view + latest requests, matching reference row 3 --}}
     <div class="mb-6 grid gap-5 lg:grid-cols-[1.3fr_.7fr]">
-        <x-card variant="v2" title="پایپ‌لاین فروش" icon="kanban">
+        <x-card variant="v2" title="پایپ‌لاین فروش" icon="kanban" class="min-w-0">
             <x-slot:subtitle><a href="{{ route('admin.kanban') }}" class="text-v2-primary hover:underline">مشاهده کانبان کامل</a></x-slot:subtitle>
             @if ($pipelineByStage->isEmpty())
                 <x-empty-state variant="v2" icon="kanban" title="سرنخی در پایپ‌لاین نیست." />
@@ -95,7 +95,7 @@
             @endif
         </x-card>
 
-        <x-card variant="v2" title="آخرین درخواست‌های استعلام" icon="inbox">
+        <x-card variant="v2" title="آخرین درخواست‌های استعلام" icon="inbox" class="min-w-0">
             @if ($recentRequests->isEmpty())
                 <x-empty-state variant="v2" icon="inbox" title="هنوز درخواستی ثبت نشده است." />
             @else
@@ -119,7 +119,7 @@
          CalendarEvent/QuoteRequest.next_call_date data, scoped the same way as the rest of the
          dashboard. See GAP_REPORT.md §3 for what's still not built (funnel, reduced sidebar). --}}
     <div class="mb-6 grid gap-5 lg:grid-cols-2">
-        <x-card variant="v2" title="برنامه امروز" icon="clock">
+        <x-card variant="v2" title="برنامه امروز" icon="clock" class="min-w-0">
             @if ($todaySchedule->isEmpty())
                 <x-empty-state variant="v2" icon="clock" title="برای امروز رویدادی برنامه‌ریزی نشده است." />
             @else
@@ -140,7 +140,7 @@
             <div class="mt-3"><x-button :href="route('admin.calendar.index')" variant="v2-secondary" size="sm">مشاهده تقویم</x-button></div>
         </x-card>
 
-        <x-card variant="v2" title="پیگیری‌های عقب‌افتاده" icon="alert">
+        <x-card variant="v2" title="پیگیری‌های عقب‌افتاده" icon="alert" class="min-w-0">
             @if ($overdueFollowUps->isEmpty())
                 <x-empty-state variant="v2" icon="check-circle" title="پیگیری عقب‌افتاده‌ای وجود ندارد." />
             @else
@@ -161,7 +161,7 @@
 
     @if ($isAdmin)
         <div class="mb-6 grid gap-5 lg:grid-cols-2">
-            <x-card variant="v2" title="وضعیت ایمپورت" icon="inbox">
+            <x-card variant="v2" title="وضعیت ایمپورت" icon="inbox" class="min-w-0">
                 <div class="grid grid-cols-3 gap-3 text-center">
                     <div class="rounded-xl bg-v2-bg p-3">
                         <div class="flex items-center justify-center gap-1.5 text-v2-success"><x-icon name="check-circle" class="w-4 h-4" /> موفق</div>
@@ -178,7 +178,7 @@
                 </div>
             </x-card>
 
-            <x-card variant="v2" title="نرخ‌های امروز" icon="target" subtitle="منبع: تنظیمات نرخ ارز پنل مدیریت.">
+            <x-card variant="v2" title="نرخ‌های امروز" icon="target" subtitle="منبع: تنظیمات نرخ ارز پنل مدیریت." class="min-w-0">
                 <div class="grid grid-cols-2 gap-3 text-center">
                     <div class="rounded-xl bg-v2-bg p-3">
                         <div class="text-xs font-bold text-v2-text-muted">درهم (AED)</div>

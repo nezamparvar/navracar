@@ -35,7 +35,6 @@
         </nav>
 
         <h1 class="text-lg font-black text-v2-text sm:text-xl">{{ $heading }}</h1>
-        <p class="mt-1 max-w-2xl text-xs text-v2-text-muted sm:text-sm">{{ $description }}</p>
 
         {{--
             Compact filter bar: search (real q param) + sort (real sort param) always visible;
@@ -47,7 +46,7 @@
             engine-volume/year filter — those columns don't exist on CarListing yet, so they are
             not rendered as dead controls. See GAP_REPORT.md §7.
         --}}
-        <div x-data="{ filtersOpen: false }" class="mt-4">
+        <div x-data="{ filtersOpen: false }" class="mt-2.5">
             <div class="flex flex-wrap items-center gap-2">
                 <form method="GET" class="flex min-w-[200px] flex-1 items-center gap-2">
                     <label for="car-search" class="sr-only">جستجو بر اساس برند، مدل یا کد خودرو</label>
@@ -71,7 +70,7 @@
                 </button>
             </div>
 
-            <div class="mt-2 flex flex-wrap items-center gap-2" :class="{ 'hidden sm:flex': !filtersOpen }">
+            <div class="mt-1.5 flex flex-wrap items-center gap-2" :class="{ 'hidden sm:flex': !filtersOpen }">
                 <label for="car-brand" class="sr-only">برند</label>
                 <select id="car-brand" onchange="if(this.value) location.href=this.value"
                         class="min-h-[40px] rounded-xl border border-v2-border bg-v2-elevated px-2.5 text-xs text-v2-text focus:border-v2-primary focus:outline-none sm:text-sm">
@@ -107,14 +106,11 @@
                 <x-empty-state variant="v2" icon="car" title="در حال حاضر آگهی‌ای در این بخش منتشر نشده است." />
             </div>
         @else
-            <div class="mt-5 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
+            <div class="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach ($listings as $listing)
                     <a href="{{ route('public.car-prices.show', $listing) }}"
                        class="group relative overflow-hidden rounded-2xl border border-v2-border bg-v2-elevated shadow-soft-dark transition hover:-translate-y-1">
-                        <span class="absolute end-2.5 top-2.5 z-10 flex h-7 w-7 items-center justify-center rounded-full bg-v2-bg/60 text-v2-text backdrop-blur-sm" aria-hidden="true">
-                            <x-icon name="heart" class="w-3.5 h-3.5" />
-                        </span>
-                        <div class="aspect-[16/11] overflow-hidden bg-v2-surface">
+                        <div class="aspect-[19/10] overflow-hidden bg-v2-surface">
                             @if ($listing->coverImage())
                                 <img src="{{ $listing->coverImage()->url() }}" alt="{{ $listing->title_fa }}"
                                      loading="lazy" class="h-full w-full object-cover transition group-hover:scale-105">
@@ -124,12 +120,14 @@
                         </div>
                         <div class="p-2.5 sm:p-3">
                             <h2 class="line-clamp-2 text-xs font-extrabold text-v2-text sm:text-sm">{{ $listing->title_fa }}</h2>
-                            <div class="mt-1.5 flex flex-wrap gap-1">
-                                @if($listing->model_year)<span class="rounded-md bg-v2-bg px-1.5 py-0.5 text-[10px] font-bold text-v2-text-muted">مدل {{ $listing->model_year }}</span>@endif
-                                @if($listing->kilometers)<span class="rounded-md bg-v2-bg px-1.5 py-0.5 text-[10px] font-bold text-v2-text-muted num-font">{{ $listing->kilometers }} کیلومتر</span>@endif
-                            </div>
-                            <div class="mt-2 text-sm font-black text-v2-text num-font sm:text-base">
-                                {{ number_format((float) $listing->price_aed) }} <span class="text-[10px] font-bold text-v2-text-muted">درهم</span>
+                            @if($listing->model_year)<div class="mt-0.5 text-[10px] text-v2-text-muted sm:text-xs">مدل {{ $listing->model_year }}</div>@endif
+                            <div class="mt-1.5 flex items-center justify-between gap-1.5">
+                                <div class="text-sm font-black text-v2-text num-font sm:text-base">
+                                    {{ number_format((float) $listing->price_aed) }} <span class="text-[10px] font-bold text-v2-text-muted">درهم</span>
+                                </div>
+                                @if($listing->fuel_type)
+                                    <span class="shrink-0 rounded-md bg-v2-bg px-1.5 py-0.5 text-[10px] font-bold text-v2-text-muted">{{ $listing->fuel_type }}</span>
+                                @endif
                             </div>
                             <div class="mt-0.5 text-[10px] text-v2-text-muted num-font sm:text-xs">
                                 قیمت تمام‌شده: {{ number_format($listing->estimatedLandedCostToman($freeRate, $customsRate) * 10) }} <span class="font-bold">ریال</span>

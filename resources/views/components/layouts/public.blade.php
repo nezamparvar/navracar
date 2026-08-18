@@ -144,11 +144,17 @@
     </div>
 </header>
 
-<main id="main-content" class="pb-20 sm:pb-0">
+<main id="main-content">
     {{ $slot }}
 </main>
 
-<footer class="mt-10 border-t border-v2-border bg-v2-surface py-10">
+{{--
+    Bottom clearance for the fixed mobile nav belongs at the true end of the page (after the
+    footer), not between main and footer — the nav is position:fixed and only ever risks covering
+    whatever content is currently at the bottom of the scrollable page. Padding on <main> created a
+    large empty gap here instead of protecting the real page end.
+--}}
+<footer class="mt-10 border-t border-v2-border bg-v2-surface pt-10 pb-24 sm:pb-10">
     <div class="mx-auto max-w-6xl px-4">
         <div class="grid grid-cols-1 gap-8 sm:grid-cols-3">
             <div>

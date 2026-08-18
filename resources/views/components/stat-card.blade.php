@@ -24,15 +24,15 @@ $noteClass = $variant === 'v2' ? 'mt-1 text-xs text-v2-text-muted' : 'mt-1 text-
 $iconWrap = $variant === 'v2' ? ($v2Accents[$accent] ?? $v2Accents['brand']) : ($accents[$accent] ?? $accents['brand']);
 @endphp
 
-<div class="group {{ $shell }} transition-all duration-200 hover:-translate-y-1 hover:shadow-soft-lg">
-    <div class="mb-3 flex items-center justify-between">
-        <span class="{{ $labelClass }}">{{ $label }}</span>
-        <span class="flex h-9 w-9 items-center justify-center rounded-xl {{ $iconWrap }}">
+<div class="group min-w-0 {{ $shell }} transition-all duration-200 hover:-translate-y-1 hover:shadow-soft-lg">
+    <div class="mb-3 flex items-center justify-between gap-2">
+        <span class="truncate {{ $labelClass }}">{{ $label }}</span>
+        <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl {{ $iconWrap }}">
             <x-icon :name="$icon" class="w-[18px] h-[18px]" />
         </span>
     </div>
-    <div class="{{ $valueClass }}">{{ $slot }}</div>
+    <div class="truncate {{ $valueClass }}">{{ $slot }}</div>
     @if($note)
-        <div class="{{ $noteClass }}">{{ $note }}</div>
+        <div class="truncate {{ $noteClass }}">{{ $note }}</div>
     @endif
 </div>
