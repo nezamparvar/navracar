@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Public;
 
 use App\Http\Controllers\Controller;
+use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
 use Illuminate\Http\Request;
 
@@ -51,11 +52,27 @@ class RequestTrackingController extends Controller
             ])
         )->filter(fn ($row) => $row['at'] !== null)->sortBy('at')->values();
 
+        // Real pipeline-stage sequence (same PipelineStage data the admin kanban/dashboard
+        // use), excluding the "lost" terminal stage since it isn't a forward step. Used to
+        // render a real numbered-stage stepper — not the reference image's fictional fixed
+        // payment-stage labels, since no such data exists here.
+        $stages = PipelineStage::where('is_active', true)
+            ->where('slug', '!=', 'lost')
+            ->orderBy('sort_order')
+            ->get(['id', 'name', 'sort_order']);
+        $currentIndex = $quoteRequest->current_stage_id
+            ? $stages->search(fn ($s) => $s->id === $quoteRequest->current_stage_id)
+            : false;
+
         return view('public.track.show', [
             'title' => 'پیگیری درخواست #'.$quoteRequest->id.' | ناوراکار',
             'quoteRequest' => $quoteRequest,
+            'requestNumber' => 'NVR-'.$quoteRequest->created_at->format('Y').'-'.str_pad((string) $quoteRequest->id, 6, '0', STR_PAD_LEFT),
             'timeline' => $timeline,
             'latestInvoice' => $quoteRequest->invoices->first(),
+            'stages' => $stages,
+            'currentStageIndex' => $currentIndex === false ? null : $currentIndex,
+            'isLost' => $quoteRequest->stage?->slug === 'lost',
         ]);
     }
 }
