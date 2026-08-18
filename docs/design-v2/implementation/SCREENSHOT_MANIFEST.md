@@ -82,3 +82,46 @@ No triad was built for the mobile composites (`05-public-mobile.png`, `06-admin-
 ### Known, disclosed limitation: placeholder vehicle images
 
 All car photos in these screenshots are locally generated placeholders (solid color + simple car-silhouette shape + English make/model text), created by `E2eSeeder`. This sandbox has no outbound network access to real photo hosts, so real Dubizzle-sourced images cannot be fetched here under any implementation. The image-rendering code path (`CarListing::coverImage()` → `CarListingImage::url()` → `Storage::disk('public')`) is unchanged and will render real photos identically once real `source_url` images are imported through the existing Dubizzle/YallaMotor pipeline in an environment with network access.
+
+## Round 4 remediation (post round-3 review — see `QA_REPORT.md`'s "Round 4 remediation" section)
+
+Directory: `docs/design-v2/implementation/screenshots/round4/`
+
+Every route below was verified live via authenticated `curl` (HTTP 200, zero `exception|Whoops|ConnectionRefused|ERR_CONNECTION` occurrences, real content markers present) against a freshly `migrate:fresh --seed`'d server immediately before capture — the discipline built after the round-3 `ERR_CONNECTION_REFUSED` incident, applied to every route this time rather than spot-checked.
+
+| File | Route | Viewport | Role | State | SHA-256 |
+|---|---|---|---|---|---|
+| `public-home-1440x900.png` / `-390x844.png` | `/` | 1440×900 / 390×844 | public | populated | `b1886d9240ddfa902cc9e32d637e503f425abcd5a253c3870bb1aec4867153a9` / `00daa80c35289e7e725a9f77e980189a2abca4f04dd9655dfbc0e6dc5188cd74` |
+| `public-vehicle-list-1440x900.png` / `-390x844.png` | `/car-prices` | 1440×900 / 390×844 | public | populated, compact filter bar (round-4 fix) | `b42235fcb4e36cf3cd16b7f35bb54634c675cbb45959edbb56beac1c67819079` / `87fcba0ab0eb0046fa62a4420821fa79d76bf30272fc55d58a411efb739a3b9d` |
+| `public-vehicle-detail-1440x900.png` / `-390x844.png` | `/car-prices/e2e-bmw-x4` | 1440×900 / 390×844 | public | populated, gallery-left/info-right fix, real tabs, corrected pricing | `6e2b9319327e1db905139596de040cc347145566298afd5a36154d5b46b56325` / `8de551ec8588baa659c2aed10852aab8be0326103f0bbcb11a044c5edfa35f17` |
+| `public-calculator-1440x900.png` / `-390x844.png` | `/calculator` | 1440×900 / 390×844 | public | initial form, V2 dark re-skin (visual only) | `828aa95094f06b83eb830be6c4689e2334e0536ccbed9fb29bf86d62e6a599ef` / `f483683d0d42406509c2e9399f1eeef41fb32fad369188f75d75d57cb9fb76b8` |
+| `public-track-find-1440x900.png` / `-390x844.png` | `/track` | 1440×900 / 390×844 | public | lookup form, new this round | `4c2606819dc5f3de6f2f90f10a608de2d807795fd4690c31785d6977a2deb1ed` / `c655cd315f9e5ee598202d13f8c54a5f7cd3e7e870da9e121783245316c9abf9` |
+| `public-track-show-1440x900.png` / `-390x844.png` | `/track/1?phone=09120000000` | 1440×900 / 390×844 | public | populated, real horizontal pipeline stepper | `6d4324ee50edbbbb70e304359eb463c228b83d666e2c2e38f3846e19f356c12d` / `15aba53cfdf90c72bf31c77393487fe8e3f80ba83260614567e04074fa32b5e8` |
+| `admin-dashboard-1440x900.png` / `-390x844.png` | `/admin` | 1440×900 / 390×844 | admin | populated, restructured (calendar/pipeline/today's-schedule/overdue widgets, CTA banner removed) | `c5cba83ed348b5d6a59a4d0d045db0b05a1500a755f8167a1fb777ef668b862c` / `44eea57bdfdef67e41e17436d74dfb579591f16bda9fe472c38b6b0faa318a9c` |
+| `admin-calendar-1440x900.png` / `-390x844.png` | `/admin/calendar` | 1440×900 / 390×844 | admin | populated (week view desktop, list view mobile), new this round | `3ab40517b720d06f163adabcecae7c54b9a6bbc916ad59d6f866ced1ae972ddc` / `d7cd9534db70377c2d144b10c6b87a7882c83a8429bc97009f9037c47aeccdf6` |
+| `admin-kanban-1440x900.png` / `-390x844.png` | `/admin/kanban` | 1440×900 / 390×844 | admin | populated, V2 dark re-skin (was light/broken on mobile) | `5dec59120383a79436b83888e20fc0cf18cc368153f27fb6881e5ac3146a9e2a` / `61668cf96bc176417deecf939bd2766dfb896a4e656530cffb1bd31c123a1f79` |
+| `admin-content-dashboard-1440x900.png` / `-390x844.png` | `/admin/content-dashboard` | 1440×900 / 390×844 | admin (content) | populated, new this round | `de9c516311c49c1f1745d31be88105c08d0d6d131a648c4f80b14bcca5f4a718` / `915cbf37055452913b501b34683dd80ee3ed89acdccf43e6a1506c248e19fe65` |
+| `admin-content-import-1440x900.png` / `-390x844.png` | `/admin/car-listings/import` | 1440×900 / 390×844 | admin (content) | form, V2 dark re-skin (was white/amber) | `850cde00a81b1fc857f733387140f67ae991d7dbfa4b6df941dab31aac1069e0` / `039358a722d72d42e01ddc85deeb9c324abfd7d07969cdd1f0b1e6e2e9f3e413` |
+| `admin-requests-1440x900.png` | `/admin/requests` | 1440×900 | admin | populated, V2 dark re-skin | `1aa845c9e1d4b7447daddb583c13bcf7db9036e67a93923d95901c0d8e72a9f3` |
+| `admin-invoices-1440x900.png` | `/admin/invoices` | 1440×900 | admin | populated, V2 dark re-skin | `7674e5ee149132cf2df9945e40c1354dedf917633f855d67ac85ac098b0d7870` |
+
+**Not captured separately in this round:** the other 20 admin pages migrated to V2 tokens this round (invoices create/show, car-listings index/edit/create, posts, home-slides, menu-items, users, extension-pairing, templates, vin-checks, calculations, activity-log, import-queue, settings) were verified via the live authenticated curl sweep recorded in `QA_REPORT.md` (HTTP 200, zero error markers, `php -l` clean) but not individually screenshotted — screenshotting all 20 was judged lower-priority than covering every page changed structurally (not just re-skinned) in this round. Flagged honestly rather than silently omitted; a full per-page screenshot pass remains a reasonable next step if wanted.
+
+### Reference-crop / implementation / overlay triads (round 4)
+
+Directory: `docs/design-v2/implementation/screenshots/round4/triads/`
+
+Regenerated the three round-3 triads against the current implementation (both pages changed structurally again this round — vehicle detail's column order and tabs, the dashboard's new widgets — so the round-3 triads were stale). Same method as round 3: exact reference panel cropped from the composite PNG, placed beside a same-aspect-ratio crop of a fresh implementation screenshot (scaled to match), plus a 50%-opacity overlay.
+
+| File | Reference panel | Implementation | SHA-256 |
+|---|---|---|---|
+| `vehicle-list-triad.png` | `01-public-desktop-system.png`, right panel (x∈[844,1672], y∈[0,574]) | `public-vehicle-list-1440x900.png`, top crop (0,0,1440,998) | `a1bd9f29d1f2efaa57c11cd49766f63c396784c55a08345961d497c3926261fe` |
+| `vehicle-detail-triad.png` | `01-public-desktop-system.png`, left panel (x∈[0,828], y∈[0,574]) | `public-vehicle-detail-1440x900.png`, top crop (0,0,1440,998) | `8cc2d83facfe709988f6b44ec4bf185a046d332daabb636536df4c9ec9a5776b` |
+| `admin-dashboard-triad.png` | `02-admin-dashboard-calendar.png`, full canvas | `admin-dashboard-1440x900.png`, top crop (0,0,1563,879) | `98b45ca9f14860e1f9de302a910e85d226bc4035bd41fac0d29f013ae688d5bb` |
+
+**Honest read of these three, not just "delivered":**
+- **Vehicle list:** strong structural match — 4-up card grid, dark theme, chip/badge composition, heart icon, price hierarchy all line up closely with the reference panel.
+- **Vehicle detail:** the gallery-left/info-right fix is visible and correct (previously reversed). The tabs row and cost-summary section fall below this particular crop's fold because the implementation's header/title block is taller than the reference's — not mis-cropped, just a real vertical-rhythm difference between the two; the reference is exported without the app's actual public header/breadcrumb chrome. The gallery main image is a visibly synthetic gray placeholder shape, per the disclosed placeholder-image limitation.
+- **Admin dashboard:** confirms the dark sidebar/shell match, but also confirms — visually, not just in prose — the still-open gap already recorded in `GAP_REPORT.md` §3: the reference's 4-KPI row and line+bar performance chart differ from the implementation's 7-KPI two-row layout and horizontal-bar trend chart. Included honestly rather than cropped to hide the mismatch.
+
+No triad was attempted for the newly-built pages with no corresponding reference panel at this precision (calendar, kanban, content dashboard, request-tracking, calculator) — same reasoning as round 3's mobile composites: forcing a crop-and-overlay against a reference that doesn't actually depict that screen at a comparable scale would look rigorous without being so. Direct screenshots are the honest deliverable for those.
