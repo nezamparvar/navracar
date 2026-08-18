@@ -95,19 +95,13 @@ class ImportQueueController extends Controller
         $listing = DB::transaction(function () use ($importQueue, $data) {
             $slugData = $data;
             $slugData['model_year'] = $data['year'] ?? null;
-            $mapperData = array_merge($data, [
-                'model_year' => $data['year'] ?? null,
-                'trim_level' => $data['trim'] ?? null,
-                'kilometers' => $data['mileage_km'] ?? null,
-            ]);
-            $titleFa = $this->mapper->buildPersianTitle($mapperData);
             $listing = CarListing::create([
                 'source_url' => $importQueue->source_url,
                 'source_site' => $importQueue->source,
                 'status' => 'draft',
                 'slug' => $this->mapper->slugify($slugData),
                 'title_en' => $data['title'],
-                'title_fa' => $titleFa,
+                'title_fa' => $data['title'],
                 'make' => $data['make'] ?? null,
                 'model' => $data['model'] ?? null,
                 'trim_level' => $data['trim'] ?? null,
@@ -132,8 +126,6 @@ class ImportQueueController extends Controller
                 'category_id' => $this->mapper->detectCategory($data['engine_capacity_cc'] ?? null, $data['fuel_type'] ?? null),
                 'delivery_days' => (int) Setting::get(Setting::DEFAULT_DELIVERY_DAYS),
                 'description_en' => $data['description'] ?? null,
-                'meta_title' => $titleFa.' | ناوراکار',
-                'meta_description' => $this->mapper->buildMetaDescription($mapperData, $titleFa),
                 'posted_on_dubizzle' => $data['posted_on'] ?? null,
                 'created_by' => $importQueue->user_id,
             ]);
