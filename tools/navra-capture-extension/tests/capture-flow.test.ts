@@ -68,6 +68,10 @@ function loadServiceWorker(fetchImpl: jest.Mock) {
 }
 
 describe('capture delivery flow', () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
   it('returns a preview payload without sending it before the user clicks Send', async () => {
     const html = `
       <h1>Toyota Camry</h1>
@@ -102,6 +106,21 @@ describe('capture delivery flow', () => {
     const result = await handleSendCapture({ source: 'dubicars' });
 
     expect(result.status).toBe('error');
+    expect(tabsCreate).not.toHaveBeenCalled();
+  });
+
+  it('releases a send whose API request never settles', async () => {
+    jest.useFakeTimers();
+    const fetchImpl = jest.fn(() => new Promise(() => {}));
+    const { handleSendCapture, tabsCreate } = loadServiceWorker(fetchImpl);
+
+    const resultPromise = handleSendCapture({ source: 'dubizzle' });
+    await jest.advanceTimersByTimeAsync(15000);
+
+    await expect(resultPromise).resolves.toEqual(expect.objectContaining({
+      status: 'error',
+      error: expect.stringMatching(/timeout|زمان/i),
+    }));
     expect(tabsCreate).not.toHaveBeenCalled();
   });
 

@@ -18,6 +18,7 @@ const CONFIG = {
 };
 
 const CURRENT_CONFIG = CONFIG[EXTENSION_ENVIRONMENT];
+const CAPTURE_REQUEST_TIMEOUT_MS = 12000;
 
 // Listen for messages from content script and popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -110,14 +111,32 @@ async function handleSendCapture(payload) {
   }
 
   try {
-    const response = await fetch(`${CURRENT_CONFIG.apiUrl}/browser-capture/v1/listings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token.token}`,
-      },
-      body: JSON.stringify(payload),
+    const controller = new AbortController();
+    let timeout;
+    const timeoutPromise = new Promise((_, reject) => {
+      timeout = setTimeout(() => {
+        controller.abort();
+        reject(new Error('NavraCar API request timeout'));
+      }, CAPTURE_REQUEST_TIMEOUT_MS);
     });
+
+    let response;
+    try {
+      response = await Promise.race([
+        fetch(`${CURRENT_CONFIG.apiUrl}/browser-capture/v1/listings`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token.token}`,
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal,
+        }),
+        timeoutPromise,
+      ]);
+    } finally {
+      clearTimeout(timeout);
+    }
 
     const data = await parseApiResponse(response);
 
