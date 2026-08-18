@@ -195,7 +195,7 @@ class E2eSeeder extends Seeder
         ];
 
         foreach ($importQueueRecords as $idx => $record) {
-            $publishedId = ($record['status'] === 'published' && $idx < 3)
+            $publishedId = ($record['status'] === 'published')
                 ? CarListing::where('slug', 'e2e-bmw-x4')->first()?->id
                 : null;
 
@@ -228,26 +228,34 @@ class E2eSeeder extends Seeder
                 'error' => $record['error'],
                 'published_listing_id' => $publishedId,
                 'images_imported' => $record['images'] > 0,
-                'created_at' => today()->copy()->addDays($record['day'])->setTime($record['hour'], 0, 0),
+                'created_at' => today()->copy()->subDays(7 - $record['day'])->setTime($record['hour'], 0, 0),
             ]);
         }
 
-        // Home slide for carousel on public homepage (single slide for content dashboard demo)
-        $imagePath = 'home-slides/slide-1.png';
-        if (! Storage::disk('public')->exists($imagePath)) {
-            Storage::disk('public')->put($imagePath, $this->placeholderImage('محاسبه هزینه واردات', 'Slide', '#1677FF'));
-        }
-        HomeSlide::updateOrCreate(
-            ['sort_order' => 1],
-            [
-                'title' => 'محاسبه هزینه واردات',
-                'subtitle' => 'هزینه دقیق را محاسبه کنید',
+        // Home slides for carousel: Delete old records then seed fresh for idempotency
+        HomeSlide::truncate();
+
+        $homeSlides = [
+            ['order' => 1, 'title' => 'محاسبه هزینه واردات', 'subtitle' => 'هزینه دقیق را محاسبه کنید', 'cta' => 'شروع کنید', 'url' => '/calculator', 'color' => '#1677FF'],
+            ['order' => 2, 'title' => 'خودروهای وارداتی معتبر', 'subtitle' => 'بزرگ‌ترین بانک آگهی خودروهای وارداتی', 'cta' => 'مشاهده فهرست', 'url' => '/car-prices', 'color' => '#14243F'],
+            ['order' => 3, 'title' => 'مشاوره تخصصی', 'subtitle' => 'تیم متخصص ما آماده کمک است', 'cta' => 'درخواست مشاوره', 'url' => '/lead-form', 'color' => '#122C4A'],
+        ];
+
+        foreach ($homeSlides as $slide) {
+            $imagePath = 'home-slides/slide-'.$slide['order'].'.png';
+            if (! Storage::disk('public')->exists($imagePath)) {
+                Storage::disk('public')->put($imagePath, $this->placeholderImage($slide['title'], 'Slide '.$slide['order'], $slide['color']));
+            }
+            HomeSlide::create([
+                'sort_order' => $slide['order'],
+                'title' => $slide['title'],
+                'subtitle' => $slide['subtitle'],
                 'image_path' => $imagePath,
-                'cta_label' => 'شروع کنید',
-                'cta_url' => '/calculator',
+                'cta_label' => $slide['cta'],
+                'cta_url' => $slide['url'],
                 'is_active' => true,
-            ]
-        );
+            ]);
+        }
 
         // Rich calendar events for day/week/list views: today + this week + next week, mixed statuses
         // Using fixed dates (always relative to database seeding date, never "now")

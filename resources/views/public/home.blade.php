@@ -8,6 +8,8 @@
         <meta property="og:url" content="{{ route('public.home') }}">
     @endpush
 
+    <h1 class="sr-only">واردات تخصصی خودرو از امارات به ایران</h1>
+
     @if ($slides->isNotEmpty())
         <div x-data="homeSlider" data-slide-count="{{ $slides->count() }}" class="relative overflow-hidden bg-v2-bg">
             @foreach ($slides as $i => $slide)
@@ -18,7 +20,7 @@
                     <div class="absolute inset-0 flex items-center bg-gradient-to-l from-v2-bg/90 via-v2-bg/50 to-transparent">
                         <div class="mx-auto w-full max-w-6xl px-4">
                             <div class="max-w-lg">
-                                <h1 class="text-2xl font-black text-v2-text sm:text-4xl">{{ $slide->title }}</h1>
+                                <h2 class="text-2xl font-black text-v2-text sm:text-4xl">{{ $slide->title }}</h2>
                                 @if($slide->subtitle)
                                     <p class="mt-3 text-sm text-v2-text-muted sm:text-base">{{ $slide->subtitle }}</p>
                                 @endif
@@ -35,14 +37,14 @@
             @if ($slides->count() > 1)
                 <div class="absolute inset-x-0 bottom-3 flex justify-center gap-1.5">
                     <template x-for="i in count" :key="i">
-                        <button type="button" @click="active = i - 1" class="h-1.5 w-6 rounded-full" :class="active === i - 1 ? 'bg-v2-primary' : 'bg-white/30'"></button>
+                        <button type="button" @click="active = i - 1" :aria-label="'رفتن به اسلاید ' + i" :aria-current="active === i - 1 ? 'true' : 'false'" class="h-1.5 w-6 rounded-full" :class="active === i - 1 ? 'bg-v2-primary' : 'bg-white/30'"></button>
                     </template>
                 </div>
             @endif
         </div>
     @else
         <div class="bg-v2-surface py-16 text-center">
-            <h1 class="text-2xl font-black text-v2-text sm:text-4xl">واردات تخصصی خودرو از امارات به ایران</h1>
+            <h2 class="text-2xl font-black text-v2-text sm:text-4xl">واردات تخصصی خودرو از امارات به ایران</h2>
             <p class="mx-auto mt-3 max-w-xl px-4 text-sm text-v2-text-muted">محاسبه دقیق هزینه ترخیص گمرکی، عوارض و پلاک — همراه با بانک آگهی خودروهای وارداتی.</p>
         </div>
     @endif

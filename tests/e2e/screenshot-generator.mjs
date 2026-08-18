@@ -95,8 +95,15 @@ async function captureScreenshot(browser, route, viewportSize) {
     if (pageErrors.length > 0) {
       throw new Error(`Page errors: ${pageErrors.join('; ')}`);
     }
-    if (consoleErrors.length > 0) {
-      throw new Error(`Console errors: ${consoleErrors.join('; ')}`);
+    // Allow ERR_CERT_AUTHORITY_INVALID from external resources through proxy; disallow other console errors
+    const filteredConsoleErrors = consoleErrors.filter(e => !e.includes('ERR_CERT_AUTHORITY_INVALID'));
+    if (filteredConsoleErrors.length > 0) {
+      throw new Error(`Console errors: ${filteredConsoleErrors.join('; ')}`);
+    }
+    // Allow ERR_CERT_AUTHORITY_INVALID request failures from proxy policy
+    const filteredRequestFailures = requestFailures.filter(f => !f.includes('ERR_CERT_AUTHORITY_INVALID'));
+    if (filteredRequestFailures.length > 0) {
+      throw new Error(`Request failures: ${filteredRequestFailures.join('; ')}`);
     }
 
     // Capture viewport-sized screenshot
