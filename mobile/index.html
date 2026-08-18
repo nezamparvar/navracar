@@ -7,6 +7,7 @@
   <meta name="color-scheme" content="dark">
   <meta name="navracar-api-base" content="https://navracar.com">
   <meta name="navracar-environment" content="production">
+  <meta name="navracar-app-version" content="1.1.0">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src https://navracar.com https://staging.nezamparvar.com; img-src 'self' data: https:; style-src 'self'; script-src 'self'; font-src 'self' data:; object-src 'none'; base-uri 'none'; form-action 'self'">
   <title>ناوراکار</title>
   <link rel="stylesheet" href="styles.css">
@@ -25,6 +26,11 @@
     <a href="#/account" data-nav="account" aria-label="حساب"><span aria-hidden="true">♙</span><b>حساب</b></a>
   </nav>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <aside id="privacy-notice" class="privacy-notice" aria-labelledby="privacy-title" hidden>
+    <strong id="privacy-title">آمار ناشناس برای بهتر شدن اپ</strong>
+    <p>با اجازه شما فقط صفحه‌ها، جستجوی خودرو، مدل گوشی و شهر/کشور تقریبی ثبت می‌شود؛ شماره، ایمیل، VIN، GPS و مخاطبین جمع‌آوری نمی‌شوند.</p>
+    <div><button class="btn btn-primary" data-privacy-choice="accept">موافقم</button><button class="btn btn-secondary" data-privacy-choice="decline">فعلاً نه</button></div>
+  </aside>
   <script type="module" src="app.js"></script>
 </body>
 </html>

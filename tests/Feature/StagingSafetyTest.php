@@ -15,6 +15,13 @@ class StagingSafetyTest extends TestCase
         $this->assertStringNotContainsString("build_variant staging 'https://navracar.com/staging'", $builder);
     }
 
+    public function test_android_manifest_declares_runtime_notification_permission(): void
+    {
+        $manifest = file_get_contents(base_path('android/app/src/main/AndroidManifest.xml'));
+
+        $this->assertStringContainsString('android.permission.POST_NOTIFICATIONS', $manifest);
+    }
+
     public function test_staging_candidate_can_use_an_exact_green_branch_head_without_unlocking_production(): void
     {
         $stagingWorkflow = file_get_contents(base_path('.github/workflows/cpanel-staging.yml'));

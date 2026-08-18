@@ -50,10 +50,10 @@ export function createApiClient(baseUrl, options = {}) {
   }
 
   return {
-    get: (path) => request(path),
-    post: (path, data) => request(path, { method: 'POST', body: JSON.stringify(data) }),
-    put: (path, data = null) => request(path, { method: 'PUT', ...(data ? { body: JSON.stringify(data) } : {}) }),
-    patch: (path, data) => request(path, { method: 'PATCH', body: JSON.stringify(data) }),
-    delete: (path) => request(path, { method: 'DELETE' }),
+    get: (path, options = {}) => request(path, options),
+    post: (path, data, options = {}) => request(path, { ...options, method: 'POST', body: JSON.stringify(data) }),
+    put: (path, data = null, options = {}) => request(path, { ...options, method: 'PUT', ...(data ? { body: JSON.stringify(data) } : {}) }),
+    patch: (path, data, options = {}) => request(path, { ...options, method: 'PATCH', body: JSON.stringify(data) }),
+    delete: (path, options = {}) => request(path, { ...options, method: 'DELETE' }),
   };
 }

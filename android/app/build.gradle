@@ -9,8 +9,8 @@ android {
         applicationId stagingBuild ? "com.navracar.mobile.staging" : "com.navracar.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode stagingBuild ? 2 : 1
-        versionName stagingBuild ? "1.0-staging" : "1.0"
+        versionCode 3
+        versionName stagingBuild ? "1.1.0-staging" : "1.1.0"
         manifestPlaceholders = [appLabel: stagingBuild ? "ناوراکار Staging" : "ناوراکار"]
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

@@ -54,6 +54,10 @@ test('renders complete Persian RTL Android V1 screen inventory', async ({ page }
     await mockMobileApi(page);
     await page.goto('http://127.0.0.1:4173/');
     await expect(page.locator('html')).toHaveAttribute('dir', 'rtl');
+    await expect(page.getByText('آمار ناشناس برای بهتر شدن اپ')).toBeVisible();
+    await capture(page, '00-privacy-consent.png', false);
+    await page.getByRole('button', { name: 'فعلاً نه' }).click();
+    await expect(page.getByText('آمار ناشناس برای بهتر شدن اپ')).toBeHidden();
     await expect(page.getByRole('navigation', { name: 'ناوبری اصلی' }).getByRole('link')).toHaveCount(4);
     await expect(page.getByRole('heading', { name: /خودروی بعدی/ })).toBeVisible();
     await capture(page, '01-home-rtl.png');
@@ -101,6 +105,7 @@ test('renders complete Persian RTL Android V1 screen inventory', async ({ page }
     await expect(page.getByText('مریم احمدی')).toBeVisible();
     await expect(page.getByRole('link', { name: 'علاقه‌مندی‌ها' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'ذخیره تغییرات' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'حریم خصوصی و اعلان‌ها' })).toBeVisible();
     await capture(page, '09-account.png');
 
     await page.getByRole('link', { name: 'علاقه‌مندی‌ها' }).click();
@@ -111,6 +116,7 @@ test('renders complete Persian RTL Android V1 screen inventory', async ({ page }
 test('guest favorites resolve the selected listing and failed logout preserves the token', async ({ page }) => {
     await mockMobileApi(page, { logoutStatus: 503 });
     await page.goto('http://127.0.0.1:4173/#/vehicles');
+    await page.getByRole('button', { name: 'فعلاً نه' }).click();
     await expect(page.getByTestId('vehicle-card')).toHaveCount(2);
     await page.locator('[data-favorite="toyota-camry"]').click();
     await expect.poll(() => page.evaluate(() => JSON.parse(localStorage.getItem('navracar.local-favorites') || '[]')[0]?.slug)).toBe('toyota-camry');
@@ -121,4 +127,20 @@ test('guest favorites resolve the selected listing and failed logout preserves t
     await page.getByRole('button', { name: 'خروج از حساب' }).click();
     await expect(page.getByText(/خروج انجام نشد/)).toBeVisible();
     await expect.poll(() => page.evaluate(() => localStorage.getItem('navracar.mobile.token'))).toContain('|');
+});
+
+test('admin mobile insights renders live, search, device, location, contact, and Push controls', async ({ page }) => {
+    await page.goto('http://127.0.0.1:8000/admin/login');
+    await page.locator('input[name="username"]').fill('admin');
+    await page.locator('input[name="password"]').fill('password');
+    await page.locator('button[type="submit"]').click();
+    await page.goto('http://127.0.0.1:8000/admin/mobile-insights');
+
+    await expect(page.getByRole('heading', { name: 'آمار اپلیکیشن' })).toBeVisible();
+    await expect(page.getByText('BMW X5')).toBeVisible();
+    await expect(page.getByText('Samsung SM-S928B')).toBeVisible();
+    await expect(page.getByText(/Dubai/)).toBeVisible();
+    await expect(page.getByText('WhatsApp', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'ارسال Push Notification' })).toBeVisible();
+    await capture(page, '11-admin-mobile-insights.png');
 });
