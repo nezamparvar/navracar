@@ -24,6 +24,7 @@
         ['route' => 'admin.kanban', 'label' => 'پایپ‌لاین (کانبان)', 'icon' => 'kanban'],
         ['route' => 'admin.requests.index', 'label' => 'درخواست‌ها (لیست)', 'icon' => 'inbox'],
         ['route' => 'admin.invoices.index', 'label' => 'پیش‌فاکتورها', 'icon' => 'invoice'],
+        ['route' => 'admin.calendar.index', 'label' => 'تقویم جلسات و تماس‌ها', 'icon' => 'calendar'],
     ];
     $contentNavItems = [
         ['route' => 'admin.car-listings.index', 'label' => 'آگهی‌ها و ایمپورت', 'icon' => 'car'],
@@ -215,12 +216,10 @@
     {{--
         Admin mobile bottom nav per DESIGN_SPEC.md §3 (پنل مدیریت موبایل) and
         docs/design-v2/assets/06-admin-mobile.png: داشبورد/فروش/محتوا/تقویم/منو.
-        Permission-aware like the sidebar (فروش/محتوا only for roles that can see them).
-        "تقویم" has no backing route yet — no calendar/meeting subsystem exists in the
-        repo (see GAP_REPORT.md §2) — kept visible per the reference, disabled with a
-        reason rather than silently dropped or faked. "منو" opens the same drawer as
-        the header hamburger button (real, not a dead end) — needs the adminShell
-        Alpine scope, so this nav stays inside that root div.
+        Permission-aware like the sidebar (فروش/محتوا/تقویم only for roles that can see
+        them). "منو" opens the same drawer as the header hamburger button (real, not a
+        dead end) — needs the adminShell Alpine scope, so this nav stays inside that
+        root div.
     --}}
     <nav aria-label="ناوبری پایین پنل مدیریت" class="fixed inset-x-0 bottom-0 z-40 flex border-t border-v2-border bg-v2-surface/95 backdrop-blur-md lg:hidden" style="padding-bottom: env(safe-area-inset-bottom)">
         @if (auth()->user()?->canManageSales())
@@ -239,9 +238,12 @@
                 <x-icon name="car" class="w-5 h-5" /> محتوا
             </a>
         @endif
-        <span aria-disabled="true" title="تقویم جلسات و تماس‌ها هنوز پیاده‌سازی نشده" class="flex min-h-[48px] flex-1 cursor-not-allowed flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold text-v2-text-muted/50">
-            <x-icon name="calendar" class="w-5 h-5" /> تقویم
-        </span>
+        @if (auth()->user()?->canManageSales())
+            @php $active = request()->routeIs('admin.calendar.*'); @endphp
+            <a href="{{ route('admin.calendar.index') }}" class="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold {{ $active ? 'text-v2-primary' : 'text-v2-text-muted' }}" @if($active) aria-current="page" @endif>
+                <x-icon name="calendar" class="w-5 h-5" /> تقویم
+            </a>
+        @endif
         <button type="button" @click="sidebarOpen = true" class="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold text-v2-text-muted">
             <x-icon name="menu" class="w-5 h-5" /> منو
         </button>
