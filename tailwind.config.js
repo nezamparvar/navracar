@@ -63,7 +63,7 @@ export default {
                     bg: '#020B18',
                     surface: '#061426',
                     elevated: '#0A1B32',
-                    primary: '#2565AE',
+                    primary: '#4A90E2',
                     accent: '#20C7E9',
                     text: '#F8FAFC',
                     'text-muted': '#9AAAC1',
@@ -79,7 +79,7 @@ export default {
                 'soft-dark': '0 10px 30px -12px rgba(0, 0, 0, .55)',
                 'glow-amber': '0 8px 22px -8px rgba(255, 138, 30, .55)',
                 'glow-brand': '0 8px 22px -8px rgba(41, 82, 224, .5)',
-                'glow-v2': '0 8px 22px -8px rgba(37, 101, 174, .5)',
+                'glow-v2': '0 8px 22px -8px rgba(74, 144, 226, .5)',
             },
             borderRadius: {
                 xl2: '1.25rem',
