@@ -30,6 +30,7 @@ class AdminRolePermissionsTest extends TestCase
         $this->actingAs($user)->get(route('admin.posts.index'))->assertOk();
         $this->actingAs($user)->get(route('admin.home-slides.index'))->assertOk();
         $this->actingAs($user)->get(route('admin.menu-items.index'))->assertOk();
+        $this->actingAs($user)->get(route('admin.content-dashboard'))->assertOk();
 
         $this->actingAs($user)->get(route('admin.dashboard'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.kanban'))->assertForbidden();
@@ -57,6 +58,7 @@ class AdminRolePermissionsTest extends TestCase
         $this->actingAs($user)->get(route('admin.posts.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.home-slides.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.menu-items.index'))->assertForbidden();
+        $this->actingAs($user)->get(route('admin.content-dashboard'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.calculations.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.vin-checks.index'))->assertForbidden();
         $this->actingAs($user)->get(route('admin.export'))->assertForbidden();
@@ -131,10 +133,10 @@ class AdminRolePermissionsTest extends TestCase
         auth()->logout();
 
         $this->post(route('login'), ['username' => $sales->username, 'password' => 'secret'])
-            ->assertRedirect(route('admin.requests.index'));
+            ->assertRedirect(route('admin.dashboard'));
         auth()->logout();
 
         $this->post(route('login'), ['username' => $cm->username, 'password' => 'secret'])
-            ->assertRedirect(route('admin.car-listings.index'));
+            ->assertRedirect(route('admin.content-dashboard'));
     }
 }

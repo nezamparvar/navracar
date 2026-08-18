@@ -104,6 +104,13 @@
 
             @if (auth()->user()?->canManageContent())
                 <div class="mt-4 mb-1 px-3.5 text-[11px] font-bold uppercase tracking-wider text-v2-text-muted/70">مدیریت محتوا</div>
+                @php $contentDashboardActive = request()->routeIs('admin.content-dashboard'); @endphp
+                <a href="{{ route('admin.content-dashboard') }}"
+                   class="flex items-center gap-3 min-h-[44px] rounded-xl px-3.5 py-2.5 text-sm font-bold transition-colors
+                   {{ $contentDashboardActive ? 'bg-v2-primary text-white' : 'text-v2-text-muted hover:bg-v2-elevated hover:text-v2-text' }}">
+                    <x-icon name="dashboard" class="w-[18px] h-[18px]" />
+                    داشبورد محتوا
+                </a>
                 @foreach ($contentNavItems as $item)
                     @php $active = request()->routeIs($item['route'].'*'); @endphp
                     <a href="{{ route($item['route']) }}"

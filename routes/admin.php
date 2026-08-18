@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\CalculationLogController;
 use App\Http\Controllers\Admin\CalendarController;
 use App\Http\Controllers\Admin\CarListingController;
+use App\Http\Controllers\Admin\ContentDashboardController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\ExtensionPairingController;
@@ -74,6 +75,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // بخش‌های محتوایی: هم مدیر کامل و هم «مدیر محتوا» به این‌ها دسترسی دارند.
     Route::middleware('content.role')->group(function () {
+        Route::get('/content-dashboard', ContentDashboardController::class)->name('content-dashboard');
+
         Route::prefix('car-listings')->name('car-listings.')->group(function () {
             Route::get('/', [CarListingController::class, 'index'])->name('index');
             Route::post('/', [CarListingController::class, 'store'])->name('store');
