@@ -136,7 +136,7 @@ For the acceptance build, the packaged meta configuration is set to:
 
 ```text
 environment: staging
-API base: https://navracar.com/staging
+API base: https://staging.nezamparvar.com
 applicationId: com.navracar.mobile.staging
 label: ناوراکار Staging
 version: 1.0-staging (2)
@@ -169,13 +169,12 @@ standard Android debug certificate.
 
 ## Staging acceptance
 
-The staging package is built and internally points to the canonical repository
-staging base. A live HTTP probe from the build runner on 2026-08-18 could not
-resolve `navracar.com` (`curl` status `000`), so online API/CRM delivery is not
-claimed. The deployment steps below remain the external acceptance boundary.
+The staging package is built and internally points to the canonical staging
+subdomain. Live API/CRM delivery must be accepted against that isolated server;
+the deployment steps below remain the external acceptance boundary.
 
 1. Apply migrations and this branch to an isolated staging deployment.
-2. Confirm `https://navracar.com/staging/api/mobile/v1/bootstrap` returns JSON
+2. Confirm `https://staging.nezamparvar.com/api/mobile/v1/bootstrap` returns JSON
    without a web Basic-Auth challenge.
 3. Install the staging debug APK alongside any production app.
 4. Exercise listing/detail/pricing/guest quote, then register/login and exercise

@@ -7,6 +7,14 @@ use Tests\TestCase;
 
 class StagingSafetyTest extends TestCase
 {
+    public function test_android_staging_builder_targets_the_canonical_subdomain(): void
+    {
+        $builder = file_get_contents(base_path('tools/build-android-variants.sh'));
+
+        $this->assertStringContainsString("build_variant staging 'https://staging.nezamparvar.com'", $builder);
+        $this->assertStringNotContainsString("build_variant staging 'https://navracar.com/staging'", $builder);
+    }
+
     public function test_cpanel_staging_deployment_repairs_schema_and_pdf_runtime_without_terminal(): void
     {
         $runtimeHelper = file_get_contents(base_path('deployment/cpanel-staging/ensure-runtime.sh'));
