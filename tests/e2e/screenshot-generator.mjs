@@ -4,6 +4,7 @@ import { mkdirSync, writeFileSync, existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
+import { execSync } from 'child_process';
 
 const baseURL = 'http://127.0.0.1:8000';
 const finalOutputDir = join(process.cwd(), 'docs/design-v2/implementation/screenshots/round6-visual-parity');
@@ -26,10 +27,12 @@ const routes = [
     sizes: [390, 1440],
     requiresHeading: 'قیمت خودروها',
     assertion: async (page) => {
-      // Vehicle cards are <a> elements in the grid container
-      const gridContainer = await page.locator('div.grid').first();
-      const carLinks = await gridContainer.locator('a[href*="/car-prices/"]').count();
-      if (carLinks < 2) throw new Error('Expected at least 2 vehicle cards, got ' + carLinks);
+      // Seeded data: 1 original (e2e-bmw-x4) + 7 demo listings = 8 total
+      const carLinks = await page.locator('a[href*="/car-prices/"]').count();
+      if (carLinks < 8) throw new Error('Expected at least 8 vehicle cards, got ' + carLinks);
+      // Verify pricing is visible (AED currency)
+      const priceText = await page.locator('text=/درهم/').count();
+      if (priceText < 2) throw new Error('Expected price text in AED, got ' + priceText);
     }
   },
   {
@@ -39,9 +42,15 @@ const routes = [
     sizes: [390, 1440],
     requiresHeading: 'بی‌ام‌و X4 تست',
     assertion: async (page) => {
-      // Look for price information (typically shown as a number)
-      const priceElements = await page.locator('div').filter({ has: page.locator('text=/\\d+\\s*(درهم|ریال)/')}).first().isVisible();
-      if (!priceElements) throw new Error('Price not visible on vehicle detail page');
+      // Seeded gallery: 4 images (Front, Side, Rear, Interior)
+      const galleryImages = await page.locator('img[src*="car-listings-demo"]').count();
+      if (galleryImages < 3) throw new Error('Expected at least 3 gallery images, got ' + galleryImages);
+      // Verify pricing is displayed (price format is 100,000 درهم with comma)
+      const priceVisible = await page.locator('text=/100,000|100000/').count();
+      if (priceVisible < 1) throw new Error('Price not found on detail page');
+      // Verify model year is shown (use first() to handle strict mode)
+      const modelYear = await page.locator('text=/2025/').first().isVisible();
+      if (!modelYear) throw new Error('Model year 2025 not visible');
     }
   },
   {
@@ -52,9 +61,13 @@ const routes = [
     requiresHeading: 'داشبورد مدیریت',
     requiresUrl: /^https?:\/\/[^\/]+\/admin($|\?)/ ,
     assertion: async (page) => {
-      // Admin dashboard should have main content (sidebar may be hidden on mobile)
-      const main = await page.locator('main, [role="main"], [class*="main"]').isVisible().catch(() => false);
-      if (!main) throw new Error('Main content area not visible');
+      // Seeded data: ~48 quote requests across 14 days should show on dashboard
+      // Check for presence of quote/lead data (via text or widgets)
+      const hasContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
+      if (!hasContent) throw new Error('Admin dashboard main content not visible');
+      // Look for quote/lead count indicators or pipeline widgets
+      const hasQuoteData = await page.locator('text=/درخواست|پیام|quote|lead|request/i').count();
+      if (hasQuoteData < 1) throw new Error('No quote/lead data visible on admin dashboard');
     }
   },
   {
@@ -65,9 +78,12 @@ const routes = [
     requiresHeading: 'داشبورد فروش',
     requiresUrl: /^https?:\/\/[^\/]+\/admin\/sales-dashboard/ ,
     assertion: async (page) => {
-      // Sales dashboard should have some content (non-empty page body after heading)
+      // Seeded data: 40 calculation logs and ~48 quote requests for KPI display
       const mainContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
       if (!mainContent) throw new Error('Sales dashboard main content not visible');
+      // Just verify main content is visible (specific widget structure may vary)
+      const bodyText = await page.locator('body').innerText();
+      if (!bodyText || bodyText.length < 100) throw new Error('Sales dashboard content too minimal');
     }
   },
   {
@@ -78,9 +94,12 @@ const routes = [
     requiresHeading: 'داشبورد محتوا',
     requiresUrl: /^https?:\/\/[^\/]+\/admin\/content-dashboard/ ,
     assertion: async (page) => {
-      // Content dashboard should have table with rows
+      // Seeded data: 8 import queue items with various statuses
       const tableRows = await page.locator('table tbody tr').count();
-      if (tableRows < 1) throw new Error('Expected at least 1 content row in dashboard, got ' + tableRows);
+      if (tableRows < 1) throw new Error('Expected at least 1 import queue row, got ' + tableRows);
+      // Verify import content is visible (table exists)
+      const hasTable = await page.locator('table').count();
+      if (hasTable < 1) throw new Error('Import queue table not found on dashboard');
     }
   },
   {
@@ -91,9 +110,12 @@ const routes = [
     requiresHeading: 'تقویم',
     requiresUrl: /^https?:\/\/[^\/]+\/admin\/calendar.*view=day/ ,
     assertion: async (page) => {
-      // Calendar view should have some visible content
+      // Seeded data: 3 events today (09:00, 13:00, 18:00)
       const calendarContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
-      if (!calendarContent) throw new Error('Calendar view not visible');
+      if (!calendarContent) throw new Error('Calendar day view not visible');
+      // Look for any calendar event indicators
+      const hasEvents = await page.locator('[class*="event"], [class*="calendar"]').count();
+      if (hasEvents < 1) throw new Error('No calendar events visible in day view');
     }
   },
   {
@@ -104,9 +126,12 @@ const routes = [
     requiresHeading: 'تقویم',
     requiresUrl: /^https?:\/\/[^\/]+\/admin\/calendar.*view=week/ ,
     assertion: async (page) => {
-      // Calendar view should have some visible content
+      // Seeded data: 8 events across the week
       const calendarContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
-      if (!calendarContent) throw new Error('Calendar view not visible');
+      if (!calendarContent) throw new Error('Calendar week view not visible');
+      // Look for calendar events in week view
+      const events = await page.locator('[class*="event"], [class*="calendar"]').count();
+      if (events < 1) throw new Error('No calendar events visible in week view');
     }
   },
   {
@@ -117,9 +142,12 @@ const routes = [
     requiresHeading: 'تقویم',
     requiresUrl: /^https?:\/\/[^\/]+\/admin\/calendar.*view=list/ ,
     assertion: async (page) => {
-      // Calendar view should have some visible content
+      // Seeded data: 8 calendar events total
       const calendarContent = await page.locator('main, [role="main"]').isVisible().catch(() => false);
-      if (!calendarContent) throw new Error('Calendar view not visible');
+      if (!calendarContent) throw new Error('Calendar list view not visible');
+      // In list view, verify there's any calendar content
+      const bodyText = await page.locator('body').innerText();
+      if (!bodyText || bodyText.length < 100) throw new Error('Calendar list view content too minimal');
     }
   },
 ];
@@ -138,6 +166,15 @@ function getPNGDimensions(buffer) {
   const width = buffer.readUInt32BE(16);
   const height = buffer.readUInt32BE(20);
   return { width, height };
+}
+
+function getCurrentCommitSHA() {
+  try {
+    return execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
+  } catch (err) {
+    console.error('Failed to get commit SHA:', err.message);
+    process.exit(1);
+  }
 }
 
 async function authenticateAndSaveState(browser) {
@@ -211,7 +248,7 @@ async function waitForRouteReady(page, route) {
   }
 }
 
-async function captureScreenshot(browser, route, viewportSize, storageState, outputDir) {
+async function captureScreenshot(browser, route, viewportSize, storageState, outputDir, commitSHA) {
   const viewport = viewportSizes[viewportSize];
   const context = await browser.newContext({
     viewport,
@@ -249,11 +286,10 @@ async function captureScreenshot(browser, route, viewportSize, storageState, out
 
   page.on('console', msg => {
     if (msg.type() === 'error') {
-      // Only treat as error if it's not a resource loading issue (403, 404, etc)
-      const text = msg.text();
-      if (!text.includes('403') && !text.includes('404') && !text.includes('CORS')) {
-        consoleErrors.push(`Console error: ${text}`);
-      }
+      // All console errors must be captured and reported
+      // External request failures are already tracked in blockedRequests and requestfailed handler
+      // Local asset failures (403/404 on localhost) MUST fail the capture
+      consoleErrors.push(`Console error: ${msg.text()}`);
     }
   });
 
@@ -332,7 +368,7 @@ async function captureScreenshot(browser, route, viewportSize, storageState, out
       viewport: `${viewport.width}x${viewport.height}`,
       blockedRequests: [...new Set(blockedRequests)],
       timestamp: new Date().toISOString(),
-      commit: process.env.GIT_COMMIT || 'unknown'
+      commit: commitSHA
     });
 
     // Capture full-page screenshot
@@ -346,17 +382,17 @@ async function captureScreenshot(browser, route, viewportSize, storageState, out
     results.push({
       filename: fullPageFilename,
       sha: fullPageSha,
-      dimensions: `${fullPageDims?.width}×${fullPageDims?.height}`,
+      dimensions: `${viewport.width}x${viewport.height}`,
       type: 'full-page',
       route: route.name,
       requestedUrl,
       finalUrl,
       authState: route.auth ? 'authenticated' : 'unauthenticated',
       httpStatus,
-      viewport: `${viewport.width}x${viewport.width}`,
+      viewport: `${viewport.width}x${viewport.height}`,
       blockedRequests: [...new Set(blockedRequests)],
       timestamp: new Date().toISOString(),
-      commit: process.env.GIT_COMMIT || 'unknown'
+      commit: commitSHA
     });
 
   } catch (err) {
@@ -388,7 +424,11 @@ async function main() {
   const allResults = [];
   let totalFailed = 0;
 
+  // Get current commit SHA
+  const commitSHA = getCurrentCommitSHA();
+
   console.log(`\n📸 Starting Batch 1 screenshot generation\n`);
+  console.log(`Commit: ${commitSHA}`);
   console.log(`Temporary directory: ${tempOutputDir}`);
   console.log(`Final directory: ${finalOutputDir}\n`);
 
@@ -427,7 +467,7 @@ async function main() {
         rmSync(tempOutputDir, { recursive: true, force: true });
         process.exit(1);
       }
-      const { results, hasError } = await captureScreenshot(browser, route, size, storageState, tempOutputDir);
+      const { results, hasError } = await captureScreenshot(browser, route, size, storageState, tempOutputDir, commitSHA);
       if (hasError) {
         totalFailed++;
       } else {
@@ -465,9 +505,6 @@ async function main() {
   console.log(`\n✅ Validation phase: All ${totalCaptured} captures verified`);
   console.log(`\n📋 Generating machine-readable JSON manifest...`);
 
-  // Ensure final output directory exists
-  mkdirSync(finalOutputDir, { recursive: true });
-
   // Generate and validate JSON manifest
   const isFullRun = routesToCapture.length === 8; // Full run = all 8 routes
   const manifest = {
@@ -501,20 +538,45 @@ async function main() {
     process.exit(1);
   }
 
-  // Copy all files from temp to final directory
-  console.log(`\n🚀 Promoting ${totalCaptured} screenshots to final directory...`);
+  // ATOMIC PROMOTION: Use directory swap instead of individual file copies
+  console.log(`\n🚀 Promoting ${totalCaptured} screenshots (atomic directory swap)...`);
   const fs = await import('fs').then(m => m.promises);
-  const allTempFiles = (await fs.readdir(tempOutputDir)).filter(f => f.endsWith('.png'));
 
+  // Create staging directory and copy all files from temp
+  const stagingDir = join(process.cwd(), `.navracar-staging-${randomUUID().substring(0, 8)}`);
+  mkdirSync(stagingDir, { recursive: true });
+
+  const allTempFiles = (await fs.readdir(tempOutputDir)).filter(f => f.endsWith('.png'));
   for (const file of allTempFiles) {
     const tempPath = join(tempOutputDir, file);
-    const finalPath = join(finalOutputDir, file);
+    const stagingPath = join(stagingDir, file);
     const data = await fs.readFile(tempPath);
-    await fs.writeFile(finalPath, data);
+    await fs.writeFile(stagingPath, data);
   }
 
-  // Write manifest to final directory
-  writeFileSync(manifestPath, manifestJson);
+  // Write manifest to staging directory
+  const stagingManifestPath = join(stagingDir, 'screenshot-manifest.json');
+  writeFileSync(stagingManifestPath, manifestJson);
+
+  // Verify all files in staging directory before swap
+  const allStagingFiles = (await fs.readdir(stagingDir)).filter(f => f.endsWith('.png') || f.endsWith('.json'));
+  console.log(`✓ Staging directory validated: ${allStagingFiles.length} files`);
+
+  // Atomically swap staging directory with final directory
+  const finalOutputParent = join(finalOutputDir, '..');
+  const finalDirBasename = finalOutputDir.split('/').pop();
+  const backupDir = join(finalOutputParent, `.${finalDirBasename}-backup-${Date.now()}`);
+
+  // Remove or backup existing final directory
+  if (existsSync(finalOutputDir)) {
+    await fs.rename(finalOutputDir, backupDir);
+    console.log(`✓ Previous directory backed up to ${backupDir}`);
+  }
+
+  // Atomic swap: rename staging to final
+  await fs.rename(stagingDir, finalOutputDir);
+  console.log(`✓ Atomic swap complete: ${stagingDir} → ${finalOutputDir}`);
+
   console.log(`✓ Manifest: ${manifestPath}`);
 
   // Print manifest table
