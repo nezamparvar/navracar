@@ -26,10 +26,8 @@ if (migrate.status !== 0) {
     process.exit(migrate.status ?? 1);
 }
 
-const seedE2e = spawnSync(php, ['artisan', 'db:seed', '--class=Database\\Seeders\\E2eSeeder', '--force'], { cwd: root, env, stdio: 'inherit' });
-if (seedE2e.status !== 0) {
-    process.exit(seedE2e.status ?? 1);
-}
+// Note: E2eSeeder is already run by 'migrate:fresh --seed', no need to run it again
+// Explicit re-run causes unique constraint violations on invoice numbers
 
 // E2eSeeder attaches real cover images to demo listings; without this symlink
 // Storage::disk('public')->url() points at a path the dev server can't serve.
