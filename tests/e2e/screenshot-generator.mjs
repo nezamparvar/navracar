@@ -538,7 +538,7 @@ async function main() {
     process.exit(1);
   }
 
-  // ATOMIC PROMOTION: Use directory swap instead of individual file copies
+  // ATOMIC PROMOTION: Use directory swap with SHA verification and failure-safe recovery
   console.log(`\n🚀 Promoting ${totalCaptured} screenshots (atomic directory swap)...`);
   const fs = await import('fs').then(m => m.promises);
 
@@ -547,35 +547,100 @@ async function main() {
   mkdirSync(stagingDir, { recursive: true });
 
   const allTempFiles = (await fs.readdir(tempOutputDir)).filter(f => f.endsWith('.png'));
+  const stagingHashes = {};
+
+  // Copy files and compute SHA-256 on read
   for (const file of allTempFiles) {
     const tempPath = join(tempOutputDir, file);
     const stagingPath = join(stagingDir, file);
     const data = await fs.readFile(tempPath);
     await fs.writeFile(stagingPath, data);
+    stagingHashes[file] = getFileSHA256(data);
   }
 
   // Write manifest to staging directory
   const stagingManifestPath = join(stagingDir, 'screenshot-manifest.json');
   writeFileSync(stagingManifestPath, manifestJson);
 
-  // Verify all files in staging directory before swap
+  // Verify all files in staging directory with SHA-256 re-check
   const allStagingFiles = (await fs.readdir(stagingDir)).filter(f => f.endsWith('.png') || f.endsWith('.json'));
-  console.log(`✓ Staging directory validated: ${allStagingFiles.length} files`);
+  console.log(`✓ Staging directory created: ${allStagingFiles.length} files`);
 
-  // Atomically swap staging directory with final directory
+  // Verify SHA-256 for each PNG file in staging before promotion
+  for (const file of allStagingFiles) {
+    if (file.endsWith('.png')) {
+      const stagingPath = join(stagingDir, file);
+      const stagingData = await fs.readFile(stagingPath);
+      const stagingSha = getFileSHA256(stagingData);
+
+      // Find corresponding result to compare
+      const result = allResults.find(r => r.filename === file);
+      if (result && stagingSha !== result.sha) {
+        throw new Error(`SHA-256 mismatch for ${file}: expected ${result.sha}, got ${stagingSha}`);
+      }
+    }
+  }
+  console.log(`✓ SHA-256 verified for all staged files before promotion`);
+
+  // Atomically swap staging directory with final directory (with recovery on failure)
   const finalOutputParent = join(finalOutputDir, '..');
   const finalDirBasename = finalOutputDir.split('/').pop();
   const backupDir = join(finalOutputParent, `.${finalDirBasename}-backup-${Date.now()}`);
 
-  // Remove or backup existing final directory
-  if (existsSync(finalOutputDir)) {
-    await fs.rename(finalOutputDir, backupDir);
-    console.log(`✓ Previous directory backed up to ${backupDir}`);
+  let promotionSuccessful = false;
+  try {
+    // Backup existing final directory if it exists
+    if (existsSync(finalOutputDir)) {
+      await fs.rename(finalOutputDir, backupDir);
+      console.log(`✓ Previous directory backed up to ${backupDir}`);
+    }
+
+    // Atomic swap: rename staging to final
+    await fs.rename(stagingDir, finalOutputDir);
+    promotionSuccessful = true;
+    console.log(`✓ Atomic swap complete: ${stagingDir} → ${finalOutputDir}`);
+  } catch (err) {
+    // If promotion failed and we have a backup, try to restore it
+    if (existsSync(backupDir)) {
+      console.error(`✗ Promotion failed: ${err.message}`);
+      console.log(`⚠ Attempting to restore backup from ${backupDir}...`);
+      try {
+        // Remove the partially-created staging-to-final directory if it exists
+        if (existsSync(finalOutputDir)) {
+          rmSync(finalOutputDir, { recursive: true, force: true });
+        }
+        // Restore the backup
+        await fs.rename(backupDir, finalOutputDir);
+        console.log(`✓ Successfully restored backup to ${finalOutputDir}`);
+        throw new Error(`Promotion failed and backup restored. Original error: ${err.message}`);
+      } catch (restoreErr) {
+        console.error(`✗ Failed to restore backup: ${restoreErr.message}`);
+        throw restoreErr;
+      }
+    } else {
+      throw err;
+    }
   }
 
-  // Atomic swap: rename staging to final
-  await fs.rename(stagingDir, finalOutputDir);
-  console.log(`✓ Atomic swap complete: ${stagingDir} → ${finalOutputDir}`);
+  if (!promotionSuccessful) {
+    rmSync(stagingDir, { recursive: true, force: true });
+    process.exit(1);
+  }
+
+  // Verify SHA-256 again after final promotion
+  for (const file of allStagingFiles) {
+    if (file.endsWith('.png')) {
+      const finalPath = join(finalOutputDir, file);
+      const finalData = await fs.readFile(finalPath);
+      const finalSha = getFileSHA256(finalData);
+
+      // Compare with original staging hash
+      if (finalSha !== stagingHashes[file]) {
+        throw new Error(`SHA-256 mismatch after promotion for ${file}: expected ${stagingHashes[file]}, got ${finalSha}`);
+      }
+    }
+  }
+  console.log(`✓ SHA-256 verified for all promoted files after promotion`);
 
   console.log(`✓ Manifest: ${manifestPath}`);
 
@@ -603,25 +668,76 @@ function validateManifest(manifest, isFullRun = true) {
 
   if (!manifest.screenshots || !Array.isArray(manifest.screenshots)) {
     errors.push('Missing or invalid screenshots array');
+    return { valid: false, errors };
   }
 
   if (manifest.screenshots.length === 0) {
     errors.push('No screenshots in manifest');
   }
 
-  // For full runs, expect 32 screenshots; for smoke tests, allow fewer
+  // For full runs, expect exactly 32 screenshots; for smoke tests, allow fewer
   if (isFullRun && manifest.screenshots.length !== 32) {
     errors.push(`Expected 32 screenshots for full run, got ${manifest.screenshots.length}`);
   } else if (!isFullRun && manifest.screenshots.length < 2) {
     errors.push(`Expected at least 2 screenshots for smoke test, got ${manifest.screenshots.length}`);
   }
 
+  // Check for unique filenames
+  const filenames = new Set();
+  const routeViewpointTypes = {};
+
   for (const ss of manifest.screenshots || []) {
+    // Validate required fields
     if (!ss.filename) errors.push('Missing filename');
     if (!ss.sha256) errors.push('Missing SHA-256 hash');
+    if (!ss.sha256 || ss.sha256 === 'unknown') errors.push(`Invalid/missing SHA-256 for ${ss.filename}`);
     if (!ss.route) errors.push('Missing route');
     if (!ss.final_url) errors.push('Missing final_url');
     if (!ss.capture_type) errors.push('Missing capture_type');
+    if (!ss.viewport_dimensions) errors.push(`Missing viewport_dimensions for ${ss.filename}`);
+    if (!ss.actual_dimensions) errors.push(`Missing actual_dimensions for ${ss.filename}`);
+    if (ss.http_status !== 200) errors.push(`HTTP status not 200 for ${ss.filename}: ${ss.http_status}`);
+    if (!ss.authentication_state) errors.push(`Missing authentication_state for ${ss.filename}`);
+    if (!ss.source_commit || ss.source_commit === 'unknown') errors.push(`Invalid/missing source_commit for ${ss.filename}`);
+    if (!ss.timestamp) errors.push(`Missing timestamp for ${ss.filename}`);
+
+    // Validate authenticated routes have proper URLs
+    if (ss.authentication_state === 'authenticated') {
+      if (!ss.final_url.includes('/admin')) {
+        errors.push(`Protected route ${ss.route} has non-admin final_url: ${ss.final_url}`);
+      }
+    }
+
+    // Validate capture types
+    if (!['viewport', 'full-page'].includes(ss.capture_type)) {
+      errors.push(`Invalid capture_type for ${ss.filename}: ${ss.capture_type}`);
+    }
+
+    // Track unique filenames
+    if (ss.filename) {
+      if (filenames.has(ss.filename)) {
+        errors.push(`Duplicate filename: ${ss.filename}`);
+      }
+      filenames.add(ss.filename);
+    }
+
+    // Track route/viewport/capture-type cardinality
+    if (ss.route && ss.viewport_dimensions && ss.capture_type) {
+      const key = `${ss.route}/${ss.viewport_dimensions}/${ss.capture_type}`;
+      if (routeViewpointTypes[key]) {
+        errors.push(`Duplicate route/viewport/type combination: ${key}`);
+      }
+      routeViewpointTypes[key] = ss.filename;
+    }
+  }
+
+  // For full runs, verify exact cardinality
+  if (isFullRun) {
+    const expectedCombinations = 32; // 8 routes × 2 viewports × 2 types
+    const actualCombinations = Object.keys(routeViewpointTypes).length;
+    if (actualCombinations !== expectedCombinations) {
+      errors.push(`Route/viewport/type cardinality mismatch: expected ${expectedCombinations}, got ${actualCombinations}`);
+    }
   }
 
   return {
