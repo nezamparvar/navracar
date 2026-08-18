@@ -61,22 +61,23 @@ async function authenticateAndSaveState(browser) {
     const submitButton = authPage.locator('button[type="submit"]');
     await submitButton.click();
 
-    // Wait for URL to change away from login page
+    // Wait for URL to change away from login page with fast polling
     let attempts = 0;
-    const maxAttempts = 120; // 60 seconds at 500ms intervals
+    const maxAttempts = 200; // 10 seconds at 50ms intervals
+    const pollInterval = 50;
     while (attempts < maxAttempts) {
       const currentUrl = authPage.url();
       if (!currentUrl.includes('/admin/login')) {
         break;
       }
-      await authPage.waitForTimeout(500);
+      await authPage.waitForTimeout(pollInterval);
       attempts++;
     }
 
     // Verify authenticated state
     const finalUrl = authPage.url();
     if (finalUrl.includes('/admin/login')) {
-      throw new Error(`Authentication failed: still on login page after ${attempts * 500}ms at ${finalUrl}`);
+      throw new Error(`Authentication failed: still on login page after ${attempts * pollInterval}ms at ${finalUrl}`);
     }
 
     // Wait for authenticated UI shell with longer timeout
