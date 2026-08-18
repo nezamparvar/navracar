@@ -1,15 +1,15 @@
 {
   "artifact_branch": "cpanel-staging",
   "environment": "staging",
-  "release": "rc-v1.3.4-1",
-  "release_candidate": "rc-v1.3.4-1",
+  "release": "rc-v1.4.0-3",
+  "release_candidate": "rc-v1.4.0-3",
   "staging_status": "pending-owner-acceptance",
-  "source_commit": "f805314c9583a0c81d7079639ce42a95525b9d4f",
-  "source_main_commit": "f805314c9583a0c81d7079639ce42a95525b9d4f",
-  "artifact_id": "rc-v1.3.4-1-f805314c9583-3b1f4f907e71",
-  "artifact_sha": "3b1f4f907e714e0c77e67e78c11606119ef8cf1375e8c2f01e8b8c4b21056015",
-  "application_checksum": "f00b00543c22a2b297ab0baa9fba383b704219620af830e3ede0df4ac75ee38d",
-  "public_checksum": "2fba060298f666664e054776f73584305b9713bb0b02c25e6a2933e47b30387c",
-  "generated_at_utc": "2026-08-18T17:21:59Z",
-  "workflow_run": "32164961483"
+  "source_commit": "e4e70f1e3c35650820ebea3781f33135d25c3b04",
+  "source_main_commit": "e4e70f1e3c35650820ebea3781f33135d25c3b04",
+  "artifact_id": "rc-v1.4.0-3-e4e70f1e3c35-f6887aa2b739",
+  "artifact_sha": "f6887aa2b73937baab80c4bdf70a1df62e033f091fb39b568c6f3ece20de0a40",
+  "application_checksum": "0fdea8f977aea3025924f210c26033b1705284c22f2f4a4350fa28d57c594e28",
+  "public_checksum": "6afcc201f9ea19ffe1921a23c2dcb7d089930ec85044256918bb14856d8c2a96",
+  "generated_at_utc": "2026-08-18T19:05:26Z",
+  "workflow_run": "32174109151"
 }
