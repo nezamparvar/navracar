@@ -74,8 +74,9 @@
         {{--
             Nav order/labels match docs/design-v2/assets/01-public-desktop-system.png exactly:
             خودروها, محاسبه هزینه, درخواست‌ها, تماس با ما (text nav) + phone/account icon buttons.
-            "درخواست‌ها" links to the real submission page (public.lead-form) — there is no
-            request-tracking-by-number page yet, see GAP_REPORT.md §1 for the real-route plan.
+            "درخواست‌ها" links to the real submission page (public.lead-form); the real
+            request-tracking-by-number page (public.track.find) is linked from the footer
+            instead of the header, so the reference's exact nav item set stays unchanged.
             "حساب" is the reference's account icon button; kept visible (not removed) but
             disabled with a reason, since no public-account backend exists — GAP_REPORT.md §1.
         --}}
@@ -163,6 +164,7 @@
                     <li><a href="{{ route('public.home') }}" class="hover:text-v2-primary">صفحه اصلی</a></li>
                     <li><a href="{{ route('public.calculator') }}" class="hover:text-v2-primary">محاسبه‌گر هزینه واردات</a></li>
                     <li><a href="{{ route('public.car-prices.index') }}" class="hover:text-v2-primary">قیمت خودروها</a></li>
+                    <li><a href="{{ route('public.track.find') }}" class="hover:text-v2-primary">پیگیری درخواست</a></li>
                     @foreach ($menuItems as $item)
                         <li><a href="{{ $item->url }}" @if($item->opens_new_tab) target="_blank" rel="noopener" @endif class="hover:text-v2-primary">{{ $item->label }}</a></li>
                     @endforeach

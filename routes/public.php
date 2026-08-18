@@ -7,6 +7,7 @@ use App\Http\Controllers\Public\CarPriceController;
 use App\Http\Controllers\Public\HomeController;
 use App\Http\Controllers\Public\LeadFormController;
 use App\Http\Controllers\Public\QuoteController;
+use App\Http\Controllers\Public\RequestTrackingController;
 use App\Http\Controllers\Public\SitemapController;
 use App\Http\Controllers\Public\VehiclePricingController;
 use App\Http\Controllers\Public\VinLogController;
@@ -22,6 +23,9 @@ Route::get('/quote-requests/{quoteRequest}/pdf', [QuoteController::class, 'downl
     ->middleware('signed')->name('public.quote-requests.pdf');
 Route::post('/calculation-logs', [CalculationLogController::class, 'store'])->middleware('throttle:30,1')->name('public.calculation-logs.store');
 Route::post('/vin-checks', [VinLogController::class, 'store'])->middleware('throttle:30,1')->name('public.vin-checks.store');
+
+Route::get('/track', [RequestTrackingController::class, 'find'])->middleware('throttle:20,1')->name('public.track.find');
+Route::get('/track/{quoteRequest}', [RequestTrackingController::class, 'show'])->middleware('throttle:20,1')->name('public.track.show');
 
 Route::get('/lead-form', [LeadFormController::class, 'create'])->name('public.lead-form');
 Route::post('/lead-form', [LeadFormController::class, 'store'])->middleware('throttle:5,1')->name('public.lead-form.store');
