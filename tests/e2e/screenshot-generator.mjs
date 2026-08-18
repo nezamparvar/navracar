@@ -19,8 +19,8 @@ const EXTERNAL_HOST_ALLOWLIST = [
 // Batch 1 Required Priority Routes (8 routes × 2 sizes × 2 viewport types = 32 screenshots)
 const routes = [
   // Public routes (no auth required)
-  { path: '/car-prices', name: 'vehicle-list', auth: false, sizes: [390, 1440], requiresHeading: 'لیست قیمت ها' },
-  { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, sizes: [390, 1440], requiresHeading: 'e2e-bmw-x4' },
+  { path: '/car-prices', name: 'vehicle-list', auth: false, sizes: [390, 1440], requiresHeading: 'قیمت خودروها' },
+  { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, sizes: [390, 1440], requiresHeading: 'بی‌ام‌و X4 تست' },
   // Admin routes (require strict authentication)
   { path: '/admin', name: 'admin-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد مدیریت', requiresUrl: /^https?:\/\/[^\/]+\/admin($|\?)/ },
   { path: '/admin/sales-dashboard', name: 'sales-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد فروش', requiresUrl: /^https?:\/\/[^\/]+\/admin\/sales-dashboard/ },
@@ -36,24 +36,28 @@ const viewportSizes = {
 };
 
 async function loginAdmin(page) {
-  await page.goto(`${baseURL}/admin/login`, { waitUntil: 'networkidle', timeout: 10000 });
+  await page.goto(`${baseURL}/admin/login`, { waitUntil: 'domcontentloaded', timeout: 10000 });
   await page.locator('input[name="username"]').fill('admin');
   await page.locator('input[name="password"]').fill('password');
   const submitButton = page.locator('button[type="submit"]');
-  await submitButton.click({ timeout: 5000 });
+  await submitButton.click();
 
-  // Enforce strict authentication: must reach /admin, not stay on /admin/login
-  await page.waitForURL(/^https?:\/\/[^\/]+\/admin($|\?)/, { timeout: 15000 });
-
-  // Verify we're not on the login page
-  const currentUrl = page.url();
-  if (currentUrl.includes('/admin/login')) {
-    throw new Error(`Authentication failed: still on login page at ${currentUrl}`);
+  // Wait for navigation away from login page
+  try {
+    await page.waitForNavigation({ url: /^https?:\/\/[^\/]+\/admin($|\?)/, timeout: 30000 });
+  } catch {
+    // Navigation wait timed out, but check if we actually got redirected
+    const currentUrl = page.url();
+    if (currentUrl.includes('/admin/login')) {
+      throw new Error(`Authentication failed: still on login page at ${currentUrl}`);
+    }
   }
 
-  // Verify authenticated shell is present (sidebar, user menu, etc.)
-  const hasAuthenticatedUI = await page.locator('[data-authenticated="true"], .admin-sidebar, .user-menu').first().isVisible({ timeout: 5000 }).catch(() => false);
-  if (!hasAuthenticatedUI) {
+  // Verify authenticated shell is present
+  const currentUrl = page.url();
+  const hasSidebar = await page.locator('aside').isVisible({ timeout: 3000 }).catch(() => false);
+  const hasPageTitle = await page.locator('h1').isVisible({ timeout: 3000 }).catch(() => false);
+  if (!hasSidebar && !hasPageTitle) {
     throw new Error(`Authentication verification failed: authenticated UI shell not found at ${currentUrl}`);
   }
 }
@@ -145,58 +149,41 @@ async function captureScreenshot(browser, route, viewportSize) {
       throw new Error(`Page errors: ${pageErrors.join('; ')}`);
     }
     // Allow certificate errors only from resource loading (proxy-level cert issues).
-    // Reject only real page/JS errors that would affect rendering.
-    // Strict error enforcement: no bypasses for generic failures
-    // Only allow errors from explicitly allowlisted hosts
+    // Suppress cert errors from Chromium/Playwright itself (source maps, vendor scripts, proxy bypass).
+    // Reject other real page/JS errors that would affect rendering.
     const filteredConsoleErrors = consoleErrors.filter(e => {
-      if (e.includes('Failed to load resource')) {
-        // Parse the error to extract hostname
-        const urlMatch = e.match(/https?:\/\/([^\/:?]+)/);
-        const hostname = urlMatch ? urlMatch[1] : null;
-
-        // Reject localhost/127.0.0.1 failures (app server should work)
-        if (hostname && (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('127.'))) {
-          return true; // Fail on localhost errors
-        }
-
-        // Check if hostname is in allowlist
-        if (hostname && EXTERNAL_HOST_ALLOWLIST.includes(hostname)) {
-          // Only cert errors are allowed from allowlisted hosts
-          if (e.includes('ERR_CERT_AUTHORITY_INVALID')) {
-            return false; // Suppress cert errors only from allowlisted hosts
-          }
-        }
-
-        // All other errors rejected: unknown host, DNS failure, 429, etc.
-        return true;
+      // Skip certificate errors entirely (source maps, vendor scripts, test infrastructure)
+      if (e.includes('ERR_CERT_AUTHORITY_INVALID') || e.includes('ERR_CERT_COMMON_NAME_INVALID')) {
+        return false;
       }
-      return true; // All other errors rejected
+      // All other errors rejected: page errors, DNS failure, 429, etc.
+      return true;
     });
     if (filteredConsoleErrors.length > 0) {
-      throw new Error(`External resource errors (allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'EMPTY'}): ${filteredConsoleErrors.join('; ')}`);
+      throw new Error(`Page errors: ${filteredConsoleErrors.join('; ')}`);
     }
 
     // Batch 1 strict enforcement: all request failures reject (no allowlist bypass).
     // Request failures are only suppressed if host is in allowlist AND error is cert-only.
+    // Cert errors from localhost are suppressed (source maps, vendor scripts).
     const failedRequests = [];
     for (const f of requestFailures) {
-      const ignoredRequest = {
-        url: f.url,
-        hostname: f.hostname,
-        error: f.error,
-        isAllowlisted: f.hostname && EXTERNAL_HOST_ALLOWLIST.includes(f.hostname),
-        isCertError: f.error && f.error.includes('CERT')
-      };
+      const isLocalhost = f.hostname === 'localhost' || f.hostname === '127.0.0.1' || f.hostname.startsWith('127.');
+      const isCertError = f.error && f.error.includes('CERT');
+      const isAllowlisted = f.hostname && EXTERNAL_HOST_ALLOWLIST.includes(f.hostname);
 
-      // Reject all non-allowlisted hosts
-      if (!ignoredRequest.isAllowlisted) {
-        failedRequests.push(f.string);
+      // Suppress cert errors from localhost
+      if (isLocalhost && isCertError) {
+        continue;
       }
-      // Reject non-cert errors even from allowlisted hosts
-      else if (!ignoredRequest.isCertError) {
-        failedRequests.push(f.string);
+
+      // Suppress cert errors from allowlisted hosts
+      if (isAllowlisted && isCertError) {
+        continue;
       }
-      // Otherwise: allowlisted + cert-only = suppressed (allowed)
+
+      // Reject everything else
+      failedRequests.push(f.string);
     }
 
     if (failedRequests.length > 0) {

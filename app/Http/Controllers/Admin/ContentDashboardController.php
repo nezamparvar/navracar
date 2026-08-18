@@ -78,7 +78,7 @@ class ContentDashboardController extends Controller
             'draftPosts' => Post::where('status', 'draft')->count(),
             'activeSlides' => HomeSlide::where('is_active', true)->count(),
             'recentListings' => CarListing::latest('created_at')->limit(5)->get(['id', 'slug', 'title_fa', 'status', 'created_at']),
-            'recentPosts' => Post::latest('created_at')->limit(5)->get(['id', 'title', 'status', 'created_at']),
+            'recentPosts' => Post::latest('created_at')->limit(5)->get(['id', 'title', 'slug', 'status', 'created_at']),
             'incompleteMetaListings' => $incompleteMetaListings,
             'reviewQueue' => $reviewQueue,
             'healthFields' => $healthFields,

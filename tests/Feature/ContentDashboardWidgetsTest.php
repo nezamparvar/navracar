@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\AdminUser;
 use App\Models\CarListing;
 use App\Models\ImportQueueItem;
+use App\Models\Post;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -178,5 +179,64 @@ class ContentDashboardWidgetsTest extends TestCase
         $this->assertGreaterThanOrEqual(1, $tasks['آگهی متای ناقص دارند']['count']);
         $this->assertSame(1, $tasks['ایمپورت ناموفق نیاز به بررسی دارند']['count']);
         $this->assertSame(1, $tasks['آگهی پیش‌نویس منتظر انتشار هستند']['count']);
+    }
+
+    public function test_recent_posts_include_slug_column_for_route_generation(): void
+    {
+        $user = $this->contentManager();
+
+        // Post model uses slug as route key; missing it causes "Missing required parameter for Route: admin.posts.edit"
+        Post::create([
+            'title' => 'Test Post 1',
+            'slug' => 'test-post-1',
+            'status' => 'published',
+            'content' => 'Test content',
+        ]);
+
+        Post::create([
+            'title' => 'Test Post 2',
+            'slug' => 'test-post-2',
+            'status' => 'published',
+            'content' => 'Test content',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.content-dashboard'));
+        $response->assertOk();
+
+        $recentPosts = $response->viewData('recentPosts');
+        $this->assertCount(2, $recentPosts);
+
+        // Verify slug is present on each post for route generation
+        foreach ($recentPosts as $post) {
+            $this->assertNotNull($post->slug, 'Post slug must be present for route key');
+            $this->assertNotEmpty($post->slug, 'Post slug must not be empty');
+            // Verify route can be generated without throwing "Missing required parameter"
+            $editRoute = route('admin.posts.edit', $post);
+            $this->assertStringContainsString('/admin/posts/', $editRoute);
+        }
+    }
+
+    public function test_content_dashboard_returns_200_with_populated_posts(): void
+    {
+        $user = $this->contentManager();
+
+        Post::create([
+            'title' => 'Published Article',
+            'slug' => 'published-article',
+            'status' => 'published',
+            'content' => 'Article content',
+        ]);
+
+        Post::create([
+            'title' => 'Draft Article',
+            'slug' => 'draft-article',
+            'status' => 'draft',
+            'content' => 'Draft content',
+        ]);
+
+        $response = $this->actingAs($user)->get(route('admin.content-dashboard'));
+        $response->assertOk();
+        $this->assertSame(1, $response->viewData('publishedPosts'));
+        $this->assertSame(1, $response->viewData('draftPosts'));
     }
 }
