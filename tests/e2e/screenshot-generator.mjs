@@ -1,6 +1,6 @@
 import { chromium } from '@playwright/test';
 import { createHash } from 'crypto';
-import { mkdirSync, writeFileSync, readFileSync } from 'fs';
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const baseURL = 'http://127.0.0.1:8000';
@@ -134,7 +134,16 @@ async function captureScreenshot(browser, route, viewportSize) {
 }
 
 async function main() {
-  const browser = await chromium.launch();
+  // Use same browser path detection as Playwright config
+  const launchOptions = { args: ['--no-proxy-server'] };
+  const sandboxBrowser = '/opt/pw-browsers/chromium';
+  if (process.env.CHROMIUM_PATH) {
+    launchOptions.executablePath = process.env.CHROMIUM_PATH;
+  } else if (existsSync(sandboxBrowser)) {
+    launchOptions.executablePath = sandboxBrowser;
+  }
+
+  const browser = await chromium.launch(launchOptions);
   const allResults = [];
   let totalFailed = 0;
 
