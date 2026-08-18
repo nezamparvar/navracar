@@ -159,23 +159,93 @@
                 </div>
             </div>
 
-            <div class="flex items-center gap-2">
-                <div class="hidden text-left sm:block">
-                    <div class="text-sm font-bold text-v2-text">{{ auth()->user()?->displayName() }}</div>
-                    <div class="text-[11px] font-semibold text-v2-text-muted">
-                        {{ match(auth()->user()?->role) { 'admin' => 'مدیر سیستم', 'content_manager' => 'مدیر محتوا', default => 'کارشناس فروش' } }}
-                    </div>
+            {{-- Real search: submits to the existing admin.requests.index ?q= filter. There is no unified
+                 cross-entity (customers/proformas/content) search backend yet — see GAP_REPORT.md §6. --}}
+            @if (auth()->user()?->canManageSales())
+            <form method="GET" action="{{ route('admin.requests.index') }}" class="hidden max-w-xs flex-1 md:block">
+                <label for="admin-shell-search" class="sr-only">جستجو در درخواست‌ها</label>
+                <div class="relative">
+                    <x-icon name="search" class="pointer-events-none absolute inset-y-0 right-3 my-auto h-4 w-4 text-v2-text-muted" />
+                    <input id="admin-shell-search" type="search" name="q" placeholder="جستجو در درخواست‌ها..."
+                           class="min-h-[40px] w-full rounded-xl border border-v2-border bg-v2-elevated py-2 pe-9 ps-3 text-xs text-v2-text placeholder:text-v2-text-muted focus:border-v2-primary focus:outline-none focus:ring-2 focus:ring-v2-primary/30">
                 </div>
-                <div class="flex h-9 w-9 items-center justify-center rounded-full bg-v2-primary/15 text-sm font-black text-v2-primary">
-                    {{ mb_substr(auth()->user()?->displayName() ?? '?', 0, 1) }}
+            </form>
+            @endif
+
+            <div class="flex items-center gap-2">
+                {{-- Icon only: no live notification backend exists yet (no fabricated unread count) — see GAP_REPORT.md §6. --}}
+                <span class="flex h-10 w-10 items-center justify-center rounded-full text-v2-text-muted" aria-hidden="true">
+                    <x-icon name="bell" class="w-[18px] h-[18px]" />
+                </span>
+
+                <div x-data="{ open: false }" class="relative">
+                    <button type="button" @click="open = !open" @click.outside="open = false" :aria-expanded="open"
+                            class="flex min-h-[44px] items-center gap-2 rounded-xl px-1.5 py-1 hover:bg-v2-elevated">
+                        <div class="hidden text-left sm:block">
+                            <div class="text-sm font-bold text-v2-text">{{ auth()->user()?->displayName() }}</div>
+                            <div class="text-[11px] font-semibold text-v2-text-muted">
+                                {{ match(auth()->user()?->role) { 'admin' => 'مدیر سیستم', 'content_manager' => 'مدیر محتوا', default => 'کارشناس فروش' } }}
+                            </div>
+                        </div>
+                        <div class="flex h-9 w-9 items-center justify-center rounded-full bg-v2-primary/15 text-sm font-black text-v2-primary">
+                            {{ mb_substr(auth()->user()?->displayName() ?? '?', 0, 1) }}
+                        </div>
+                        <x-icon name="chevron-down" class="hidden w-4 h-4 text-v2-text-muted sm:block" />
+                    </button>
+                    <div x-show="open" x-cloak x-transition
+                         class="absolute left-0 top-full z-40 mt-2 w-48 rounded-xl border border-v2-border bg-v2-surface p-1.5 shadow-soft-dark"
+                         style="display:none">
+                        <form method="POST" action="{{ route('logout') }}">
+                            @csrf
+                            <button type="submit" class="flex w-full min-h-[44px] items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-bold text-v2-error hover:bg-v2-elevated">
+                                <x-icon name="logout" class="w-[18px] h-[18px]" />
+                                خروج
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </header>
 
-        <main class="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main class="flex-1 px-4 py-6 pb-24 sm:px-6 lg:px-8 lg:pb-6">
             {{ $slot }}
         </main>
     </div>
+
+    {{--
+        Admin mobile bottom nav per DESIGN_SPEC.md §3 (پنل مدیریت موبایل) and
+        docs/design-v2/assets/06-admin-mobile.png: داشبورد/فروش/محتوا/تقویم/منو.
+        Permission-aware like the sidebar (فروش/محتوا only for roles that can see them).
+        "تقویم" has no backing route yet — no calendar/meeting subsystem exists in the
+        repo (see GAP_REPORT.md §2) — kept visible per the reference, disabled with a
+        reason rather than silently dropped or faked. "منو" opens the same drawer as
+        the header hamburger button (real, not a dead end) — needs the adminShell
+        Alpine scope, so this nav stays inside that root div.
+    --}}
+    <nav aria-label="ناوبری پایین پنل مدیریت" class="fixed inset-x-0 bottom-0 z-40 flex border-t border-v2-border bg-v2-surface/95 backdrop-blur-md lg:hidden" style="padding-bottom: env(safe-area-inset-bottom)">
+        @if (auth()->user()?->canManageSales())
+            @php $active = request()->routeIs('admin.dashboard*'); @endphp
+            <a href="{{ route('admin.dashboard') }}" class="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold {{ $active ? 'text-v2-primary' : 'text-v2-text-muted' }}" @if($active) aria-current="page" @endif>
+                <x-icon name="dashboard" class="w-5 h-5" /> داشبورد
+            </a>
+            @php $active = request()->routeIs('admin.kanban*') || request()->routeIs('admin.requests.*') || request()->routeIs('admin.invoices.*'); @endphp
+            <a href="{{ route('admin.kanban') }}" class="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold {{ $active ? 'text-v2-primary' : 'text-v2-text-muted' }}" @if($active) aria-current="page" @endif>
+                <x-icon name="kanban" class="w-5 h-5" /> فروش
+            </a>
+        @endif
+        @if (auth()->user()?->canManageContent())
+            @php $active = request()->routeIs('admin.car-listings.*') || request()->routeIs('admin.posts.*'); @endphp
+            <a href="{{ route('admin.car-listings.index') }}" class="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold {{ $active ? 'text-v2-primary' : 'text-v2-text-muted' }}" @if($active) aria-current="page" @endif>
+                <x-icon name="car" class="w-5 h-5" /> محتوا
+            </a>
+        @endif
+        <span aria-disabled="true" title="تقویم جلسات و تماس‌ها هنوز پیاده‌سازی نشده" class="flex min-h-[48px] flex-1 cursor-not-allowed flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold text-v2-text-muted/50">
+            <x-icon name="calendar" class="w-5 h-5" /> تقویم
+        </span>
+        <button type="button" @click="sidebarOpen = true" class="flex min-h-[48px] flex-1 flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold text-v2-text-muted">
+            <x-icon name="menu" class="w-5 h-5" /> منو
+        </button>
+    </nav>
 </div>
 
 <x-toast-container />

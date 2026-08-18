@@ -71,6 +71,14 @@
             </div>
         </a>
 
+        {{--
+            Nav order/labels match docs/design-v2/assets/01-public-desktop-system.png exactly:
+            خودروها, محاسبه هزینه, درخواست‌ها, تماس با ما (text nav) + phone/account icon buttons.
+            "درخواست‌ها" links to the real submission page (public.lead-form) — there is no
+            request-tracking-by-number page yet, see GAP_REPORT.md §1 for the real-route plan.
+            "حساب" is the reference's account icon button; kept visible (not removed) but
+            disabled with a reason, since no public-account backend exists — GAP_REPORT.md §1.
+        --}}
         <nav aria-label="ناوبری اصلی" class="hidden items-center gap-1 sm:flex">
             <a href="{{ route('public.car-prices.index') }}"
                class="rounded-full px-4 py-2 text-xs font-bold transition-colors {{ request()->routeIs('public.car-prices.*') ? 'bg-v2-primary text-white' : 'text-v2-text-muted hover:bg-v2-elevated hover:text-v2-text' }}">
@@ -82,11 +90,11 @@
             </a>
             <a href="{{ route('public.lead-form') }}"
                class="rounded-full px-4 py-2 text-xs font-bold transition-colors {{ request()->routeIs('public.lead-form') ? 'bg-v2-primary text-white' : 'text-v2-text-muted hover:bg-v2-elevated hover:text-v2-text' }}">
-                ثبت درخواست
+                درخواست‌ها
             </a>
-            <a href="{{ route('public.blog.index') }}"
-               class="rounded-full px-4 py-2 text-xs font-bold transition-colors {{ request()->routeIs('public.blog.*') ? 'bg-v2-primary text-white' : 'text-v2-text-muted hover:bg-v2-elevated hover:text-v2-text' }}">
-                وبلاگ
+            <a href="{{ route('public.home') }}#contact"
+               class="rounded-full px-4 py-2 text-xs font-bold text-v2-text-muted hover:bg-v2-elevated hover:text-v2-text">
+                تماس با ما
             </a>
             @foreach ($menuItems as $item)
                 <a href="{{ $item->url }}" @if($item->opens_new_tab) target="_blank" rel="noopener" @endif
@@ -97,6 +105,11 @@
         </nav>
 
         <div class="flex shrink-0 items-center gap-2">
+            <span tabindex="0" aria-disabled="true" title="حساب کاربری هنوز راه‌اندازی نشده — ناوراکار ثبت‌نام عمومی ندارد"
+                  class="hidden h-10 w-10 cursor-not-allowed items-center justify-center rounded-full bg-v2-elevated text-v2-text-muted/50 sm:flex">
+                <x-icon name="user" class="w-[18px] h-[18px]" />
+                <span class="sr-only">حساب کاربری (هنوز راه‌اندازی نشده)</span>
+            </span>
             <a href="tel:{{ str_replace(' ', '', $footerContactIran) }}" aria-label="تماس تلفنی با ناوراکار"
                class="hidden h-10 w-10 items-center justify-center rounded-full bg-v2-elevated text-v2-text-muted hover:text-v2-text sm:flex">
                 <x-icon name="phone" class="w-[18px] h-[18px]" />
@@ -118,8 +131,9 @@
          class="mx-4 mt-3 space-y-1.5 rounded-2xl border border-v2-border bg-v2-surface p-3 sm:hidden">
         <a href="{{ route('public.car-prices.index') }}" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">خودروها</a>
         <a href="{{ route('public.calculator') }}" class="block rounded-xl bg-v2-primary px-4 py-2.5 text-center text-sm font-bold text-white">محاسبه قیمت خودرو</a>
-        <a href="{{ route('public.lead-form') }}" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">ثبت درخواست</a>
-        <a href="{{ route('public.blog.index') }}" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">وبلاگ</a>
+        <a href="{{ route('public.lead-form') }}" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">درخواست‌ها</a>
+        <a href="{{ route('public.home') }}#contact" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">تماس با ما</a>
+        <span aria-disabled="true" title="حساب کاربری هنوز راه‌اندازی نشده" class="block cursor-not-allowed rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text-muted/50">حساب (به‌زودی)</span>
         @foreach ($menuItems as $item)
             <a href="{{ $item->url }}" @if($item->opens_new_tab) target="_blank" rel="noopener" @endif
                class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">
@@ -169,14 +183,19 @@
     </div>
 </footer>
 
-{{-- Mobile bottom nav — only real destinations (no public account/request-tracking page exists yet, see docs/design-v2/implementation/GAP_REPORT.md) --}}
+{{--
+    Mobile bottom nav — 5 items matching docs/design-v2/assets/05-public-mobile.png exactly
+    (خانه/خودروها/محاسبه/درخواست‌ها/حساب). "درخواست‌ها" links to the real submission page
+    (public.lead-form); "حساب" is kept visible but disabled — no public-account backend
+    exists yet. See GAP_REPORT.md §1 for the plan, not silently dropped.
+--}}
 <nav aria-label="ناوبری پایین صفحه" class="fixed inset-x-0 bottom-0 z-40 flex border-t border-v2-border bg-v2-surface/95 backdrop-blur-md sm:hidden" style="padding-bottom: env(safe-area-inset-bottom)">
     @php
         $bottomNavItems = [
             ['route' => 'public.home', 'label' => 'خانه', 'icon' => 'dashboard', 'match' => 'public.home'],
             ['route' => 'public.car-prices.index', 'label' => 'خودروها', 'icon' => 'car', 'match' => 'public.car-prices.*'],
             ['route' => 'public.calculator', 'label' => 'محاسبه', 'icon' => 'calculator', 'match' => 'public.calculator'],
-            ['route' => 'public.lead-form', 'label' => 'ثبت درخواست', 'icon' => 'inbox', 'match' => 'public.lead-form*'],
+            ['route' => 'public.lead-form', 'label' => 'درخواست‌ها', 'icon' => 'inbox', 'match' => 'public.lead-form*'],
         ];
     @endphp
     @foreach ($bottomNavItems as $item)
@@ -188,6 +207,11 @@
             {{ $item['label'] }}
         </a>
     @endforeach
+    <span aria-disabled="true" title="حساب کاربری هنوز راه‌اندازی نشده"
+          class="flex min-h-[48px] flex-1 cursor-not-allowed flex-col items-center justify-center gap-0.5 py-2 text-[11px] font-bold text-v2-text-muted/50">
+        <x-icon name="user" class="w-5 h-5" />
+        حساب
+    </span>
 </nav>
 
 <x-toast-container />

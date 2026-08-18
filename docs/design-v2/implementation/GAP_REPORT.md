@@ -45,3 +45,21 @@ Living document. Each entry: what the design wants, what the repo currently has,
 **Decision:** the V2 admin shell (`resources/views/components/layouts/admin.blade.php`) no longer renders the toggle and no longer applies the `.dark` class — it always renders the approved dark-navy language. The underlying `Alpine.store('theme')` in `resources/js/app.js` was left untouched (still used by `public/mobile-app.blade.php`, unaffected by this change) since removing it entirely wasn't necessary and keeps the diff minimal.
 **Why this isn't "faked":** a toggle with only one real (dark) side and a fabricated, never-designed "light" side would be worse than no toggle — it would ship an unapproved, invented light theme. This is a deliberate, documented product decision, not an oversight.
 **Follow-up:** if a light mode is ever wanted for V2, it needs an actual approved design reference first, not an improvised one.
+
+## 6. Admin header notification bell and unified search
+
+**Design wants:** a notification bell with an unread-count badge, and a search box, in the admin header on every dashboard variant (`02-admin-dashboard-calendar.png`, `03-sales-dashboard.png`, `04-content-dashboard.png`).
+**Repo has:** no notification/alert model or delivery mechanism anywhere in `app/Models`. A real, working `?q=` filter exists on `admin.requests.index` (`RequestController.php:38,330`); no equivalent exists on `CarListingController` (content search) or anywhere that spans customers+proformas+content at once the way the reference implies.
+**Implemented (Phase 3 remediation):** the bell icon is now rendered in the shell — matching the reference's visual composition — but with **no badge/count**, since a fabricated unread number would be exactly the kind of fake sample data the mission rules forbid. The search box is wired to the one real search that exists (`admin.requests.index?q=`).
+**Genuinely missing:** a notification system (events, delivery, read/unread state) and a unified cross-entity search endpoint. Both are backend subsystems, not restyles.
+**Evidence:** `app/Models/*` listing (Phase 1), `grep` for `'q'` across `app/Http/Controllers/Admin/*.php`.
+**Follow-up:** out of scope to invent here. If wanted, needs its own scoped backend task (what counts as a notification, retention, read state for a notification system; which entities and how for search) before any UI is built against it.
+
+## 7. Public vehicle-list filter/search bar
+
+**Design wants:** a single search box (search by brand/model/code) plus brand/model/year/engine-volume/fuel-type/price-range as **combinable** filters with sort, on the vehicle list page (DESIGN_SPEC.md §4 "فهرست خودروها", `01-public-desktop-system.png` right panel).
+**Repo has:** `CarPriceController` exposes brand/category/price-bracket only as **separate routes** (`/car-prices/brand/{make}`, `/car-prices/category/{id}`, `/car-prices/price/{bracket}`), not as combinable query-string filters, and has no free-text search, no year/engine/fuel filters, and no sort parameter at all.
+**Implemented (Phase 3 remediation):** `car-prices/index.blade.php` was restyled to V2 tokens using exactly the filter chips that exist today (brand, category, price bracket) in the reference's chip visual style. No search input or extra filter dropdowns were added to the markup, since they would submit to nothing.
+**Genuinely missing:** real controller support for combinable query-string filtering, free-text search, and sorting — this is the actual scope of DESIGN_SPEC §4's "فهرست خودروها" requirement and is real Phase 4 backend+UI work, not a restyle.
+**Evidence:** `app/Http/Controllers/Public/CarPriceController.php` (full read, Phase 1 and this remediation), `routes/public.php`.
+**Follow-up:** build in Phase 4 as originally planned — this gap was surfaced now only because the owner asked for full page-content parity on this specific page as part of the Phase 3 correction; the filter/search backend itself was correctly out of scope for that correction and remains Phase 4.
