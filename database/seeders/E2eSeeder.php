@@ -232,29 +232,22 @@ class E2eSeeder extends Seeder
             ]);
         }
 
-        // Home slides for carousel on public homepage
-        $homeSlideData = [
-            ['title' => 'محاسبه هزینه واردات', 'subtitle' => 'هزینه دقیق را محاسبه کنید', 'cta_label' => 'شروع کنید', 'cta_url' => '/calculator', 'sort_order' => 1],
-            ['title' => 'قیمت خودروها', 'subtitle' => 'فهرست خودروهای مجاز', 'cta_label' => 'مشاهده', 'cta_url' => '/car-prices', 'sort_order' => 2],
-            ['title' => 'ارتباط با متخصصین', 'subtitle' => 'مشاوره رایگان', 'cta_label' => 'تماس بگیرید', 'cta_url' => '/contact', 'sort_order' => 3],
-        ];
-        foreach ($homeSlideData as $slide) {
-            $imagePath = 'home-slides/slide-'.$slide['sort_order'].'.png';
-            if (! Storage::disk('public')->exists($imagePath)) {
-                Storage::disk('public')->put($imagePath, $this->placeholderImage($slide['title'], 'Slide', '#1677FF'));
-            }
-            HomeSlide::updateOrCreate(
-                ['sort_order' => $slide['sort_order']],
-                [
-                    'title' => $slide['title'],
-                    'subtitle' => $slide['subtitle'],
-                    'image_path' => $imagePath,
-                    'cta_label' => $slide['cta_label'],
-                    'cta_url' => $slide['cta_url'],
-                    'is_active' => true,
-                ]
-            );
+        // Home slide for carousel on public homepage (single slide for content dashboard demo)
+        $imagePath = 'home-slides/slide-1.png';
+        if (! Storage::disk('public')->exists($imagePath)) {
+            Storage::disk('public')->put($imagePath, $this->placeholderImage('محاسبه هزینه واردات', 'Slide', '#1677FF'));
         }
+        HomeSlide::updateOrCreate(
+            ['sort_order' => 1],
+            [
+                'title' => 'محاسبه هزینه واردات',
+                'subtitle' => 'هزینه دقیق را محاسبه کنید',
+                'image_path' => $imagePath,
+                'cta_label' => 'شروع کنید',
+                'cta_url' => '/calculator',
+                'is_active' => true,
+            ]
+        );
 
         // Rich calendar events for day/week/list views: today + this week + next week, mixed statuses
         // Using fixed dates (always relative to database seeding date, never "now")
