@@ -164,7 +164,7 @@
                 <input type="text" x-model="stageNameInput" @keydown.enter="saveStageName" class="mb-4 w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                 <div class="flex justify-end gap-2">
                     <button type="button" @click="cancelStageNameEdit" class="rounded-xl px-4 py-2 text-sm font-bold text-v2-text-muted hover:bg-v2-elevated">انصراف</button>
-                    <button type="button" @click="saveStageName" class="rounded-xl bg-v2-primary px-4 py-2 text-sm font-bold text-white hover:brightness-110">ذخیره</button>
+                    <button type="button" @click="saveStageName" class="rounded-xl bg-v2-primary-action px-4 py-2 text-sm font-bold text-white hover:brightness-110">ذخیره</button>
                 </div>
             </div>
         </div>

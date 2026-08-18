@@ -23,7 +23,7 @@
                                     <p class="mt-3 text-sm text-v2-text-muted sm:text-base">{{ $slide->subtitle }}</p>
                                 @endif
                                 @if($slide->cta_label && $slide->cta_url)
-                                    <a href="{{ $slide->cta_url }}" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-v2-primary px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
+                                    <a href="{{ $slide->cta_url }}" class="mt-5 inline-flex items-center gap-2 rounded-xl bg-v2-primary-action px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
                                         {{ $slide->cta_label }}
                                     </a>
                                 @endif
@@ -53,7 +53,7 @@
         <div class="rounded-2xl border border-v2-border bg-v2-surface p-6 text-center sm:p-8">
             <h2 class="text-lg font-black text-v2-text sm:text-xl">محاسبه آنلاین هزینه واردات خودرو</h2>
             <p class="mx-auto mt-2 max-w-xl text-xs text-v2-text-muted sm:text-sm">قیمت خودروی دلخواه را وارد کنید تا جدول کامل هزینه ترخیص گمرکی، عوارض و پلاک انتظامی را ببینید.</p>
-            <a href="{{ route('public.calculator') }}" class="mt-4 inline-flex items-center gap-2 rounded-xl bg-v2-primary px-6 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
+            <a href="{{ route('public.calculator') }}" class="mt-4 inline-flex items-center gap-2 rounded-xl bg-v2-primary-action px-6 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
                 <x-icon name="calculator" class="w-4 h-4" /> شروع محاسبه
             </a>
         </div>

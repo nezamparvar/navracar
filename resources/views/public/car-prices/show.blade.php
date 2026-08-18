@@ -134,7 +134,7 @@
                     </p>
 
                     <div class="mt-3 flex flex-wrap gap-3">
-                        <a href="{{ route('public.lead-form') }}" class="inline-flex items-center gap-2 rounded-xl bg-v2-primary px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
+                        <a href="{{ route('public.lead-form') }}" class="inline-flex items-center gap-2 rounded-xl bg-v2-primary-action px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
                             ثبت درخواست
                         </a>
                         <a href="{{ route('public.calculator') }}" class="inline-flex items-center gap-2 rounded-xl border border-v2-border bg-v2-elevated px-5 py-3 text-sm font-bold text-v2-text hover:border-v2-primary">

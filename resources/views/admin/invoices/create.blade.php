@@ -67,7 +67,7 @@
                     <div><label class="mb-1 block text-xs font-bold text-v2-text-muted">دسته خودرو *</label><select name="category" x-model="category" @change="calculate" :required="mode === 'automatic'" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-v2-text">@foreach($categories as $id => $item)<option value="{{ $id }}">{{ $item['label'] }}</option>@endforeach</select></div>
                 </div>
                 <div class="mt-4 flex items-center gap-3">
-                    <button type="button" @click="calculate" :disabled="loading" class="rounded-xl bg-v2-primary px-5 py-2.5 text-sm font-bold text-white hover:brightness-110 disabled:opacity-60">
+                    <button type="button" @click="calculate" :disabled="loading" class="rounded-xl bg-v2-primary-action px-5 py-2.5 text-sm font-bold text-white hover:brightness-110 disabled:opacity-60">
                         <span x-show="!loading">محاسبه خودکار</span>
                         <span x-show="loading">در حال محاسبه…</span>
                     </button>

@@ -20,7 +20,7 @@
   --}}
   :root{
     --ink:#F8FAFC; --ink-soft:#9AAAC1; --bg:#020B18; --surface:#0A1B32; --surface-alt:#061426;
-    --border:#1A3554; --primary:#4A90E2; --primary-dark:#2D5BA8; --primary-light:#6BA5FF;
+    --border:#1A3554; --primary:#1677FF; --primary-dark:#0D3FA8; --primary-light:#5B9BFF;
     {{--
         --amber/--amber-dark/--amber-light/--violet are repurposed here to the V2 primary
         blue / accent cyan (DESIGN_SPEC.md §2 keeps yellow/purple out of the primary visual
@@ -30,7 +30,7 @@
         (CTA buttons, emblems, badges, icon chips), not a warning state; real warning colors
         (.disclaimer-box, .vin-msg.warn) already use literal amber hex values, untouched here.
     --}}
-    --amber:#4A90E2; --amber-dark:#2D5BA8; --amber-light:#6BA5FF; --violet:#20C7E9; --green:#22C55E;
+    --amber:#1677FF; --amber-dark:#0D3FA8; --amber-light:#5B9BFF; --violet:#20C7E9; --green:#22C55E;
     --dash-1:#061426; --dash-2:#0A1B32;
     --print-ink:#1A1730; --print-ink-soft:#6B6584; --print-surface:#FFFFFF; --print-surface-alt:#F1EDE6;
     --print-border:#E4DFD3; --print-primary:#2D2657; --print-primary-dark:#171433; --print-primary-light:#EDE9F7;

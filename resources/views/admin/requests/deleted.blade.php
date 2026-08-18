@@ -32,7 +32,7 @@
                                 <div class="flex justify-center gap-2">
                                     <form method="POST" action="{{ route('admin.requests.restore', $row) }}" class="inline">
                                         @csrf
-                                        <button type="submit" class="rounded-lg bg-v2-primary px-3 py-1.5 text-xs font-bold text-white hover:brightness-110">
+                                        <button type="submit" class="rounded-lg bg-v2-primary-action px-3 py-1.5 text-xs font-bold text-white hover:brightness-110">
                                             بازیابی
                                         </button>
                                     </form>

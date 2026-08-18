@@ -115,7 +115,7 @@
                class="hidden h-10 w-10 items-center justify-center rounded-full bg-v2-elevated text-v2-text-muted hover:text-v2-text sm:flex">
                 <x-icon name="phone" class="w-[18px] h-[18px]" />
             </a>
-            <a href="{{ route('public.calculator') }}" class="hidden rounded-full bg-v2-primary px-4 py-2 text-xs font-bold text-white shadow-glow-v2 hover:brightness-110 sm:inline-block">
+            <a href="{{ route('public.calculator') }}" class="hidden rounded-full bg-v2-primary-action px-4 py-2 text-xs font-bold text-white shadow-glow-v2 hover:brightness-110 sm:inline-block">
                 محاسبه قیمت خودرو
             </a>
             <button type="button" @click="mobileMenuOpen = !mobileMenuOpen"
@@ -131,7 +131,7 @@
     <div x-show="mobileMenuOpen" x-cloak x-transition @click.outside="mobileMenuOpen = false"
          class="mx-4 mt-3 space-y-1.5 rounded-2xl border border-v2-border bg-v2-surface p-3 sm:hidden">
         <a href="{{ route('public.car-prices.index') }}" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">خودروها</a>
-        <a href="{{ route('public.calculator') }}" class="block rounded-xl bg-v2-primary px-4 py-2.5 text-center text-sm font-bold text-white">محاسبه قیمت خودرو</a>
+        <a href="{{ route('public.calculator') }}" class="block rounded-xl bg-v2-primary-action px-4 py-2.5 text-center text-sm font-bold text-white">محاسبه قیمت خودرو</a>
         <a href="{{ route('public.lead-form') }}" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">درخواست‌ها</a>
         <a href="{{ route('public.home') }}#contact" class="block rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text hover:bg-v2-elevated">تماس با ما</a>
         <span aria-disabled="true" title="حساب کاربری هنوز راه‌اندازی نشده" class="block cursor-not-allowed rounded-xl px-4 py-2.5 text-center text-sm font-bold text-v2-text-muted/50">حساب (به‌زودی)</span>

@@ -202,7 +202,7 @@
                     @endforeach
                 </select>
                 <textarea x-model="preview" readonly rows="6" class="mb-2.5 w-full rounded-xl border border-v2-border bg-v2-surface px-3.5 py-3 text-sm text-v2-text"></textarea>
-                <button type="button" @click="copy" class="w-full rounded-xl bg-v2-primary py-2.5 text-sm font-extrabold text-white shadow-glow-v2 hover:brightness-110">📋 کپی متن</button>
+                <button type="button" @click="copy" class="w-full rounded-xl bg-v2-primary-action py-2.5 text-sm font-extrabold text-white shadow-glow-v2 hover:brightness-110">📋 کپی متن</button>
                 @if ($templates->isEmpty())
                     <p class="mt-2 text-xs text-v2-text-muted">هنوز قالبی تعریف نشده — از منوی «قالب‌های پیام» بسازید.</p>
                 @endif

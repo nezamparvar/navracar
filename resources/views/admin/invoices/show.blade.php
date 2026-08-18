@@ -27,7 +27,7 @@
 
     <div class="no-print mx-auto mb-5 flex max-w-3xl flex-wrap justify-end gap-2.5">
         <a href="{{ route('admin.invoices.index') }}" class="rounded-xl border border-v2-border bg-v2-elevated px-4 py-2.5 text-sm font-bold text-v2-text hover:border-v2-primary/60">{{ $labels['back'] }}</a>
-        <a href="{{ route('admin.invoices.create', ['id' => $invoice->id]) }}" class="rounded-xl bg-v2-primary px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">✏️ ویرایش پیش‌فاکتور</a>
+        <a href="{{ route('admin.invoices.create', ['id' => $invoice->id]) }}" class="rounded-xl bg-v2-primary-action px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">✏️ ویرایش پیش‌فاکتور</a>
         <form method="POST" action="{{ route('admin.invoices.status', $invoice) }}">
             @csrf
             <select name="status" onchange="this.form.submit()" class="rounded-xl border border-v2-border bg-v2-elevated px-3 py-2.5 text-sm text-v2-text">
@@ -38,7 +38,7 @@
         </form>
         <a href="{{ route('admin.invoices.pdf', [$invoice, 'fa']) }}" title="دانلود PDF فارسی" class="rounded-xl bg-v2-success px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">دانلود فایل PDF</a>
         <a href="{{ route('admin.invoices.pdf', [$invoice, 'en']) }}" class="rounded-xl border border-v2-success px-4 py-2.5 text-sm font-bold text-v2-success hover:bg-v2-success/10">Download English PDF</a>
-        <button onclick="window.print()" class="rounded-xl bg-v2-primary px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">چاپ / ذخیره PDF</button>
+        <button onclick="window.print()" class="rounded-xl bg-v2-primary-action px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">چاپ / ذخیره PDF</button>
     </div>
 
     <div class="mx-auto max-w-3xl overflow-hidden rounded-2xl shadow-soft-lg print:rounded-none print:shadow-none">

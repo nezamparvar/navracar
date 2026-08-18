@@ -14,7 +14,7 @@ $variants = [
     'ghost' => 'bg-transparent text-ink-600 hover:bg-ink-100 dark:text-ink-300 dark:hover:bg-white/10 focus-visible:ring-ink-300',
     'danger' => 'bg-rose-600 text-white hover:bg-rose-700 hover:-translate-y-0.5 active:translate-y-0 focus-visible:ring-rose-300',
     // V2 tokens (docs/design-v2/DESIGN_SPEC.md §2) — for pages migrated to the V2 shell.
-    'v2-primary' => 'bg-v2-primary text-white shadow-glow-v2 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 focus-visible:ring-v2-primary/40',
+    'v2-primary' => 'bg-v2-primary-action text-white shadow-glow-v2 hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 focus-visible:ring-v2-primary/40',
     'v2-secondary' => 'bg-v2-elevated text-v2-text border border-v2-border hover:border-v2-primary/60 hover:-translate-y-0.5 active:translate-y-0 focus-visible:ring-v2-primary/40',
     'v2-ghost' => 'bg-transparent text-v2-text-muted hover:bg-v2-elevated hover:text-v2-text focus-visible:ring-v2-primary/40',
     'v2-danger' => 'bg-v2-error text-white hover:brightness-110 hover:-translate-y-0.5 active:translate-y-0 focus-visible:ring-v2-error/40',

@@ -15,6 +15,12 @@ const responsiveViewports = [
     ['1920x1080', 1920, 1080],
 ];
 
+const launchOptions = { args: ['--no-proxy-server'] };
+// Use pre-installed Chromium in sandboxed environments (not committed to repo)
+if (process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD || process.env.CHROMIUM_PATH) {
+    launchOptions.executablePath = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
+}
+
 export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: false,
@@ -28,7 +34,7 @@ export default defineConfig({
         // flat ~13s delay to EVERY navigation on machines with an HTTPS_PROXY env var set but no
         // HTTP_PROXY (this sandbox's setup) — reproduced directly, confirmed fixed by this flag
         // alone. All navigations in this suite target 127.0.0.1 only, so a proxy is never wanted.
-        launchOptions: { args: ['--no-proxy-server'], executablePath: '/opt/pw-browsers/chromium' },
+        launchOptions,
     },
     webServer: {
         command: 'node tests/e2e/serve.mjs',

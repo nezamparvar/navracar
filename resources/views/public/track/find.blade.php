@@ -26,7 +26,7 @@
                         <p class="text-xs font-bold text-v2-error">درخواستی با این شماره و موبایل پیدا نشد. لطفاً دوباره بررسی کنید.</p>
                     @endif
 
-                    <button type="submit" class="w-full rounded-xl bg-v2-primary px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
+                    <button type="submit" class="w-full rounded-xl bg-v2-primary-action px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
                         پیگیری درخواست
                     </button>
                 </form>
