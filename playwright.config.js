@@ -15,10 +15,16 @@ const responsiveViewports = [
     ['1920x1080', 1920, 1080],
 ];
 
+import { existsSync } from 'fs';
+
 const launchOptions = { args: ['--no-proxy-server'] };
-// Use pre-installed Chromium in sandboxed environments (not committed to repo)
-if (process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD || process.env.CHROMIUM_PATH) {
-    launchOptions.executablePath = process.env.CHROMIUM_PATH || '/opt/pw-browsers/chromium';
+// Use pre-installed Chromium in sandboxed environments (check if file exists)
+// Local dev and Windows CI will download browsers normally via Playwright.
+// Sandboxed envs have a pre-installed browser at /opt/pw-browsers/chromium
+// Environment-based override: export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+const sandboxBrowser = '/opt/pw-browsers/chromium';
+if (existsSync(sandboxBrowser) || process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD) {
+    launchOptions.executablePath = process.env.CHROMIUM_PATH || sandboxBrowser;
 }
 
 export default defineConfig({
