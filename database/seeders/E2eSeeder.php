@@ -174,24 +174,61 @@ class E2eSeeder extends Seeder
 
         VinCheck::create(['vin' => 'WBAJU7101M9E12345']);
 
-        // Content dashboard seed data: import queue and home slides for deterministic content dashboard
-        $importQueueStatuses = ['pending', 'captured', 'parsed', 'needs_review', 'ready', 'published'];
-        for ($i = 0; $i < 8; $i++) {
+        // Content dashboard seed data: import queue with deterministic, varied records
+        $importQueueRecords = [
+            // pending: just captured, awaiting parsing
+            ['status' => 'pending', 'title' => 'BMW X5 2024', 'make' => 'bmw', 'model' => 'x5', 'year' => 2024, 'price' => 450000, 'mileage' => 0, 'engine' => 3.0, 'images' => 6, 'error' => null, 'day' => 0, 'hour' => 9],
+            // captured: raw data received
+            ['status' => 'captured', 'title' => 'Mercedes GLE 450', 'make' => 'mercedes', 'model' => 'gle', 'year' => 2023, 'price' => 380000, 'mileage' => 5000, 'engine' => 3.0, 'images' => 4, 'error' => null, 'day' => 1, 'hour' => 11],
+            // parsed: extracted but needs review
+            ['status' => 'parsed', 'title' => 'Lexus LX600', 'make' => 'lexus', 'model' => 'lx', 'year' => 2024, 'price' => 420000, 'mileage' => 100, 'engine' => 3.5, 'images' => 5, 'error' => null, 'day' => 2, 'hour' => 14],
+            // needs_review: confidence < threshold
+            ['status' => 'needs_review', 'title' => 'Porsche Cayenne', 'make' => 'porsche', 'model' => 'cayenne', 'year' => 2022, 'price' => 390000, 'mileage' => 8000, 'engine' => 2.9, 'images' => 3, 'error' => null, 'day' => 3, 'hour' => 10],
+            // ready: parsed and confident, can be published
+            ['status' => 'ready', 'title' => 'Audi Q7 55', 'make' => 'audi', 'model' => 'q7', 'year' => 2023, 'price' => 350000, 'mileage' => 3000, 'engine' => 3.2, 'images' => 8, 'error' => null, 'day' => 4, 'hour' => 13],
+            // published: successfully converted to listing
+            ['status' => 'published', 'title' => 'Range Rover Sport', 'make' => 'range-rover', 'model' => 'sport', 'year' => 2023, 'price' => 360000, 'mileage' => 6000, 'engine' => 3.0, 'images' => 7, 'error' => null, 'day' => 5, 'hour' => 15],
+            // failed: image import failed
+            ['status' => 'failed', 'title' => 'Volvo XC90', 'make' => 'volvo', 'model' => 'xc90', 'year' => 2021, 'price' => 295000, 'mileage' => 12000, 'engine' => 2.0, 'images' => 0, 'error' => 'Image import timeout', 'day' => 6, 'hour' => 9],
+            // image_importing: in progress
+            ['status' => 'image_importing', 'title' => 'Tesla Model X', 'make' => 'tesla', 'model' => 'model-x', 'year' => 2024, 'price' => 500000, 'mileage' => 50, 'engine' => null, 'images' => 2, 'error' => null, 'day' => 0, 'hour' => 16],
+        ];
+
+        foreach ($importQueueRecords as $idx => $record) {
+            $publishedId = ($record['status'] === 'published' && $idx < 3)
+                ? CarListing::where('slug', 'e2e-bmw-x4')->first()?->id
+                : null;
+
             ImportQueueItem::create([
                 'user_id' => $sales->id,
                 'source' => 'dubizzle',
                 'source_platform' => 'web',
                 'capture_method' => 'link',
-                'source_url' => 'https://dubizzle.ae/motors/cars/'.$i,
-                'status' => $importQueueStatuses[$i % count($importQueueStatuses)],
-                'payload_json' => ['title' => 'Sample Car '.$i, 'price' => 100000 + ($i * 10000)],
-                'parsed_json' => ['make' => 'toyota', 'model' => 'camry', 'year' => 2024 - ($i % 3)],
-                'warnings_json' => [],
-                'confidence' => 0.85 + ($i * 0.01),
-                'error' => $i === 5 ? 'Network timeout' : null,
-                'published_listing_id' => $i % 2 === 0 ? ($i < 3 ? CarListing::where('slug', 'e2e-bmw-x4')->first()?->id : null) : null,
-                'images_imported' => $i % 2 === 0,
-                'created_at' => now()->subDays($i % 7)->addHours((9 + ($i * 2)) % 24)->setMinute(0)->setSecond(0),
+                'source_url' => 'https://dubizzle.ae/motors/cars/'.($idx + 1),
+                'status' => $record['status'],
+                'payload_json' => [
+                    'title' => $record['title'],
+                    'price' => $record['price'],
+                    'description' => 'Sample vehicle description',
+                ],
+                'parsed_json' => [
+                    'make' => $record['make'],
+                    'model' => $record['model'],
+                    'year' => $record['year'],
+                    'price' => $record['price'],
+                    'mileage' => $record['mileage'],
+                    'engine_capacity' => $record['engine'],
+                    'body_type' => 'SUV',
+                    'fuel_type' => 'Petrol',
+                    'transmission' => 'Automatic',
+                    'color' => 'Black',
+                ],
+                'warnings_json' => $record['status'] === 'needs_review' ? ['Low confidence score'] : [],
+                'confidence' => $record['status'] === 'needs_review' ? 0.65 : (0.85 + ($idx * 0.01)),
+                'error' => $record['error'],
+                'published_listing_id' => $publishedId,
+                'images_imported' => $record['images'] > 0,
+                'created_at' => today()->copy()->addDays($record['day'])->setTime($record['hour'], 0, 0),
             ]);
         }
 
@@ -220,30 +257,28 @@ class E2eSeeder extends Seeder
         }
 
         // Rich calendar events for day/week/list views: today + this week + next week, mixed statuses
+        // Using fixed dates (always relative to database seeding date, never "now")
         $requests = QuoteRequest::limit(10)->get();
-        $today = now();
-        $types = [
-            CalendarEvent::TYPE_FOLLOW_UP_CALL,
-            CalendarEvent::TYPE_CONSULTATION_MEETING,
-            CalendarEvent::TYPE_PAYMENT_CALL,
-            CalendarEvent::TYPE_DELIVERY_MEETING,
-        ];
+        $today = today();
         $calendarSchedule = [
-            // Today: 3 events to show in day/list views
-            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 2, 'duration' => 45, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            ['type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'offset_hours' => 5, 'duration' => 20, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            ['type' => CalendarEvent::TYPE_PAYMENT_CALL, 'offset_hours' => 10, 'duration' => 30, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            // This week: 4 more events
-            ['type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'offset_hours' => 26, 'duration' => 60, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 50, 'duration' => 45, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            ['type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'offset_hours' => 74, 'duration' => 15, 'status' => CalendarEvent::STATUS_COMPLETED],
-            ['type' => CalendarEvent::TYPE_PAYMENT_CALL, 'offset_hours' => 98, 'duration' => 25, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            // Past: 1 completed event for visual reference
-            ['type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'offset_hours' => -24, 'duration' => 45, 'status' => CalendarEvent::STATUS_COMPLETED],
+            // Today: 3 events at fixed times (09:00, 13:00, 18:00)
+            ['day_offset' => 0, 'hour' => 9, 'minute' => 0, 'type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'duration' => 45, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['day_offset' => 0, 'hour' => 13, 'minute' => 0, 'type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'duration' => 20, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['day_offset' => 0, 'hour' => 18, 'minute' => 0, 'type' => CalendarEvent::TYPE_PAYMENT_CALL, 'duration' => 30, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            // Next day: 1 event
+            ['day_offset' => 1, 'hour' => 10, 'minute' => 0, 'type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'duration' => 60, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            // Day +2: 1 event
+            ['day_offset' => 2, 'hour' => 14, 'minute' => 30, 'type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'duration' => 45, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            // Day +3: 1 completed event
+            ['day_offset' => 3, 'hour' => 11, 'minute' => 0, 'type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'duration' => 15, 'status' => CalendarEvent::STATUS_COMPLETED],
+            // Day +4: 1 event
+            ['day_offset' => 4, 'hour' => 16, 'minute' => 0, 'type' => CalendarEvent::TYPE_PAYMENT_CALL, 'duration' => 25, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            // Yesterday: 1 completed event for visual reference
+            ['day_offset' => -1, 'hour' => 10, 'minute' => 0, 'type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'duration' => 45, 'status' => CalendarEvent::STATUS_COMPLETED],
         ];
         $eventIndex = 0;
         foreach ($calendarSchedule as $ce) {
-            $start = $today->copy()->addHours($ce['offset_hours'])->setMinute(0)->setSecond(0);
+            $start = $today->copy()->addDays($ce['day_offset'])->setTime($ce['hour'], $ce['minute'], 0);
             $req = $requests[$eventIndex % $requests->count()] ?? $requests->first();
             CalendarEvent::create([
                 'type' => $ce['type'],

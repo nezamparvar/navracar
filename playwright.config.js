@@ -21,10 +21,14 @@ const launchOptions = { args: ['--no-proxy-server'] };
 // Use pre-installed Chromium in sandboxed environments (check if file exists)
 // Local dev and Windows CI will download browsers normally via Playwright.
 // Sandboxed envs have a pre-installed browser at /opt/pw-browsers/chromium
-// Environment-based override: export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+// Environment-based override: export CHROMIUM_PATH=/path/to/chromium
 const sandboxBrowser = '/opt/pw-browsers/chromium';
-if (existsSync(sandboxBrowser) || process.env.PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD) {
-    launchOptions.executablePath = process.env.CHROMIUM_PATH || sandboxBrowser;
+if (process.env.CHROMIUM_PATH) {
+    // Explicit path override takes precedence
+    launchOptions.executablePath = process.env.CHROMIUM_PATH;
+} else if (existsSync(sandboxBrowser)) {
+    // Auto-detect sandboxed browser if it exists
+    launchOptions.executablePath = sandboxBrowser;
 }
 
 export default defineConfig({

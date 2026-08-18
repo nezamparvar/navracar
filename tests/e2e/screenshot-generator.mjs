@@ -56,12 +56,31 @@ async function captureScreenshot(browser, route, viewportSize) {
   const results = [];
   let hasError = false;
 
+  // Attach error listeners BEFORE navigation to catch all errors
+  const pageErrors = [];
+  const requestFailures = [];
+  const consoleErrors = [];
+
+  page.on('pageerror', err => {
+    pageErrors.push(`Page error: ${err.message}`);
+  });
+
+  page.on('requestfailed', req => {
+    requestFailures.push(`Request failed: ${req.url()} (${req.failure()?.errorText})`);
+  });
+
+  page.on('console', msg => {
+    if (msg.type() === 'error') {
+      consoleErrors.push(msg.text());
+    }
+  });
+
   try {
     if (route.auth) {
       await loginAdmin(page);
     }
 
-    const response = await page.goto(`${baseURL}${route.path}`);
+    const response = await page.goto(`${baseURL}${route.path}`, { waitUntil: 'networkidle' });
     if (!response || response.status() !== 200) {
       throw new Error(`Failed to load ${route.path}: HTTP ${response?.status()}`);
     }
@@ -72,13 +91,13 @@ async function captureScreenshot(browser, route, viewportSize) {
       throw new Error(`Page error detected on ${route.path}`);
     }
 
-    // Check for console errors
-    const consoleErrors = [];
-    page.on('console', msg => {
-      if (msg.type() === 'error') {
-        consoleErrors.push(msg.text());
-      }
-    });
+    // Check for captured errors during page load/navigation
+    if (pageErrors.length > 0) {
+      throw new Error(`Page errors: ${pageErrors.join('; ')}`);
+    }
+    if (consoleErrors.length > 0) {
+      throw new Error(`Console errors: ${consoleErrors.join('; ')}`);
+    }
 
     // Capture viewport-sized screenshot
     const viewportScreenshot = await page.screenshot({ fullPage: false });
