@@ -134,6 +134,45 @@
         </x-card>
     </div>
 
+    @if ($isAdmin)
+        <div class="mb-6 grid gap-5 lg:grid-cols-2">
+            <x-card variant="v2" title="وضعیت ایمپورت" icon="inbox">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="flex items-center justify-center gap-1.5 text-v2-success"><x-icon name="check-circle" class="w-4 h-4" /> موفق</div>
+                        <div class="mt-1 text-2xl font-black text-v2-text num-font">{{ $importStatus->succeeded ?? 0 }}</div>
+                    </div>
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="flex items-center justify-center gap-1.5 text-v2-warning"><x-icon name="calendar" class="w-4 h-4" /> در صف</div>
+                        <div class="mt-1 text-2xl font-black text-v2-text num-font">{{ $importStatus->queued ?? 0 }}</div>
+                    </div>
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="flex items-center justify-center gap-1.5 text-v2-error"><x-icon name="x" class="w-4 h-4" /> خطا</div>
+                        <div class="mt-1 text-2xl font-black text-v2-text num-font">{{ $importStatus->failed ?? 0 }}</div>
+                    </div>
+                </div>
+            </x-card>
+
+            <x-card variant="v2" title="نرخ‌های امروز" icon="target" subtitle="منبع: تنظیمات نرخ ارز پنل مدیریت.">
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="text-xs font-bold text-v2-text-muted">درهم (AED)</div>
+                        <div class="mt-1 text-xl font-black text-v2-text num-font">{{ number_format($todayRates['aed']) }}</div>
+                        <div class="text-[11px] text-v2-text-muted">تومان</div>
+                    </div>
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="text-xs font-bold text-v2-text-muted">دلار (USD)</div>
+                        <div class="mt-1 text-xl font-black text-v2-text num-font">{{ number_format($todayRates['usd']) }}</div>
+                        <div class="text-[11px] text-v2-text-muted">تومان</div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <x-button :href="route('admin.settings.edit')" variant="v2-secondary" size="sm">بروزرسانی نرخ‌ها</x-button>
+                </div>
+            </x-card>
+        </div>
+    @endif
+
     <x-card variant="v2" title="خروجی اکسل گزارش‌ها" icon="download" subtitle="خروجی فایل اکسل (CSV) از تعداد و جزئیات درخواست‌ها و محاسبات، برای بازه دلخواه.">
         <div class="flex flex-wrap gap-2.5">
             <x-button :href="route('admin.export', ['type' => 'requests'])" variant="v2-primary"><x-icon name="download" class="w-4 h-4" /> خروجی همه درخواست‌های استعلام</x-button>

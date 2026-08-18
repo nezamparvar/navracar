@@ -4,8 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\CalculationLog;
+use App\Models\ImportQueueItem;
 use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
+use App\Models\Setting;
 use App\Models\VinCheck;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -76,6 +78,22 @@ class DashboardController extends Controller
             ->latest('created_at')->limit(8)
             ->get(['id', 'created_at', 'name', 'phone', 'car_label', 'total_with_profit', 'email_sent']);
 
+        // Today's rates + import status — admin-only, matches the reference dashboard's
+        // "نرخ‌های امروز" and "وضعیت ایمپورت" widgets, real data (Setting/ImportQueueItem),
+        // no fabricated figures.
+        $todayRates = $isAdmin ? [
+            'aed' => (float) Setting::get(Setting::FREE_RATE),
+            'usd' => (float) Setting::get(Setting::FREE_RATE) * (float) Setting::get(Setting::USD_TO_AED_RATE),
+        ] : null;
+
+        $importStatus = $isAdmin ? ImportQueueItem::query()
+            ->selectRaw("
+                SUM(CASE WHEN status = 'published' THEN 1 ELSE 0 END) as succeeded,
+                SUM(CASE WHEN status IN ('pending', 'captured', 'parsed', 'needs_review', 'image_importing') THEN 1 ELSE 0 END) as queued,
+                SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) as failed
+            ")
+            ->first() : null;
+
         return view('admin.dashboard', [
             'pageTitle' => 'داشبورد مدیریت',
             'pageSubtitle' => 'نمای کلی از درخواست‌های استعلام قیمت و محاسبات انجام‌شده روی سایت.',
@@ -93,6 +111,8 @@ class DashboardController extends Controller
             'topCars' => $topCars,
             'recentRequests' => $recentRequests,
             'isAdmin' => $isAdmin,
+            'todayRates' => $todayRates,
+            'importStatus' => $importStatus,
         ]);
     }
 }
