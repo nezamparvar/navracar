@@ -1,6 +1,6 @@
 {
   "name": "navra-capture-extension",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "Navra Capture Browser Extension for NavraCar",
   "scripts": {
     "build": "npm run bundle && npm run archive:staging && npm run archive:production && npm run checksum",
