@@ -91,7 +91,7 @@
                 <x-empty-state variant="v2" icon="car" title="در حال حاضر آگهی‌ای در این بخش منتشر نشده است." />
             </div>
         @else
-            <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div class="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 @foreach ($listings as $listing)
                     <a href="{{ route('public.car-prices.show', $listing) }}"
                        class="group relative overflow-hidden rounded-2xl border border-v2-border bg-v2-elevated shadow-soft-dark transition hover:-translate-y-1">
