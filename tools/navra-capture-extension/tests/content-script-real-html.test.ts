@@ -2,6 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 type CaptureFunctions = {
+  captureDubizzle: () => any;
   captureDubiCars: () => any;
   captureYallaMotor: () => any;
 };
@@ -20,7 +21,7 @@ function loadContentScript(): CaptureFunctions {
 
   return new Function(
     'chrome',
-    `${source}\nreturn { captureDubiCars, captureYallaMotor };`,
+    `${source}\nreturn { captureDubizzle, captureDubiCars, captureYallaMotor };`,
   )(chrome);
 }
 
@@ -28,6 +29,38 @@ describe('content script extraction from supplied marketplace HTML structures', 
   beforeEach(() => {
     document.head.innerHTML = '';
     document.body.innerHTML = '';
+  });
+
+  it('excludes Dubizzle recommended-listing images from the captured vehicle gallery', () => {
+    document.head.innerHTML = `
+      <script type="application/ld+json">
+        {
+          "@type": "Vehicle",
+          "name": "2024 Mazda 3",
+          "image": "https://dbz-images.dubizzle.com/images/main-cover.jpg",
+          "offers": {"price": "73000"}
+        }
+      </script>`;
+    document.body.innerHTML = `
+      <img data-testid="dpv-view-main-image" src="https://dbz-images.dubizzle.com/images/main-1.jpg">
+      <img data-testid="dpv-view-secondary-image-1" src="https://dbz-images.dubizzle.com/images/main-2.jpg">
+      <section data-testid="recommended-gallery">
+        <img src="https://dbz-images.dubizzle.com/images/other-listing.jpg">
+      </section>`;
+    window.history.replaceState(
+      {},
+      '',
+      '/motors/used-cars/mazda/3/2024/8/17/2024-mazda-3-0123456789abcdef0123456789abcdef/',
+    );
+
+    const { captureDubizzle } = loadContentScript();
+    const payload = captureDubizzle();
+
+    expect(payload.images.map((image: { url: string }) => image.url)).toEqual([
+      'https://dbz-images.dubizzle.com/images/main-cover.jpg',
+      'https://dbz-images.dubizzle.com/images/main-1.jpg',
+      'https://dbz-images.dubizzle.com/images/main-2.jpg',
+    ]);
   });
 
   it('extracts the DubiCars vehicle from its @graph when data-field elements are absent', () => {

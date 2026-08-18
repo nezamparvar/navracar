@@ -246,7 +246,7 @@ const Extractors = {
     const MAX_IMAGES = 20;
 
     const selectorsBySource = {
-      dubizzle: ['img[data-testid^="dpv-view-"]', '[data-testid*="gallery"] img'],
+      dubizzle: ['img[data-testid^="dpv-view-"]'],
       dubicars: ['[class*="gallery"] img', '[class*="carousel"] img', 'figure[class*="gallery"] img'],
       yallamotor: ['[class*="gallery"] img', '[class*="carousel"] img', 'img[src*="used_car"]'],
     };
