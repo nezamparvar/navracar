@@ -546,6 +546,13 @@ body {
   pointer-events: none;
 }
 
+.popup-runtime-status {
+  padding: 7px 12px 9px;
+  color: #64748b;
+  font-size: 10px;
+  text-align: center;
+}
+
 .btn.loading {
   position: relative;
   color: transparent;

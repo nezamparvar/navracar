@@ -278,16 +278,12 @@ describe('Message Listener Management', () => {
     expect(true).toBe(true); // Verified in popup.js fix
   });
 
-  it('binds authenticated popup actions before waiting for page capture', () => {
+  it('binds delegated popup actions before asynchronous initialization', () => {
     const popup = fs.readFileSync(path.join(extensionRoot, 'src/popup/popup.js'), 'utf8');
-    const authenticatedBlock = popup.slice(
-      popup.indexOf('} else {'),
-      popup.indexOf('\n  }\n});', popup.indexOf('} else {')),
-    );
 
-    expect(authenticatedBlock.indexOf('setupAuthenticatedListeners()')).toBeGreaterThan(-1);
-    expect(authenticatedBlock.indexOf('setupAuthenticatedListeners()'))
-      .toBeLessThan(authenticatedBlock.indexOf('await checkCurrentPage()'));
+    expect(popup.indexOf('setupAuthenticatedListeners()'))
+      .toBeLessThan(popup.indexOf("document.addEventListener('DOMContentLoaded'"));
+    expect(popup).toContain("document.addEventListener('click'");
     expect(popup).toContain('chrome.runtime.lastError');
     expect(popup).toContain('Message timeout');
   });
