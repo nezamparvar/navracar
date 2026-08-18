@@ -35,7 +35,14 @@ const server = spawn(php, [
     '-S', '127.0.0.1:8000',
     path.resolve(root, 'vendor', 'laravel', 'framework', 'src', 'Illuminate', 'Foundation', 'resources', 'server.php'),
 ], { cwd: path.resolve(root, 'public'), env, stdio: 'ignore' });
+let stopping = false;
 for (const signal of ['SIGINT', 'SIGTERM']) {
-    process.on(signal, () => server.kill(signal));
+    process.on(signal, () => {
+        if (stopping) return;
+        stopping = true;
+        server.kill();
+        setTimeout(() => process.exit(0), 250);
+    });
 }
-server.on('exit', (code) => process.exit(code ?? 0));
+process.on('exit', () => { if (!server.killed) server.kill(); });
+server.on('exit', (code) => { if (!stopping) process.exit(code ?? 0); });

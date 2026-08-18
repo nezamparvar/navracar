@@ -7,6 +7,7 @@ use App\Mail\ProformaInvoiceMail;
 use App\Mail\QuoteRequestReceived;
 use App\Models\QuoteRequest;
 use App\Services\GeoLookupService;
+use App\Services\MobileTokenAuthenticator;
 use App\Services\ProformaPdfGenerator;
 use App\Services\VehiclePricing\VehiclePricingCatalog;
 use App\Services\VehiclePricing\VehiclePricingService;
@@ -24,6 +25,7 @@ class QuoteController extends Controller
         GeoLookupService $geo,
         ProformaPdfGenerator $pdfGenerator,
         VehiclePricingService $pricing,
+        MobileTokenAuthenticator $mobileTokens,
     ) {
         if (! empty($request->input('website'))) {
             return response()->json(['success' => true, 'id' => 0, 'message' => 'درخواست با موفقیت ثبت شد.']);
@@ -53,6 +55,7 @@ class QuoteController extends Controller
         $breakdown = $result->breakdownRows(formatted: true, excludeServiceFee: true);
         $totals = $result->displayTotals();
         $geoData = $geo->lookup($request->ip());
+        $mobileCustomer = $mobileTokens->resolve($request->bearerToken())['customer'] ?? null;
 
         $lead = QuoteRequest::create([
             'name' => $data['name'],
@@ -71,7 +74,8 @@ class QuoteController extends Controller
             ], JSON_UNESCAPED_UNICODE),
             'total_with_profit' => $result->totals['finalTotalToman'],
             'email_sent' => false,
-            'source' => 'سایت',
+            'source' => $request->is('api/mobile/*') ? 'Android' : 'سایت',
+            'mobile_customer_id' => $mobileCustomer?->id,
             'country' => $geoData['country'],
             'city' => $geoData['city'],
             'ip_address' => $request->ip(),
