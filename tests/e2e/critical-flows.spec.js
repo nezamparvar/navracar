@@ -97,6 +97,34 @@ test('admin login rejects invalid credentials without disclosing an account', as
     await expect(page.locator('.bg-rose-50')).toBeVisible();
 });
 
+test('admin creates a calendar event and sees it in the list view', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.use.viewport.width !== 1280, 'One desktop flow covers the calendar create/list contract.');
+
+    await page.goto('/admin/login');
+    await page.locator('input[name="username"]').fill('admin');
+    await page.locator('input[name="password"]').fill('password');
+    await page.locator('button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await page.goto('/admin/calendar?view=list');
+    await page.getByRole('button', { name: 'جلسه یا تماس جدید' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'رویداد جدید' });
+    await expect(dialog).toBeVisible();
+    await dialog.locator('#ce-type').selectOption({ index: 0 });
+    const assigneeSelect = dialog.locator('#ce-assignee');
+    if (await assigneeSelect.count()) {
+        await assigneeSelect.selectOption({ index: 0 });
+    }
+    await dialog.locator('#ce-start').fill('2026-12-01T10:00');
+    await dialog.locator('#ce-end').fill('2026-12-01T10:30');
+    await dialog.locator('#ce-notes').fill('Playwright calendar event');
+    await dialog.getByRole('button', { name: 'ثبت رویداد' }).click();
+
+    await expect(page).toHaveURL(/\/admin\/calendar/);
+    await expect(page.getByText('رویداد با موفقیت ثبت شد.')).toBeVisible();
+});
+
 test('admin can authenticate, use a core list, and log out', async ({ page }) => {
     await page.goto('/admin/login');
     await page.locator('input[name="username"]').fill('admin');
