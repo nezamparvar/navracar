@@ -126,10 +126,16 @@ async function handleSendCapture(payload) {
       return { status: 'error', error: apiError(data, 'Failed to send capture') };
     }
 
-    // Open review page
-    if (data.review_url) {
-      chrome.tabs.create({ url: data.review_url });
+    if (data.status !== 'success' || !data.queue_item_id || !data.review_url) {
+      return { status: 'error', error: 'NavraCar did not confirm that the capture was queued.' };
     }
+
+    const reviewUrl = new URL(data.review_url, CURRENT_CONFIG.baseUrl);
+    if (reviewUrl.origin !== new URL(CURRENT_CONFIG.baseUrl).origin) {
+      return { status: 'error', error: 'NavraCar returned an invalid review URL.' };
+    }
+
+    chrome.tabs.create({ url: reviewUrl.href });
 
     return { status: 'success', data };
   } catch (error) {
@@ -242,32 +248,22 @@ async function handleKeyboardCapture() {
         return;
       }
 
-      // Listen for capture completion
-      const timeoutId = setTimeout(() => {
-        showNotification('خطا', 'زمان انتظار ختم شد');
-      }, 10000);
+      if (response?.status !== 'success' || !response.payload) {
+        showNotification('خطا', response?.error || 'اطلاعات آگهی استخراج نشد');
+        return;
+      }
 
-      const listener = (request) => {
-        if (request.action === 'sendCaptureToNavraCar') {
-          clearTimeout(timeoutId);
-          chrome.runtime.onMessage.removeListener(listener);
-
-          // Send capture
-          handleSendCapture(request.payload)
-            .then((result) => {
-              if (result.status === 'success') {
-                showNotification('موفقیت', 'خودرو با موفقیت ارسال شد');
-              } else {
-                showNotification('خطا', result.error || 'خطا در ارسال');
-              }
-            })
-            .catch((error) => {
-              showNotification('خطا', error.message);
-            });
-        }
-      };
-
-      chrome.runtime.onMessage.addListener(listener);
+      handleSendCapture(response.payload)
+        .then((result) => {
+          if (result.status === 'success') {
+            showNotification('موفقیت', 'خودرو با موفقیت ارسال شد');
+          } else {
+            showNotification('خطا', result.error || 'خطا در ارسال');
+          }
+        })
+        .catch((error) => {
+          showNotification('خطا', error.message);
+        });
     });
   } catch (error) {
     showNotification('خطا', error.message);

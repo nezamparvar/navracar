@@ -8,8 +8,8 @@ const EXTENSION_ENVIRONMENT = 'production'; // Will be replaced by build script
 
 const CONFIG = {
   staging: {
-    baseUrl: 'https://navracar.com/staging',
-    apiUrl: 'https://navracar.com/staging/api',
+    baseUrl: 'https://staging.nezamparvar.com',
+    apiUrl: 'https://staging.nezamparvar.com/api',
   },
   production: {
     baseUrl: 'https://navracar.com',
@@ -77,7 +77,7 @@ async function handlePairingExchange(pairingCode) {
       }),
     });
 
-    const data = await response.json();
+    const data = await parseApiResponse(response);
 
     if (!response.ok) {
       return { status: 'error', error: apiError(data, 'Failed to exchange pairing code') };
@@ -119,17 +119,23 @@ async function handleSendCapture(payload) {
       body: JSON.stringify(payload),
     });
 
-    const data = await response.json();
+    const data = await parseApiResponse(response);
 
     if (!response.ok) {
       if (response.status === 401) await clearAuthToken();
       return { status: 'error', error: apiError(data, 'Failed to send capture') };
     }
 
-    // Open review page
-    if (data.review_url) {
-      chrome.tabs.create({ url: data.review_url });
+    if (data.status !== 'success' || !data.queue_item_id || !data.review_url) {
+      return { status: 'error', error: 'NavraCar did not confirm that the capture was queued.' };
     }
+
+    const reviewUrl = new URL(data.review_url, CURRENT_CONFIG.baseUrl);
+    if (reviewUrl.origin !== new URL(CURRENT_CONFIG.baseUrl).origin) {
+      return { status: 'error', error: 'NavraCar returned an invalid review URL.' };
+    }
+
+    chrome.tabs.create({ url: reviewUrl.href });
 
     return { status: 'success', data };
   } catch (error) {
@@ -160,6 +166,20 @@ function clearAuthToken() {
 function apiError(data, fallback) {
   const validation = data && data.errors ? Object.values(data.errors).flat()[0] : null;
   return validation || data?.message || data?.error || fallback;
+}
+
+async function parseApiResponse(response) {
+  const contentType = response.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return response.json();
+  }
+
+  await response.text();
+  return {
+    message: response.status === 401
+      ? 'Navracar staging API is blocked by HTTP authentication.'
+      : `Navracar API returned HTTP ${response.status}.`,
+  };
 }
 
 function marketplaceFromUrl(rawUrl) {
@@ -228,32 +248,22 @@ async function handleKeyboardCapture() {
         return;
       }
 
-      // Listen for capture completion
-      const timeoutId = setTimeout(() => {
-        showNotification('خطا', 'زمان انتظار ختم شد');
-      }, 10000);
+      if (response?.status !== 'success' || !response.payload) {
+        showNotification('خطا', response?.error || 'اطلاعات آگهی استخراج نشد');
+        return;
+      }
 
-      const listener = (request) => {
-        if (request.action === 'sendCaptureToNavraCar') {
-          clearTimeout(timeoutId);
-          chrome.runtime.onMessage.removeListener(listener);
-
-          // Send capture
-          handleSendCapture(request.payload)
-            .then((result) => {
-              if (result.status === 'success') {
-                showNotification('موفقیت', 'خودرو با موفقیت ارسال شد');
-              } else {
-                showNotification('خطا', result.error || 'خطا در ارسال');
-              }
-            })
-            .catch((error) => {
-              showNotification('خطا', error.message);
-            });
-        }
-      };
-
-      chrome.runtime.onMessage.addListener(listener);
+      handleSendCapture(response.payload)
+        .then((result) => {
+          if (result.status === 'success') {
+            showNotification('موفقیت', 'خودرو با موفقیت ارسال شد');
+          } else {
+            showNotification('خطا', result.error || 'خطا در ارسال');
+          }
+        })
+        .catch((error) => {
+          showNotification('خطا', error.message);
+        });
     });
   } catch (error) {
     showNotification('خطا', error.message);

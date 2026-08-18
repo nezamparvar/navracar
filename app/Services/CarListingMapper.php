@@ -102,10 +102,32 @@ class CarListingMapper
 
     public function buildPersianTitle(array $data): string
     {
-        $make = $data['make'] ? Str::of($data['make'])->replace('-', ' ')->upper() : '';
-        $model = $data['model'] ? Str::of($data['model'])->replace('-', ' ')->upper() : '';
-        $trim = $data['trim_level'] ?? '';
-        $year = $data['model_year'] ?? '';
+        $makeAliases = [
+            'audi' => 'آئودی', 'bmw' => 'بی‌ام‌و', 'ford' => 'فورد', 'honda' => 'هوندا',
+            'hyundai' => 'هیوندای', 'kia' => 'کیا', 'lexus' => 'لکسوس',
+            'mercedes-benz' => 'مرسدس بنز', 'mercedes benz' => 'مرسدس بنز',
+            'nissan' => 'نیسان', 'porsche' => 'پورشه', 'rolls-royce' => 'رولزرویس',
+            'tesla' => 'تسلا', 'toyota' => 'تویوتا', 'volkswagen' => 'فولکس‌واگن',
+        ];
+        $modelAliases = [
+            'azera' => 'آزرا', 'camry' => 'کمری', 'corolla' => 'کرولا',
+            'g-class' => 'کلاس G', 'g class' => 'کلاس G', 'land cruiser' => 'لندکروزر',
+            'patrol' => 'پاترول', 'prado' => 'پرادو', 'sonata' => 'سوناتا',
+            'wraith' => 'ریث',
+        ];
+
+        $rawMake = trim(str_replace('-', ' ', (string) ($data['make'] ?? '')));
+        $rawModel = trim(str_replace('-', ' ', (string) ($data['model'] ?? '')));
+        $makeKey = mb_strtolower(trim((string) ($data['make'] ?? '')));
+        $modelKey = mb_strtolower(trim((string) ($data['model'] ?? '')));
+        $make = $makeAliases[$makeKey] ?? $rawMake;
+        $model = $modelAliases[$modelKey] ?? $rawModel;
+        $trim = trim((string) ($data['trim_level'] ?? $data['trim'] ?? ''));
+        $year = trim((string) ($data['model_year'] ?? $data['year'] ?? ''));
+        $year = strtr($year, [
+            '0' => '۰', '1' => '۱', '2' => '۲', '3' => '۳', '4' => '۴',
+            '5' => '۵', '6' => '۶', '7' => '۷', '8' => '۸', '9' => '۹',
+        ]);
 
         $parts = array_filter([trim("$make $model"), $trim]);
         $title = implode(' ', $parts);
@@ -116,7 +138,7 @@ class CarListingMapper
     public function buildMetaDescription(array $data, string $titleFa): string
     {
         $price = isset($data['price_aed']) ? number_format((float) $data['price_aed']) : null;
-        $km = $data['kilometers'] ?? null;
+        $km = $data['kilometers'] ?? $data['mileage_km'] ?? null;
 
         $bits = [$titleFa];
         if ($price) {
