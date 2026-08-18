@@ -145,24 +145,30 @@ for (const { route, nav, auth } of bottomNavPages) {
             const navEl = document.querySelector(navSelector);
             if (!navEl) return null;
 
-            // Document-coordinate bottom of the lowest visible, in-flow element anywhere in
-            // <body> (excludes the fixed/sticky nav itself and any closed fixed-position
-            // drawers/modals, which report a real box even while display:none is NOT set via
-            // Alpine x-show — those instead disappear from this query because getComputedStyle
-            // reports display:none for them).
-            let maxBottomDoc = 0;
-            for (const el of document.querySelectorAll('body *')) {
-                const style = getComputedStyle(el);
-                if (style.display === 'none' || style.visibility === 'hidden') continue;
-                if (style.position === 'fixed' || style.position === 'sticky') continue;
-                const rect = el.getBoundingClientRect();
-                if (rect.width === 0 && rect.height === 0) continue;
-                const bottomDoc = rect.bottom + window.scrollY;
-                if (bottomDoc > maxBottomDoc) maxBottomDoc = bottomDoc;
+            // Walk the LAST visible, in-flow child at each level starting from <body> — not a
+            // max-over-all-descendants scan. A max-scan picks up structural wrapper boxes (e.g.
+            // <main> with pb-40 reserved for the fixed nav, or a min-h-screen flex shell) whose
+            // own bottom edge sits at the reserved padding, not at real rendered content, which
+            // produced false failures identical across every page (same navTop/bottom numbers
+            // regardless of actual content). Walking to the deepest last child instead lands on
+            // the true last piece of content — the footer's copyright line on public pages, or
+            // the last real element inside <main> on admin pages — and is naturally immune to
+            // ancestor padding since we never read an ancestor's own box, only descend into it.
+            // Skips display:none/hidden and fixed/sticky elements (the nav itself, closed
+            // Alpine x-show drawers, the sticky admin header) at every level.
+            let el = document.body;
+            while (el) {
+                const visibleChildren = Array.from(el.children).filter((c) => {
+                    const style = getComputedStyle(c);
+                    return style.display !== 'none' && style.visibility !== 'hidden'
+                        && style.position !== 'fixed' && style.position !== 'sticky';
+                });
+                if (visibleChildren.length === 0) break;
+                el = visibleChildren[visibleChildren.length - 1];
             }
 
             const navTop = navEl.getBoundingClientRect().top;
-            const contentBottomViewport = maxBottomDoc - window.scrollY;
+            const contentBottomViewport = el.getBoundingClientRect().bottom;
 
             return { navTop, contentBottomViewport, overlap: contentBottomViewport - navTop };
         }, nav);

@@ -1,10 +1,5 @@
 <x-layouts.admin :page-title="$pageTitle" :page-subtitle="$pageSubtitle">
 
-    @if (session('success'))
-        <div role="status" class="mb-4 rounded-xl border border-v2-success/30 bg-v2-success/10 px-4 py-3 text-sm font-bold text-v2-success">
-            {{ session('success') }}
-        </div>
-    @endif
     @if ($errors->any())
         <div role="alert" class="mb-4 rounded-xl border border-v2-error/30 bg-v2-error/10 px-4 py-3 text-sm font-bold text-v2-error">
             @foreach ($errors->all() as $error)

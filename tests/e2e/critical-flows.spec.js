@@ -142,7 +142,10 @@ test('admin can authenticate, use a core list, and log out', async ({ page }) =>
     if (page.viewportSize().width < 1024) {
         await page.getByRole('button', { name: 'باز کردن منوی مدیریت' }).click();
     }
-    await page.locator('form[action$="/admin/logout"] button').click();
+    // The admin shell has two logout forms — one in the sidebar footer, one in the header's
+    // user-info dropdown (closed by default) — both real, visible UI, not a bug; .first()
+    // targets the sidebar's (the one just made visible by opening the mobile drawer above).
+    await page.locator('form[action$="/admin/logout"] button').first().click();
     await expect(page).toHaveURL(/\/admin\/login$/);
 });
 

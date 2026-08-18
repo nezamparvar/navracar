@@ -24,6 +24,11 @@ export default defineConfig({
         baseURL: 'http://127.0.0.1:8000',
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
+        // --no-proxy-server: without it, Chromium's default system-proxy auto-detection adds a
+        // flat ~13s delay to EVERY navigation on machines with an HTTPS_PROXY env var set but no
+        // HTTP_PROXY (this sandbox's setup) — reproduced directly, confirmed fixed by this flag
+        // alone. All navigations in this suite target 127.0.0.1 only, so a proxy is never wanted.
+        launchOptions: { args: ['--no-proxy-server'] },
     },
     webServer: {
         command: 'node tests/e2e/serve.mjs',
