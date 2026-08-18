@@ -47,9 +47,11 @@ Route::prefix('mobile/v1')->name('api.mobile.')->group(function () {
     });
 });
 
-Route::prefix('browser-capture/v1')->group(function () {
+Route::prefix('browser-capture/v1')->name('api.browser-capture.')->group(function () {
     Route::post('/pairing/exchange', [PairingController::class, 'exchange'])
-        ->middleware('throttle:10,1');
+        ->middleware('throttle:10,1')
+        ->name('pairing.exchange');
     Route::post('/listings', [CaptureController::class, 'store'])
-        ->middleware('throttle:30,1');
+        ->middleware('throttle:30,1')
+        ->name('listings.store');
 });
