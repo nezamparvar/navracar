@@ -42,7 +42,7 @@ CI همین مسیر را در check مستقل `Android build` اجرا و APK 
 <meta name="navracar-api-base" content="https://navracar.com">
 ```
 
-برای آزمون Staging، فقط در artifact آزمایشی آدرس را به endpoint تأییدشده Staging تغییر دهید، `npx cap sync android` و build را دوباره اجرا کنید. APK پذیرفته‌شده باید با SHA و hash ثبت شود. هیچ credential یا token را در فایل‌های `mobile/` یا `capacitor.config.json` قرار ندهید.
+برای آزمون Staging، فقط در artifact آزمایشی آدرس را به endpoint تأییدشده Staging تغییر دهید، `npx cap sync android` و build را دوباره اجرا کنید. APK پذیرفته‌شده باید با SHA و hash ثبت شود. endpoint آزمایشی نباید پشت HTTP Basic Auth یا Directory Privacy باشد، چون کلاینت Capacitor نمی‌تواند challenge مرورگر را به‌شکل قابل‌اعتماد پاسخ دهد. هیچ credential یا token را در فایل‌های `mobile/` یا `capacitor.config.json` قرار ندهید.
 
 ## آزمون پذیرش
 

@@ -1,6 +1,6 @@
 # Staging acceptance checklist
 
-Use the protected staging URL and record the candidate ID and cPanel commit before testing.
+Use the staging URL and record the candidate ID and cPanel commit before testing.
 
 Round 2 storage/document checks:
 
@@ -11,7 +11,8 @@ Round 2 storage/document checks:
 - If PDF generation fails, inspect the staging Laravel log for `Proforma PDF generation failed`. The entry includes only record ID, language, exception class, and a capped/redacted exception message; do not enable `APP_DEBUG` or display the exception to users.
 - Confirm thousands separators and verify that manual customs-price edits are preserved when the real AED price changes.
 
-- [ ] Directory Privacy works and only trusted testers can enter.
+- [ ] `GET /` returns `200` without a `WWW-Authenticate` header or browser password prompt.
+- [ ] An unauthenticated pricing API request reaches Laravel validation instead of returning an Nginx `401`.
 - [ ] `STAGING` indicator is visible; production does not show it.
 - [ ] Homepage and mobile homepage are visually correct.
 - [ ] Admin login and logout work.

@@ -12,7 +12,7 @@ This procedure requires cPanel UI, File Manager, and phpMyAdmin only. It does no
 7. Create the normal writable directory `/home/navrac/public_html/staging/storage`. Set `PUBLIC_DISK_ROOT=/home/navrac/public_html/staging/storage` in the staging-only `.env`; Laravel then writes new public assets directly where cPanel serves them, so no SSH-only `storage:link` or one-time copy is required. Never point it at production storage.
 
 8. In the staging-only `.env`, set `APP_URL=https://navracar.com/staging`, `ASSET_URL=https://navracar.com/staging`, `SESSION_COOKIE=navracar_staging_session`, `SESSION_PATH=/staging`, and `CACHE_PREFIX=navracar_staging_`. Use a staging-only database/schema and `APP_ENV=staging`; never copy production `.env` credentials.
-9. Enable cPanel Directory Privacy for the complete staging document root and issue credentials only to trusted testers.
+9. Do not enable cPanel Directory Privacy or HTTP Basic Auth on the staging document root. Android, extension/API, and automated acceptance clients must reach Laravel without a browser password challenge. Keep staging limited to anonymized or synthetic data and retain Laravel authentication on admin routes.
 10. Use **Update from Remote**, verify the candidate metadata, and only then use **Deploy HEAD Commit**.
 
 The staging deployment task locates cPanel's PHP 8.3+ CLI, applies outstanding
