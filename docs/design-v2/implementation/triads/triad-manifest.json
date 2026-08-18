@@ -1,0 +1,66 @@
+{
+  "generated_at": "2026-08-18T23:14:52.934Z",
+  "reference_commit": "1cdab114920cdc2431f983a1c1ea9efb88e26f82",
+  "triads": [
+    {
+      "path": "docs/design-v2/implementation/triads/vehicle-list-desktop-reference-crop.png",
+      "filename": "vehicle-list-desktop-reference-crop.png",
+      "sha256": "fa580bfc3be86c909e7ce27d96006104f8a1ac996fc2dba7fd0c925b4d765dda"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/vehicle-list-desktop-current-crop.png",
+      "filename": "vehicle-list-desktop-current-crop.png",
+      "sha256": "2082d97d6ceab8defe9cfb539e8e0194b41b2854d90cc1ae9b012f749aaf0b24"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/vehicle-list-desktop-overlay.png",
+      "filename": "vehicle-list-desktop-overlay.png",
+      "sha256": "cec6883cd021f9604802a91efaa7073d994fcefb5ac28e8b33be167ff023de85"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/admin-dashboard-desktop-reference-crop.png",
+      "filename": "admin-dashboard-desktop-reference-crop.png",
+      "sha256": "bae5a1f12282460d8438a8a6c72b52e0da6ad834cdd263aa1eebb97a4bd9bf85"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/admin-dashboard-desktop-current-crop.png",
+      "filename": "admin-dashboard-desktop-current-crop.png",
+      "sha256": "b9dbd38e970d17c64b948f062fa645bdf4d265584bfb80a85fa836f4663ff712"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/admin-dashboard-desktop-overlay.png",
+      "filename": "admin-dashboard-desktop-overlay.png",
+      "sha256": "fd31115935b528ceebb91bcecbe4650552f2bb4f306728d976e8cffcb09f406a"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/sales-dashboard-desktop-reference-crop.png",
+      "filename": "sales-dashboard-desktop-reference-crop.png",
+      "sha256": "db1837453ff0e0ec7802a3522cecbd80647ab97f6d069c31faaaad07087d945e"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/sales-dashboard-desktop-current-crop.png",
+      "filename": "sales-dashboard-desktop-current-crop.png",
+      "sha256": "a4970ac71fab7ad1258f0426ee467a4b81f5ed7af5454f6f8208daa676ee06a1"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/sales-dashboard-desktop-overlay.png",
+      "filename": "sales-dashboard-desktop-overlay.png",
+      "sha256": "8138da099b604264a8a48450f0a49b4c2be184ff4234ef5cfb3fc43ab2b2abdb"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/content-dashboard-desktop-reference-crop.png",
+      "filename": "content-dashboard-desktop-reference-crop.png",
+      "sha256": "9778d41f76eccd2c5cba887d1449cd8e2c59e8575184a02d093551d9d0c7459c"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/content-dashboard-desktop-current-crop.png",
+      "filename": "content-dashboard-desktop-current-crop.png",
+      "sha256": "e80d64f1a82e9262ed49426a1f2c389986a8090d907712db24f99d2a3b187d98"
+    },
+    {
+      "path": "docs/design-v2/implementation/triads/content-dashboard-desktop-overlay.png",
+      "filename": "content-dashboard-desktop-overlay.png",
+      "sha256": "e429ae0a74e33c82947307768767f87168f62a2b5aa5ae23a854696213f3d3ec"
+    }
+  ]
+}

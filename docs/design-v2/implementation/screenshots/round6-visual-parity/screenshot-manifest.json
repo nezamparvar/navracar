@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-18T22:53:26.732Z",
+  "generated_at": "2026-08-18T23:13:47.075Z",
   "batch": "Batch 1",
   "status": "complete",
   "route_count": 8,
@@ -14,11 +14,11 @@
       "capture_type": "viewport",
       "viewport_dimensions": "390x844",
       "actual_dimensions": "390×844",
-      "sha256": "f91c62c2168804204d894e8910c7a285816d7970e4c617427042c5d4e9bf34e9",
+      "sha256": "6054f80a7a68cfe10783b1381c52a1f21a1d08d611b0201f8ffca6c9f55284bd",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:17.831Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:38.200Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "vehicle-list-full-390w.png",
@@ -29,11 +29,11 @@
       "capture_type": "full-page",
       "viewport_dimensions": "390x844",
       "actual_dimensions": "390x844",
-      "sha256": "2dc5d22493554ef31561642391f249dc4f94f1db964e4bd0b46252e433fb7de7",
+      "sha256": "8cf2b79bd8937bafd468936ccfacd7e3a134ca2c265049e56338cbdf813e9ff0",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:17.938Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:38.305Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "vehicle-list-viewport-1440x900.png",
@@ -44,11 +44,11 @@
       "capture_type": "viewport",
       "viewport_dimensions": "1440x900",
       "actual_dimensions": "1440×900",
-      "sha256": "91a20598299b0797af230fa70c8faa488923c92e197cc5ad541104adb4320783",
+      "sha256": "8a0100806b7fe138f60e9e6d58464fd27c90ce6f2682b96c00621e88bc19889b",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:18.480Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:38.818Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "vehicle-list-full-1440w.png",
@@ -59,11 +59,11 @@
       "capture_type": "full-page",
       "viewport_dimensions": "1440x900",
       "actual_dimensions": "1440x900",
-      "sha256": "c56f504c8c36bae85d737fdb1fb136a2f57f0b72cfeb3121f26205142b705104",
+      "sha256": "7b7ab0e269cd8db1dc6199b6b406499016c8d590d190199b8fd197320698c210",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:18.651Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:38.984Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "vehicle-detail-viewport-390x844.png",
@@ -77,8 +77,8 @@
       "sha256": "5612164bc1b0d50dadfec3b853277376f1d8b206bff006e63f953c9b2b8f69eb",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:19.058Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:39.413Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "vehicle-detail-full-390w.png",
@@ -92,8 +92,8 @@
       "sha256": "ada2967d61a80c41fec12ead5d2b44a546348f7a8b310c889df0f35a751bcb5d",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:19.182Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:39.535Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "vehicle-detail-viewport-1440x900.png",
@@ -104,11 +104,11 @@
       "capture_type": "viewport",
       "viewport_dimensions": "1440x900",
       "actual_dimensions": "1440×900",
-      "sha256": "367399074556a1612c66020b76eacc1f2594b600914cb28f618862a650a51e02",
+      "sha256": "d5e177662032cfb8973a62534bffad81dfbedef3ad4e19270289a970e2a25850",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:19.685Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:40.076Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "vehicle-detail-full-1440w.png",
@@ -122,8 +122,8 @@
       "sha256": "17f633edb0ac3e20d2a5bdc466935cce4a8f955dab168915954f28ca57335abc",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:19.870Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:40.241Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "admin-dashboard-viewport-390x844.png",
@@ -134,11 +134,11 @@
       "capture_type": "viewport",
       "viewport_dimensions": "390x844",
       "actual_dimensions": "390×844",
-      "sha256": "41f6ca70de8f30171029d5d3d35739c8c35ab8db74ce5eed8995dc2a7ca907df",
+      "sha256": "88c357a0f85fa401578bf364a518ec3d00224bb2657923638b5fec24cec043f9",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:20.276Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:40.694Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "admin-dashboard-full-390w.png",
@@ -149,11 +149,11 @@
       "capture_type": "full-page",
       "viewport_dimensions": "390x844",
       "actual_dimensions": "390x844",
-      "sha256": "284ab3b22ee7e9980027c66fa502221b3b8b76d2a5e76209f0194692324afb4b",
+      "sha256": "ed2412d3e8c0f7ca196c6586c07d55115b6b39904a8e28aad7e838784d75d739",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:20.472Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:40.885Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "admin-dashboard-viewport-1440x900.png",
@@ -164,11 +164,11 @@
       "capture_type": "viewport",
       "viewport_dimensions": "1440x900",
       "actual_dimensions": "1440×900",
-      "sha256": "f08eb9f1c5ae7de930c25c6df9e9ec363c731d0ff3fbc6db33358cd332598da3",
+      "sha256": "bb15e1090c99e1134bfc3baadf76915ed342f1fe90fa5ea0de8fedb489d03c98",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:20.937Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:41.371Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "admin-dashboard-full-1440w.png",
@@ -179,11 +179,11 @@
       "capture_type": "full-page",
       "viewport_dimensions": "1440x900",
       "actual_dimensions": "1440x900",
-      "sha256": "59a84062f47cc154f12eba74bb46781d8c7ed50aff6401f39c606b563b6d42bd",
+      "sha256": "6b3a5b5f1eec6c57d17f5213fdf3e6c001382666450dcb271666d70766ce20b7",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:21.259Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:41.675Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "sales-dashboard-viewport-390x844.png",
@@ -197,8 +197,8 @@
       "sha256": "0149b85986468bd9e9dcf2f9d00c97fe60ed8c340d8ab17a0e6cdd74154136d9",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:21.625Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:42.078Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "sales-dashboard-full-390w.png",
@@ -212,8 +212,8 @@
       "sha256": "b2cdc5ab5929820dfdf0f5af8197b97c8eb9087972d0c095e6bb9fa3ed9ded75",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:21.751Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:42.202Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "sales-dashboard-viewport-1440x900.png",
@@ -227,8 +227,8 @@
       "sha256": "f6732de43ffec44dda4bb82f941460931370629fb87efc0bbde3736b276dd324",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:22.185Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:42.664Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "sales-dashboard-full-1440w.png",
@@ -242,8 +242,8 @@
       "sha256": "fd666fc757e7256eaf7298cd1a6b251c8d9d1c13d655867898cb5387d662e177",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:22.378Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:42.839Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "content-dashboard-viewport-390x844.png",
@@ -254,11 +254,11 @@
       "capture_type": "viewport",
       "viewport_dimensions": "390x844",
       "actual_dimensions": "390×844",
-      "sha256": "5a1853e906aae1cdfccb84bfe63dc67a641f0294bee368cac5e32b638281628d",
+      "sha256": "a7c7f95e00c610480da381347a8cdff2130302ca7d2d7f41c83179375f26c297",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:22.743Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:43.209Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "content-dashboard-full-390w.png",
@@ -269,11 +269,11 @@
       "capture_type": "full-page",
       "viewport_dimensions": "390x844",
       "actual_dimensions": "390x844",
-      "sha256": "7dcf670be1b5c523474269ea09be5d55fca39c8f22edad0fba7fa2656d17a776",
+      "sha256": "8efb4c6800f4e9d309e23b2f36aefd1ee39a0576275987c3c65982c4087c9256",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:22.885Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:43.350Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "content-dashboard-viewport-1440x900.png",
@@ -284,11 +284,11 @@
       "capture_type": "viewport",
       "viewport_dimensions": "1440x900",
       "actual_dimensions": "1440×900",
-      "sha256": "1cb82cbeb15973da3dbc42e6e935f52dab20fc96e7253b17c451ff3e0e062e97",
+      "sha256": "0cda930caeff4864e4156693c465cdf0c1109be14d236bb94b687f316a80d2b5",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:23.323Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:43.795Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "content-dashboard-full-1440w.png",
@@ -299,11 +299,11 @@
       "capture_type": "full-page",
       "viewport_dimensions": "1440x900",
       "actual_dimensions": "1440x900",
-      "sha256": "b73a6a74690c13b19d9071d22bcb66fe80477278c4406914ff12c170513ab04a",
+      "sha256": "e3ba68c35a31200b3eea2a7352a49071fae927b26f54737160281183eb3a2aac",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:23.551Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:44.002Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-day-viewport-390x844.png",
@@ -317,8 +317,8 @@
       "sha256": "43b8908c303bf14593065dbf3ec42a1c6d9c15411ab211e055557db1125c93a0",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:23.890Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:44.341Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-day-full-390w.png",
@@ -332,8 +332,8 @@
       "sha256": "65970e46674a880f0563a6c26ace52045d41b5bf3ae2ab73ea1b3c21f435eda2",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:23.963Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:44.413Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-day-viewport-1440x900.png",
@@ -347,8 +347,8 @@
       "sha256": "beb5d4d16d71e850e234612c8486adf4274dccb21c77611a918591daca1eb7aa",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:24.402Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:44.817Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-day-full-1440w.png",
@@ -362,8 +362,8 @@
       "sha256": "fd02db9151585ea73d45a1ae4013f11a3617312aac3cb6f10f9afcee7c55b697",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:24.555Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:44.955Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-week-viewport-390x844.png",
@@ -377,8 +377,8 @@
       "sha256": "6863dde672bc09b249b82011571eee112951a59d8090bfb0fdf81a0efa4a0ec1",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:24.906Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:45.308Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-week-full-390w.png",
@@ -392,8 +392,8 @@
       "sha256": "643feff22f404b4f4a1f61fc216d106e54f9ac69d7e0bebd49226ecccdff73c3",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:24.979Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:45.382Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-week-viewport-1440x900.png",
@@ -407,8 +407,8 @@
       "sha256": "35e3cd4d03ac66331ee2de544379c095568f1da930a7fac7db026902c1315236",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:25.419Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:45.796Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-week-full-1440w.png",
@@ -422,8 +422,8 @@
       "sha256": "127724d4ef7ef70089da6d12e5e594347fdc5aa0bb6eed20563a77a6e16d1f8a",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:25.574Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:45.941Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-list-viewport-390x844.png",
@@ -437,8 +437,8 @@
       "sha256": "b2c178a9afac0f4a6b2aa25796cdfe92aaf903e9d0b4b0b4dc47d33ca65ab8e0",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:25.928Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:46.333Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-list-full-390w.png",
@@ -452,8 +452,8 @@
       "sha256": "c955466c37d540e115ec21cb8de95a0bf50235f678c52b8123eb9a16043200ea",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:26.014Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:46.418Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-list-viewport-1440x900.png",
@@ -467,8 +467,8 @@
       "sha256": "79a8ae0723696b06191c62f0f9238cf5b84f58ac1df0c703a89a21b76cdd4977",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:26.448Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:46.818Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     },
     {
       "filename": "calendar-list-full-1440w.png",
@@ -482,8 +482,8 @@
       "sha256": "996ef592e64e91480071d8ebea45d0a1890883694f0262d0b9572dba0bf08ebb",
       "http_status": 200,
       "blocked_requests": [],
-      "timestamp": "2026-08-18T22:53:26.632Z",
-      "source_commit": "987924d9e6d7ee101c8b15e7042c9bb22b3580a2"
+      "timestamp": "2026-08-18T23:13:46.985Z",
+      "source_commit": "6392f67b04104ff06e1746e0610ab93c2e5f6031"
     }
   ]
 }

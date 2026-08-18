@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync, mkdirSync, existsSync, rmSync } from 'fs';
 import { join } from 'path';
 import { createHash } from 'crypto';
 import { execSync } from 'child_process';
+import sharp from 'sharp';
 
 /**
  * Smoke-test triad generator: Creates side-by-side comparison artifacts
@@ -62,14 +63,6 @@ async function generateTriads() {
   // Ensure output directory exists
   mkdirSync(TRIAD_OUTPUT_DIR, { recursive: true });
 
-  // Check if Python with PIL is available
-  try {
-    execSync('python3 -c "from PIL import Image"', { stdio: 'pipe' });
-  } catch (err) {
-    console.error('✗ Python PIL (Pillow) not available. Install with: pip install Pillow');
-    process.exit(1);
-  }
-
   const triads = [];
 
   for (const spec of TRIAD_SPEC) {
@@ -92,88 +85,74 @@ async function generateTriads() {
       continue;
     }
 
-    // Write temporary files for Python image processing
-    const tempDir = join(process.cwd(), `.triad-temp-${Date.now()}`);
-    mkdirSync(tempDir, { recursive: true });
-
-    const refTempPath = join(tempDir, 'reference.png');
-    const currTempPath = join(tempDir, 'current.png');
-    writeFileSync(refTempPath, referenceData);
-    writeFileSync(currTempPath, currentData);
-
-    // Generate triads using Python
-    const pythonScript = `
-import sys
-from PIL import Image
-import os
-
-def generate_triad(ref_path, curr_path, out_dir, spec, name):
-    """Generate reference crop, current crop, and overlay"""
-    ref_img = Image.open(ref_path)
-    curr_img = Image.open(curr_path)
-
-    ref_crop = spec['referenceCrop']
-    curr_crop = spec['currentCrop']
-
-    # Crop reference image
-    ref_cropped = ref_img.crop((
-        ref_crop['x'],
-        ref_crop['y'],
-        ref_crop['x'] + ref_crop['w'],
-        ref_crop['y'] + ref_crop['h']
-    ))
-    ref_crop_path = os.path.join(out_dir, f'{name}-reference-crop.png')
-    ref_cropped.save(ref_crop_path)
-    print(f'✓ {name}-reference-crop.png')
-
-    # Crop current image
-    curr_cropped = curr_img.crop((
-        curr_crop['x'],
-        curr_crop['y'],
-        curr_crop['x'] + curr_crop['w'],
-        curr_crop['y'] + curr_crop['h']
-    ))
-    curr_crop_path = os.path.join(out_dir, f'{name}-current-crop.png')
-    curr_cropped.save(curr_crop_path)
-    print(f'✓ {name}-current-crop.png')
-
-    # Create overlay: semi-transparent reference over current
-    # Resize reference to match current dimensions if needed
-    if ref_cropped.size != curr_cropped.size:
-        ref_cropped = ref_cropped.resize(curr_cropped.size, Image.Resampling.LANCZOS)
-
-    overlay = curr_cropped.copy()
-    ref_overlay = ref_cropped.convert('RGBA')
-    ref_overlay.putalpha(128)  # 50% transparency
-    overlay.paste(ref_overlay, (0, 0), ref_overlay)
-
-    overlay_path = os.path.join(out_dir, f'{name}-overlay.png')
-    overlay.save(overlay_path)
-    print(f'✓ {name}-overlay.png')
-
-    return [ref_crop_path, curr_crop_path, overlay_path]
-
-spec = ${JSON.stringify(spec)}
-paths = generate_triad('${refTempPath}', '${currTempPath}', '${TRIAD_OUTPUT_DIR}', spec, '${spec.name}')
-for p in paths:
-    print(f'artifact:{p}')
-`;
-
     try {
-      const output = execSync(`python3 -c "${pythonScript.replace(/"/g, '\\"')}"`, { encoding: 'utf-8' });
-      // Extract artifact paths from output
-      for (const line of output.split('\n')) {
-        if (line.startsWith('artifact:')) {
-          triads.push(line.substring(9).trim());
-        }
+      // Generate triads using Sharp
+      const refCrop = spec.referenceCrop;
+      const currCrop = spec.currentCrop;
+
+      // Crop reference image
+      const refCroppedBuffer = await sharp(referenceData)
+        .extract({
+          left: refCrop.x,
+          top: refCrop.y,
+          width: refCrop.w,
+          height: refCrop.h,
+        })
+        .png()
+        .toBuffer();
+
+      const refCropPath = join(TRIAD_OUTPUT_DIR, `${spec.name}-reference-crop.png`);
+      writeFileSync(refCropPath, refCroppedBuffer);
+      console.log(`  ✓ ${spec.name}-reference-crop.png`);
+      triads.push(refCropPath);
+
+      // Crop current image
+      const currCroppedBuffer = await sharp(currentData)
+        .extract({
+          left: currCrop.x,
+          top: currCrop.y,
+          width: currCrop.w,
+          height: currCrop.h,
+        })
+        .png()
+        .toBuffer();
+
+      const currCropPath = join(TRIAD_OUTPUT_DIR, `${spec.name}-current-crop.png`);
+      writeFileSync(currCropPath, currCroppedBuffer);
+      console.log(`  ✓ ${spec.name}-current-crop.png`);
+      triads.push(currCropPath);
+
+      // Create overlay: semi-transparent reference over current
+      // First get dimensions of cropped images
+      const refMetadata = await sharp(refCroppedBuffer).metadata();
+      const currMetadata = await sharp(currCroppedBuffer).metadata();
+
+      // Resize reference to match current dimensions if needed
+      let refForOverlay = refCroppedBuffer;
+      if (refMetadata.width !== currMetadata.width || refMetadata.height !== currMetadata.height) {
+        refForOverlay = await sharp(refCroppedBuffer)
+          .resize(currMetadata.width, currMetadata.height, { fit: 'cover' })
+          .toBuffer();
       }
+
+      // Create semi-transparent overlay
+      const refAlpha = await sharp(refForOverlay)
+        .ensureAlpha(0.5)  // 50% opacity
+        .toBuffer();
+
+      const overlayBuffer = await sharp(currCroppedBuffer)
+        .composite([{ input: refAlpha, blend: 'over' }])
+        .png()
+        .toBuffer();
+
+      const overlayPath = join(TRIAD_OUTPUT_DIR, `${spec.name}-overlay.png`);
+      writeFileSync(overlayPath, overlayBuffer);
+      console.log(`  ✓ ${spec.name}-overlay.png`);
+      triads.push(overlayPath);
     } catch (err) {
       console.error(`✗ Failed to generate triads for ${spec.name}: ${err.message}`);
-      rmSync(tempDir, { recursive: true, force: true });
       continue;
     }
-
-    rmSync(tempDir, { recursive: true, force: true });
   }
 
   // Generate triad manifest
@@ -199,8 +178,11 @@ for p in paths:
 
 async function fetchAssetFromCommit(commitSha, filePath) {
   try {
-    const data = execSync(`git show ${commitSha}:${filePath}`, { encoding: 'binary' });
-    return Buffer.from(data, 'binary');
+    const tempPath = `/tmp/triad-asset-${Date.now()}.png`;
+    execSync(`git show ${commitSha}:${filePath} > ${tempPath}`, { stdio: 'pipe' });
+    const data = readFileSync(tempPath);
+    rmSync(tempPath, { force: true });
+    return data;
   } catch (err) {
     return null;
   }
