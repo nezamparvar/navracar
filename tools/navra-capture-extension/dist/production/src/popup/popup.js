@@ -1,5 +1,4 @@
 let currentCapture = null;
-let captureMessageListener = null;
 
 // Initialize popup
 document.addEventListener('DOMContentLoaded', async () => {
@@ -127,45 +126,22 @@ function showUnsupportedPage() {
 
 async function captureCurrentPage(tab) {
   return new Promise((resolve) => {
-    // Ensure we don't have stale listener
-    if (captureMessageListener) {
-      chrome.runtime.onMessage.removeListener(captureMessageListener);
-    }
-
     const timeout = setTimeout(() => {
-      if (captureMessageListener) {
-        chrome.runtime.onMessage.removeListener(captureMessageListener);
-        captureMessageListener = null;
-      }
       showUnsupportedPage();
       resolve();
     }, 10000);
 
-    captureMessageListener = (request, sender, sendResponse) => {
-      if (request.action === 'sendCaptureToNavraCar' && sender.tab?.id === tab.id) {
-        clearTimeout(timeout);
-        currentCapture = request.payload;
-        displayCapturePreview(request.payload);
+    chrome.tabs.sendMessage(tab.id, { action: 'captureCurrentPage' }, (response) => {
+      clearTimeout(timeout);
+      if (chrome.runtime.lastError || response?.status !== 'success' || !response.payload) {
+        showUnsupportedPage();
+      } else {
+        currentCapture = response.payload;
+        displayCapturePreview(response.payload);
         document.getElementById('listing-detected-state').style.display = 'block';
         document.getElementById('unsupported-page-state').style.display = 'none';
-        chrome.runtime.onMessage.removeListener(captureMessageListener);
-        captureMessageListener = null;
-        resolve();
       }
-    };
-
-    chrome.runtime.onMessage.addListener(captureMessageListener);
-
-    chrome.tabs.sendMessage(tab.id, { action: 'captureCurrentPage' }, (response) => {
-      if (chrome.runtime.lastError) {
-        if (captureMessageListener) {
-          chrome.runtime.onMessage.removeListener(captureMessageListener);
-          captureMessageListener = null;
-        }
-        clearTimeout(timeout);
-        showUnsupportedPage();
-        resolve();
-      }
+      resolve();
     });
   });
 }
@@ -240,11 +216,11 @@ async function sendCapture() {
       });
     });
 
-    if (response.status === 'error') {
-      alert('خطا: ' + response.error);
-    } else {
+    if (response?.status === 'success' && response.data?.queue_item_id && response.data?.review_url) {
       alert('آگهی با موفقیت ارسال شد!');
       window.close();
+    } else {
+      alert('خطا: ' + (response?.error || 'ارسال در صف ناوراکار تأیید نشد.'));
     }
   } catch (error) {
     alert('خطا: ' + error.message);
@@ -429,38 +405,24 @@ async function sendBatchCapture() {
 async function captureAndSendTab(tabId) {
   return new Promise((resolve, reject) => {
     const timeoutId = setTimeout(() => {
-      chrome.runtime.onMessage.removeListener(listener);
       reject(new Error('Capture timeout'));
     }, 10000);
 
-    const listener = (request, sender) => {
-      if (request.action === 'sendCaptureToNavraCar' && sender.tab?.id === tabId) {
-        clearTimeout(timeoutId);
-        chrome.runtime.onMessage.removeListener(listener);
-
-        // Send to NavraCar
+    chrome.tabs.sendMessage(tabId, { action: 'captureCurrentPage' }, (response) => {
+      clearTimeout(timeoutId);
+      if (chrome.runtime.lastError) {
+        reject(new Error('Failed to communicate with tab'));
+      } else if (response?.status !== 'success' || !response.payload) {
+        reject(new Error(response?.error || 'Failed to capture listing'));
+      } else {
         chrome.runtime.sendMessage(
-          { action: 'sendCaptureToNavraCar', payload: request.payload },
-          (response) => {
-            if (chrome.runtime.lastError) {
-              reject(new Error('Failed to send capture'));
-            } else if (response && response.status === 'success') {
-              resolve(response);
-            } else {
-              reject(new Error(response?.error || 'Failed to send'));
-            }
+          { action: 'sendCaptureToNavraCar', payload: response.payload },
+          (sendResult) => {
+            if (chrome.runtime.lastError) reject(new Error('Failed to send capture'));
+            else if (sendResult?.status === 'success') resolve(sendResult);
+            else reject(new Error(sendResult?.error || 'Failed to send'));
           }
         );
-      }
-    };
-
-    chrome.runtime.onMessage.addListener(listener);
-
-    chrome.tabs.sendMessage(tabId, { action: 'captureCurrentPage' }, (response) => {
-      if (chrome.runtime.lastError) {
-        chrome.runtime.onMessage.removeListener(listener);
-        clearTimeout(timeoutId);
-        reject(new Error('Failed to communicate with tab'));
       }
     });
   });

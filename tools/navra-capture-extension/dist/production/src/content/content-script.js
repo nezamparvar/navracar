@@ -26,7 +26,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     (async () => {
       try {
         await waitForPageReady();
-        const payload = await captureAndSend();
+        const payload = captureCurrentPagePayload();
         sendResponse({ status: 'success', payload });
       } catch (error) {
         console.error('[Navra Capture] Capture error:', error);
@@ -66,7 +66,7 @@ function canCaptureCurrentPage() {
   return false;
 }
 
-async function captureAndSend() {
+function captureCurrentPagePayload() {
   const source = getMarketplaceSource();
   if (!source) throw new Error('Unsupported marketplace');
 
@@ -81,17 +81,7 @@ async function captureAndSend() {
 
   if (!payload) throw new Error('Failed to capture listing data');
 
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'sendCaptureToNavraCar',
-      payload
-    });
-    console.log('[Navra Capture] Send response:', response);
-    return payload;
-  } catch (error) {
-    console.error('[Navra Capture] Send error:', error);
-    throw error;
-  }
+  return payload;
 }
 
 // Shared extraction helpers
@@ -158,10 +148,16 @@ const Extractors = {
     for (const script of scripts) {
       try {
         const data = JSON.parse(script.textContent || '{}');
-        const nodes = Array.isArray(data) ? data : [data];
+        const roots = Array.isArray(data) ? data : [data];
+        const nodes = roots.flatMap((root) => {
+          const graph = Array.isArray(root?.['@graph']) ? root['@graph'] : [];
+          const mainEntity = root?.mainEntity?.itemOffered || root?.mainEntity;
+          return [root, ...graph, mainEntity].filter(Boolean);
+        });
         for (const node of nodes) {
-          const type = (node['@type'] || '').toLowerCase();
-          if (type.includes('vehicle') || type.includes('product') || node['offers']) {
+          const types = Array.isArray(node['@type']) ? node['@type'] : [node['@type']];
+          const type = types.filter(Boolean).join(' ').toLowerCase();
+          if (type.includes('vehicle') || type.includes('car') || type.includes('product') || node['offers']) {
             return node;
           }
         }
@@ -172,23 +168,123 @@ const Extractors = {
     return null;
   },
 
-  extractImages() {
+  schemaText(value) {
+    if (value === null || value === undefined) return null;
+    if (typeof value === 'string' || typeof value === 'number') return String(value);
+    if (value.name !== undefined) return String(value.name);
+    if (value.value !== undefined) return String(value.value);
+    return null;
+  },
+
+  schemaReferenceLabel(value) {
+    const direct = this.schemaText(value);
+    if (direct) return direct;
+    if (!value?.['@id']) return null;
+
+    try {
+      const url = new URL(value['@id']);
+      const segment = url.pathname.split('/').filter(Boolean).pop();
+      if (!segment) return null;
+      return segment
+        .split('-')
+        .filter(Boolean)
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    } catch (e) {
+      return null;
+    }
+  },
+
+  extractVehicleSchema(node) {
+    if (!node) return {};
+    const engine = node.vehicleEngine?.engineDisplacement || node.vehicleEngine;
+
+    return {
+      title: this.schemaText(node.name),
+      make: this.schemaReferenceLabel(node.brand),
+      model: this.schemaReferenceLabel(node.model),
+      year: this.schemaText(node.vehicleModelDate),
+      price_aed: this.parsePrice(this.schemaText(node.offers?.price)),
+      mileage_km: this.schemaText(node.mileageFromOdometer),
+      fuel_type: this.schemaText(node.fuelType || node.vehicleEngine?.fuelType),
+      transmission: this.schemaText(node.vehicleTransmission),
+      body_type: this.schemaText(node.bodyType),
+      color: this.schemaText(node.color),
+      description: this.schemaText(node.description),
+      engine: this.schemaText(engine),
+    };
+  },
+
+  extractSchemaImages(node) {
+    const values = Array.isArray(node?.image) ? node.image : [node?.image];
+
+    return values
+      .map((image) => typeof image === 'string' ? image : image?.url || image?.contentUrl)
+      .filter(Boolean);
+  },
+
+  buildVehicleTitle(vehicle, fallback = null) {
+    const makeModel = [vehicle.year, vehicle.make, vehicle.model, vehicle.trim]
+      .map((value) => typeof value === 'string' ? value.trim() : value)
+      .filter(Boolean)
+      .join(' ');
+
+    return makeModel || fallback || null;
+  },
+
+  extractListingId(url) {
+    const routeMatch = url.match(/\/(?:car|listing)\/(\d+)(?:[/?#]|$)/i);
+    if (routeMatch) return routeMatch[1];
+
+    const slugMatch = url.match(/-(\d+)(?:\.html)?\/?(?:[?#].*)?$/i);
+    return slugMatch ? slugMatch[1] : null;
+  },
+
+  extractImages(source, listingId = null, preferredImages = []) {
     const images = [];
     const seen = new Set();
     const MAX_IMAGES = 20;
 
-    const selectors = [
-      'picture img',
-      'img[data-testid*="image"]',
-      'img[class*="gallery"]',
-      'img[class*="carousel"]',
-      'img[src*="listing"]',
-      'img[src*="product"]',
-      'figure img',
-      'img[alt*="car"]',
-      'img[alt*="vehicle"]',
-      'img',
-    ];
+    const selectorsBySource = {
+      dubizzle: ['img[data-testid^="dpv-view-"]', '[data-testid*="gallery"] img'],
+      dubicars: ['[class*="gallery"] img', '[class*="carousel"] img', 'figure[class*="gallery"] img'],
+      yallamotor: ['[class*="gallery"] img', '[class*="carousel"] img', 'img[src*="used_car"]'],
+    };
+    const selectors = selectorsBySource[source] || [];
+
+    const addImage = (candidate) => {
+      if (!candidate || images.length >= MAX_IMAGES) return;
+      let src = candidate;
+
+      try {
+        let parsed = new URL(src, window.location.href);
+        if (source === 'yallamotor' && parsed.hostname.endsWith('yallamotor.com') && parsed.pathname === '/_next/image') {
+          const original = parsed.searchParams.get('url');
+          if (!original) return;
+          parsed = new URL(original);
+        }
+
+        const host = parsed.hostname.toLowerCase();
+        const allowed = source === 'dubizzle'
+          ? host === 'dbz-images.dubizzle.com'
+          : source === 'dubicars'
+            ? host === 'dubicars.com' || host.endsWith('.dubicars.com')
+            : source === 'yallamotor'
+              ? host === 'b8cdn.com' || host.endsWith('.b8cdn.com')
+              : true;
+        if (!allowed) return;
+        if (source === 'yallamotor' && listingId && !parsed.href.includes(`/${listingId}/`)) return;
+        src = parsed.href;
+      } catch (e) {
+        return;
+      }
+
+      if (seen.has(src) || src.includes('pixel') || src.includes('blank') || src.includes('1x1')) return;
+      seen.add(src);
+      images.push(src);
+    };
+
+    preferredImages.forEach(addImage);
 
     for (const selector of selectors) {
       if (images.length >= MAX_IMAGES) break;
@@ -196,15 +292,7 @@ const Extractors = {
       document.querySelectorAll(selector).forEach((img) => {
         if (images.length >= MAX_IMAGES) return;
 
-        const src = img.src || img.getAttribute('data-src') || img.getAttribute('data-srcset');
-        if (!src || seen.has(src)) return;
-
-        if (!src.startsWith('http') && !src.startsWith('//')) return;
-        if (src.includes('pixel') || src.includes('blank') || src.includes('1x1')) return;
-        if (src.startsWith('data:')) return;
-
-        seen.add(src);
-        images.push(src);
+        addImage(img.src || img.getAttribute('data-src') || img.getAttribute('data-srcset'));
       });
     }
 
@@ -217,12 +305,13 @@ function captureDubizzle() {
   console.log('[Navra Capture] Starting Dubizzle extraction');
   const url = window.location.href;
   const jsonLd = Extractors.extractJsonLd();
+  const schema = Extractors.extractVehicleSchema(jsonLd);
 
   const vehicle = {
-    title: Extractors.trySelectors(['[data-testid="listing-name"]', 'h1', '[class*="listing-title"]']),
-    make: null,
-    model: null,
-    year: Extractors.trySelectors(['[data-testid="listing-year-value"]', '[class*="year"]']),
+    title: Extractors.trySelectors(['[data-testid="listing-sub-heading"]']) || schema.title,
+    make: schema.make || null,
+    model: schema.model || null,
+    year: Extractors.trySelectors(['[data-testid="listing-year-value"]', '[class*="year"]']) || schema.year,
     price_aed: null,
     mileage_km: Extractors.trySelectors(['[data-testid="listing-kilometers-value"]', '[class*="mileage"]', '[class*="kilometers"]']),
     fuel_type: Extractors.trySelectors(['[data-testid="overview-fuel_type-value"]', '[class*="fuel"]']),
@@ -272,6 +361,7 @@ function captureDubizzle() {
     const modelMatch = url.match(/\/motors\/(?:used-cars|new-cars|export-cars)\/[a-z0-9-]+\/([a-z0-9-]+)/i);
     if (modelMatch) vehicle.model = modelMatch[1].replace(/-/g, ' ');
   }
+  vehicle.title = vehicle.title || Extractors.buildVehicleTitle(vehicle, schema.title);
 
   // Extract price with fallback to meta tags
   if (!vehicle.price_aed) {
@@ -321,7 +411,7 @@ function captureDubizzle() {
     captured_at: new Date().toISOString(),
     page_title: document.title,
     vehicle,
-    images: Extractors.extractImages().map((url) => ({ url, confidence: 'high' })),
+    images: Extractors.extractImages('dubizzle', listingId, Extractors.extractSchemaImages(jsonLd)).map((url) => ({ url, confidence: 'high' })),
     diagnostics: generateDiagnostics(vehicle),
   };
 
@@ -331,23 +421,25 @@ function captureDubizzle() {
 
 // DubiCars extraction
 function captureDubiCars() {
+  console.log('[Navra Capture] Starting DubiCars extraction');
   const url = window.location.href;
   const jsonLd = Extractors.extractJsonLd();
+  const schema = Extractors.extractVehicleSchema(jsonLd);
 
   const vehicle = {
-    title: Extractors.trySelectors(['h1']),
-    make: Extractors.extractTextFrom('[data-field="make"]'),
-    model: Extractors.extractTextFrom('[data-field="model"]'),
-    year: Extractors.extractTextFrom('[data-field="year"]'),
-    price_aed: null,
-    mileage_km: Extractors.extractTextFrom('[data-field="mileage"]'),
-    fuel_type: Extractors.extractTextFrom('[data-field="fuel"]'),
-    transmission: Extractors.extractTextFrom('[data-field="transmission"]'),
-    body_type: Extractors.extractTextFrom('[data-field="body"]'),
-    color: Extractors.extractTextFrom('[data-field="color"]'),
+    title: schema.title || Extractors.trySelectors(['h1', '[class*="title"]']),
+    make: Extractors.trySelectors(['[data-field="make"]', '[data-make]', '[class*="make"]']) || schema.make,
+    model: Extractors.trySelectors(['[data-field="model"]', '[data-model]', '[class*="model"]']) || schema.model,
+    year: Extractors.trySelectors(['[data-field="year"]', '[data-year]', '[class*="year"]']) || schema.year,
+    price_aed: schema.price_aed || null,
+    mileage_km: Extractors.trySelectors(['[data-field="mileage"]', '[data-mileage]', '[class*="mileage"]']) || schema.mileage_km,
+    fuel_type: Extractors.trySelectors(['[data-field="fuel"]', '[data-fuel]', '[class*="fuel"]']) || schema.fuel_type,
+    transmission: Extractors.trySelectors(['[data-field="transmission"]', '[data-transmission]', '[class*="transmission"]']) || schema.transmission,
+    body_type: Extractors.trySelectors(['[data-field="body"]', '[data-body]', '[class*="body-type"]']) || schema.body_type,
+    color: Extractors.trySelectors(['[data-field="color"]', '[data-color]', '[class*="color"]']) || schema.color,
     seller_type: Extractors.extractTextFrom('[data-field="seller"]'),
-    description: Extractors.extractTextFrom('[class*="description"]'),
-    engine: Extractors.extractTextFrom('[data-field="engine"]'),
+    description: schema.description || Extractors.trySelectors(['[class*="description"]', '[class*="detail"]']),
+    engine: Extractors.trySelectors(['[data-field="engine"]', '[data-engine]', '[class*="engine"]']) || schema.engine,
   };
 
   // Try JSON-LD
@@ -372,10 +464,10 @@ function captureDubiCars() {
   }
 
   // Extract listing ID
-  const listingIdMatch = url.match(/\/(?:car|listing)\/(\d+)/i);
-  const listingId = listingIdMatch ? listingIdMatch[1] : null;
+  const listingId = Extractors.extractListingId(url);
+  vehicle.title = Extractors.buildVehicleTitle(vehicle, vehicle.title);
 
-  return {
+  const payload = {
     schema_version: 'navracar.capture.v1',
     source: 'dubicars',
     source_url: url,
@@ -383,30 +475,35 @@ function captureDubiCars() {
     captured_at: new Date().toISOString(),
     page_title: document.title,
     vehicle,
-    images: Extractors.extractImages().map((url) => ({ url, confidence: 'high' })),
+    images: Extractors.extractImages('dubicars', listingId, Extractors.extractSchemaImages(jsonLd)).map((url) => ({ url, confidence: 'high' })),
     diagnostics: generateDiagnostics(vehicle),
   };
+
+  console.log('[Navra Capture] DubiCars extraction complete:', payload);
+  return payload;
 }
 
 // YallaMotor extraction
 function captureYallaMotor() {
+  console.log('[Navra Capture] Starting YallaMotor extraction');
   const url = window.location.href;
   const jsonLd = Extractors.extractJsonLd();
+  const schema = Extractors.extractVehicleSchema(jsonLd);
 
   const vehicle = {
-    title: Extractors.trySelectors(['h1']),
-    make: null,
-    model: null,
-    year: null,
-    price_aed: null,
-    mileage_km: null,
-    fuel_type: null,
-    transmission: null,
-    body_type: null,
-    color: null,
+    title: schema.title || Extractors.trySelectors(['h1', '[class*="title"]']),
+    make: schema.make || null,
+    model: schema.model || null,
+    year: schema.year || null,
+    price_aed: schema.price_aed || null,
+    mileage_km: schema.mileage_km || null,
+    fuel_type: schema.fuel_type || null,
+    transmission: schema.transmission || null,
+    body_type: schema.body_type || null,
+    color: schema.color || null,
     seller_type: null,
-    description: Extractors.trySelectors(['[class*="description"]', '[class*="detail"]']),
-    engine: null,
+    description: schema.description || Extractors.trySelectors(['[class*="description"]', '[class*="detail"]']),
+    engine: schema.engine || null,
   };
 
   // Try structured data first
@@ -442,10 +539,10 @@ function captureYallaMotor() {
   }
 
   // Extract listing ID
-  const listingIdMatch = url.match(/\/(?:car|listing)\/(\d+)/i);
-  const listingId = listingIdMatch ? listingIdMatch[1] : null;
+  const listingId = Extractors.extractListingId(url);
+  vehicle.title = Extractors.buildVehicleTitle(vehicle, vehicle.title);
 
-  return {
+  const payload = {
     schema_version: 'navracar.capture.v1',
     source: 'yallamotor',
     source_url: url,
@@ -453,9 +550,12 @@ function captureYallaMotor() {
     captured_at: new Date().toISOString(),
     page_title: document.title,
     vehicle,
-    images: Extractors.extractImages().map((url) => ({ url, confidence: 'high' })),
+    images: Extractors.extractImages('yallamotor', listingId, Extractors.extractSchemaImages(jsonLd)).map((url) => ({ url, confidence: 'high' })),
     diagnostics: generateDiagnostics(vehicle),
   };
+
+  console.log('[Navra Capture] YallaMotor extraction complete:', payload);
+  return payload;
 }
 
 // Generate diagnostic report
