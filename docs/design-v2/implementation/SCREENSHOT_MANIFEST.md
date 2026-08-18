@@ -62,7 +62,6 @@ Directory: `docs/design-v2/implementation/screenshots/phase3-remediation-r2/`
 | `public-mobile-detail-390x844.png` | `/car-prices/{slug}` | 390×844 | public | populated | `0a5a78c1e5431fc2716212bb501e1c77073bcf6829433a5073f32f7ebdfb094d` |
 | `public-mobile-calculator-390x844.png` | `/calculator` | 390×844 | public | initial form (unchanged — not rewritten) | `464e00d8b15bec629130cd142614d0b6b7375265c1e136fb863b4bd74d8cb089` |
 | `public-mobile-request-390x844.png` | `/lead-form` | 390×844 | public | form (closest real page to "request"; no tracking page yet) | `4be1c4626137ca63dd84aab549bcf5fe3c68c2f8d78232649236dca011d9bc61` |
-| `admin-mobile-dashboard-390x844.png` | `/admin` (dashboard) | 390×844 | admin | populated, bottom nav visible | `bd3eef44235b04356de2105f55c0f631f2950abd0a3884621f439529644abb65` |
 | `admin-mobile-sales-390x844.png` | `/admin/kanban` | 390×844 | admin | populated pipeline | `7d7e44203d725b695e264fc634867cc91ad3da3f7f0f2c036f833452f3e01911` |
 | `admin-mobile-content-390x844.png` | `/admin/car-listings` | 390×844 | admin | populated listing queue | `ea8f989bbf0e095733df6caaab0a2a567af3c3cbd0dda2bfcd4ccb5b68665f1d` |
 
