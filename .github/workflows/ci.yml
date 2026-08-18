@@ -38,6 +38,8 @@ jobs:
       - run: npm audit --audit-level=high
       - name: Test staging runtime preparation
         run: bash tools/test-cpanel-staging-runtime.sh
+      - name: Test staging source policy
+        run: bash tools/test-cpanel-staging-source-policy.sh
       - name: Test production deployment controls
         run: bash tools/test-cpanel-production-controls.sh
       - name: Validate Android variant builder
