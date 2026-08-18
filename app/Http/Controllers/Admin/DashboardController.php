@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\CalculationLog;
 use App\Models\CalendarEvent;
+use App\Models\CarListing;
 use App\Models\ImportQueueItem;
 use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
@@ -22,13 +23,23 @@ class DashboardController extends Controller
 
         $baseScope = fn ($query) => $isAdmin ? $query : $query->where('assigned_to', $user->id);
 
-        $todayRequests = $baseScope(QuoteRequest::query())->whereDate('created_at', today())->count();
+        $activeStageIds = PipelineStage::whereIn('slug', ['delivered', 'lost'])->pluck('id');
+
+        // KPI metrics — exactly 4, matching DESIGN_SPEC.md §5
+        $newRequests = $baseScope(QuoteRequest::query())->whereDate('created_at', today())->count();
+        $underFollowUp = $baseScope(QuoteRequest::query())
+            ->where('is_archived', false)
+            ->where(function ($q) use ($activeStageIds) {
+                $q->whereNull('current_stage_id')->orWhereNotIn('current_stage_id', $activeStageIds);
+            })
+            ->count();
+        $activeListings = $isAdmin ? CarListing::where('status', 'published')->count() : 0;
+        $failedImports = $isAdmin ? ImportQueueItem::where('status', 'failed')->count() : 0;
+
+        // Additional metrics for admin-only widgets (dashboard content below KPIs)
         $todayCalcs = $isAdmin ? CalculationLog::whereDate('created_at', today())->count() : 0;
         $todayVin = $isAdmin ? VinCheck::whereDate('created_at', today())->count() : 0;
         $unassignedCount = $isAdmin ? QuoteRequest::whereNull('assigned_to')->count() : 0;
-
-        $activeStageIds = PipelineStage::whereIn('slug', ['delivered', 'lost'])->pluck('id');
-
         $callsToday = $baseScope(QuoteRequest::query())->whereDate('next_call_date', today())->count();
         $hotLeads = $baseScope(QuoteRequest::query())
             ->where('temperature', 'hot')
@@ -138,7 +149,10 @@ class DashboardController extends Controller
         return view('admin.dashboard', [
             'pageTitle' => 'داشبورد مدیریت',
             'pageSubtitle' => 'نمای کلی از درخواست‌های استعلام قیمت و محاسبات انجام‌شده روی سایت.',
-            'todayRequests' => $todayRequests,
+            'newRequests' => $newRequests,
+            'underFollowUp' => $underFollowUp,
+            'activeListings' => $activeListings,
+            'failedImports' => $failedImports,
             'todayCalcs' => $todayCalcs,
             'todayVin' => $todayVin,
             'unassignedCount' => $unassignedCount,

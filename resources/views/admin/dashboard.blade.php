@@ -1,19 +1,11 @@
 <x-layouts.admin :page-title="$pageTitle" :page-subtitle="$pageSubtitle">
 
+    {{-- Dashboard KPIs: exactly 4, matching DESIGN_SPEC.md §5 --}}
     <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <x-stat-card variant="v2" label="درخواست‌های امروز" icon="inbox" note="درخواست با مشخصات تماس">{{ number_format($todayRequests) }}</x-stat-card>
-        <x-stat-card variant="v2" label="محاسبات امروز" icon="calculator" note="با یا بدون ثبت مشخصات">{{ number_format($todayCalcs) }}</x-stat-card>
-        <x-stat-card variant="v2" label="درخواست‌های ۷ روز اخیر" icon="calendar" note="۳۰ روز اخیر: {{ number_format($monthRequests) }}">{{ number_format($weekRequests) }}</x-stat-card>
-        <x-stat-card variant="v2" label="میانگین جمع کل هزینه" icon="trend-up" note="تومان — بر اساس درخواست‌های ثبت‌شده">{{ number_format($avgTotal) }}</x-stat-card>
-        <x-stat-card variant="v2" label="استعلام شاسی امروز" icon="vin" :note="$isAdmin ? number_format($unassignedCount).' درخواست بدون الحاق' : 'گزارش کامل در صفحه شماره‌شاسی‌ها'">{{ number_format($todayVin) }}</x-stat-card>
-        <x-stat-card variant="v2" label="تماس‌های امروز" icon="calendar" accent="amber">
-            {{ number_format($callsToday) }}
-            <x-slot:note><a href="{{ route('admin.requests.index') }}" class="font-bold text-v2-primary">مشاهده لیست</a></x-slot:note>
-        </x-stat-card>
-        <x-stat-card variant="v2" label="سرنخ‌های داغ" icon="flame" accent="red">
-            {{ number_format($hotLeads) }}
-            <x-slot:note><a href="{{ route('admin.kanban') }}?temp=hot" class="font-bold text-v2-primary">مشاهده در کانبان</a></x-slot:note>
-        </x-stat-card>
+        <x-stat-card variant="v2" label="درخواست‌های جدید" icon="inbox" note="امروز ثبت‌شده">{{ number_format($newRequests) }}</x-stat-card>
+        <x-stat-card variant="v2" label="در حال پیگیری" icon="hourglass" note="فعال و تکمیل‌نشده">{{ number_format($underFollowUp) }}</x-stat-card>
+        <x-stat-card variant="v2" label="آگهی‌های فعال" icon="car" note="منتشر‌شده و موجود">{{ number_format($activeListings) }}</x-stat-card>
+        <x-stat-card variant="v2" label="ایمپورت ناموفق" icon="alert-circle" accent="red" note="نیاز‌به بررسی">{{ number_format($failedImports) }}</x-stat-card>
     </div>
 
     {{-- Calendar widget + monthly performance chart, matching 02-admin-dashboard-calendar.png row 2 --}}

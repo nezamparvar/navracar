@@ -45,8 +45,8 @@ class SalesDashboardScopingTest extends TestCase
         $responseA = $this->actingAs($salesA)->get(route('admin.dashboard'));
         $responseB = $this->actingAs($salesB)->get(route('admin.dashboard'));
 
-        $responseA->assertOk()->assertViewHas('todayRequests', 1);
-        $responseB->assertOk()->assertViewHas('todayRequests', 1);
+        $responseA->assertOk()->assertViewHas('newRequests', 1);
+        $responseB->assertOk()->assertViewHas('newRequests', 1);
     }
 
     public function test_sales_cannot_see_calculation_logs(): void
@@ -117,7 +117,7 @@ class SalesDashboardScopingTest extends TestCase
 
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
         $response->assertOk()
-            ->assertViewHas('todayRequests', 2)
+            ->assertViewHas('newRequests', 2)
             ->assertViewHas('todayCalcs', 1)
             ->assertViewHas('todayVin', 1)
             ->assertViewHas('unassignedCount', 1);
