@@ -6,10 +6,10 @@
 
             @include('admin.car-listings._fields', ['l' => $listing, 'categories' => $categories])
 
-            <x-button type="submit" variant="amber" size="lg">
+            <x-button type="submit" variant="v2-primary" size="lg">
                 <x-icon name="check" class="w-4 h-4" /> ایجاد آگهی (پیش‌نویس)
             </x-button>
-            <p class="text-[11px] text-ink-400">بعد از ذخیره، به صفحه ویرایش منتقل می‌شوید تا عکس اضافه کنید.</p>
+            <p class="text-[11px] text-v2-text-muted">بعد از ذخیره، به صفحه ویرایش منتقل می‌شوید تا عکس اضافه کنید.</p>
         </form>
     </div>
 </x-layouts.admin>
