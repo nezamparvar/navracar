@@ -1,6 +1,6 @@
 792b97fc33a0c4da1a53d7923218ca687183bda588a926e5382662d01a3ff3a0  ./.cpanel.yml
-51b21f86ddea84e209961319e569a02836994df2d4d4c15d48e148f0ac67a852  ./DEPLOYMENT-METADATA.json
-51b21f86ddea84e209961319e569a02836994df2d4d4c15d48e148f0ac67a852  ./application/.cpanel-release.json
+c26af365769aa1697bda7c05c1d2866f4b170b9bfd8e63973acbce829fba4ae1  ./DEPLOYMENT-METADATA.json
+c26af365769aa1697bda7c05c1d2866f4b170b9bfd8e63973acbce829fba4ae1  ./application/.cpanel-release.json
 37f367944fb18c5a23d8d702ed785071bdf1ed5735a79c72367d02f8777ae81b  ./application/.env.example
 62f6675f6a2f7f7f05e842ad37cc548e6e1ac502a5d74eac60842aa18236a952  ./application/app/Console/Commands/Admin/CreateUserCommand.php
 7696296601922e9d80a843bbd41aa66046abccfdbdbdae00195932c61f66c029  ./application/app/Console/Commands/GenerateExtensionPairingCode.php
@@ -328,7 +328,7 @@ be274cb23b21cc5b63f9ff7ad92cb87b8a42f70a04380355039fc3410c06a14c  ./application/
 aaf36ae939c550571e229b309191a2c9996bf56b30f4516321a8aae09663f1e5  ./application/vendor/composer/autoload_real.php
 78059c9d005bb2095dab74959d623ad17a8a7e7d07ba1e3b8353f4f067802d26  ./application/vendor/composer/autoload_static.php
 35c2303c218102b2d50ab51c435d3f8fd47be20c4144c3cd27e3e5d01ba7eb1b  ./application/vendor/composer/installed.json
-a5e15a40fdb81d67b292e3c866fc2c9eb7da24409d4b08d68bdfa0fbbf06c730  ./application/vendor/composer/installed.php
+753b6595b2ada4fb15d234a9d92a940075e5c3f556cf9b38477855e162989682  ./application/vendor/composer/installed.php
 45f40bb671c2e809778cd8065a7a40f1472e476e155275440e34ae43e3fc9e9c  ./application/vendor/composer/platform_check.php
 4344d6a2a60a415ac58cd2ebf44e49fdc3c82e5e6e5ff518bfda8528f868bb95  ./application/vendor/dflydev/dot-access-data/.editorconfig
 ef5e6e154d7cfcb96644c85e267ce71803c52d7e84cf3837577d423776236cd9  ./application/vendor/dflydev/dot-access-data/.github/CONTRIBUTING.md
