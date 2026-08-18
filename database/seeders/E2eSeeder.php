@@ -7,6 +7,7 @@ use App\Models\CalculationLog;
 use App\Models\CalendarEvent;
 use App\Models\CarListing;
 use App\Models\CarListingImage;
+use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
 use App\Models\VinCheck;
 use Illuminate\Database\Seeder;
@@ -94,48 +95,97 @@ class E2eSeeder extends Seeder
         // against an all-zero dashboard (see QA_REPORT.md remediation notes). created_at is a
         // DB-level useCurrent() default on all these tables (not Eloquent-fillable), so every
         // row seeded here genuinely lands as "today" without needing to backdate anything.
-        for ($i = 0; $i < 5; $i++) {
-            QuoteRequest::create([
-                'name' => 'مشتری تست '.($i + 1),
-                'phone' => '0912000'.str_pad((string) $i, 4, '0', STR_PAD_LEFT),
-                'car_label' => $demoListings[$i % count($demoListings)]['title_fa'],
-                'category' => $demoListings[$i % count($demoListings)]['category'],
-                'temperature' => $i % 2 === 0 ? 'hot' : 'warm',
-                'breakdown_json' => '[]',
-                'totals_json' => '{}',
-                'total_with_profit' => $demoListings[$i % count($demoListings)]['price'] * 55000,
-                'email_sent' => $i % 2 === 0,
-                'source' => 'e2e',
-                'assigned_to' => $sales->id,
-                'created_by' => $sales->id,
-                'current_stage_id' => ($i % 9) + 1,
-            ]);
+        // Rich quote request data spread across 14 days + pipeline stages for dashboard widgets
+        $stages = PipelineStage::where('is_active', true)->get();
+        $stageCount = $stages->count();
+        $requestIndex = 0;
+        for ($dayOffset = 13; $dayOffset >= 0; $dayOffset--) {
+            $dayBase = now()->subDays($dayOffset)->startOfDay();
+            $dailyCount = match ($dayOffset) {
+                0 => 5,     // today: 5 requests
+                1 => 3,     // yesterday: 3
+                2 => 4,     // 2 days ago: 4
+                default => random_int(2, 4),
+            };
+            for ($j = 0; $j < $dailyCount; $j++) {
+                $listingIdx = ($requestIndex + $j) % count($demoListings);
+                $listing = $demoListings[$listingIdx];
+                $isHot = ($requestIndex + $j) % 3 === 0;
+                $nextCall = match ($dayOffset) {
+                    0, 1 => null,
+                    2, 3 => $dayBase->copy()->addDays(random_int(1, 3))->toDateString(),
+                    default => $dayBase->copy()->subDays(random_int(1, 5))->toDateString(),
+                };
+                $stageId = $stageCount > 0 ? $stages[($requestIndex + $j) % $stageCount]->id : null;
+                QuoteRequest::create([
+                    'name' => 'مشتری '.($requestIndex + $j + 1),
+                    'phone' => '0912000'.str_pad((string) ($requestIndex + $j), 4, '0', STR_PAD_LEFT),
+                    'car_label' => $listing['title_fa'],
+                    'category' => $listing['category'],
+                    'temperature' => $isHot ? 'hot' : 'warm',
+                    'breakdown_json' => '[]',
+                    'totals_json' => '{}',
+                    'total_with_profit' => $listing['price'] * 55000,
+                    'email_sent' => ($requestIndex + $j) % 2 === 0,
+                    'source' => 'e2e',
+                    'assigned_to' => $sales->id,
+                    'created_by' => $sales->id,
+                    'current_stage_id' => $stageId,
+                    'next_call_date' => $nextCall,
+                    'created_at' => $dayBase->copy()->addHours(random_int(8, 18))->addMinutes(random_int(0, 59)),
+                ]);
+            }
+            $requestIndex += $dailyCount;
         }
 
-        for ($i = 0; $i < 6; $i++) {
+        // Rich calculation logs across categories for category distribution + top cars widgets
+        $categoryList = array_values(array_unique(array_column($demoListings, 'category')));
+        $carLabelList = array_column($demoListings, 'title_fa');
+        $calcIndex = 0;
+        for ($i = 0; $i < 40; $i++) {
+            $catIdx = $i % count($categoryList);
+            $carIdx = ($i * 3) % count($carLabelList);
+            $dayOffset = random_int(0, 13);
+            $carLabelIdx = array_search($carLabelList[$carIdx], array_column($demoListings, 'title_fa'));
             CalculationLog::create([
-                'car_label' => $demoListings[$i % count($demoListings)]['title_fa'],
-                'category' => $demoListings[$i % count($demoListings)]['category'],
-                'real_price_aed' => $demoListings[$i % count($demoListings)]['price'],
+                'car_label' => $carLabelList[$carIdx],
+                'category' => $categoryList[$catIdx],
+                'real_price_aed' => $demoListings[$carLabelIdx]['price'],
+                'created_at' => now()->subDays($dayOffset)->addHours(random_int(8, 20))->addMinutes(random_int(0, 59)),
             ]);
         }
 
         VinCheck::create(['vin' => 'WBAJU7101M9E12345']);
 
-        $firstRequest = QuoteRequest::first();
+        // Rich calendar events for day/week/list views: today + this week + next week, mixed statuses
+        $requests = QuoteRequest::limit(10)->get();
         $today = now();
-        $calendarEvents = [
-            ['type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'offset_hours' => 2, 'duration' => 15, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 26, 'duration' => 60, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            ['type' => CalendarEvent::TYPE_PAYMENT_CALL, 'offset_hours' => 50, 'duration' => 20, 'status' => CalendarEvent::STATUS_SCHEDULED],
-            ['type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'offset_hours' => -24, 'duration' => 45, 'status' => CalendarEvent::STATUS_COMPLETED],
-            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 96, 'duration' => 30, 'status' => CalendarEvent::STATUS_SCHEDULED],
+        $types = [
+            CalendarEvent::TYPE_FOLLOW_UP_CALL,
+            CalendarEvent::TYPE_CONSULTATION_MEETING,
+            CalendarEvent::TYPE_PAYMENT_CALL,
+            CalendarEvent::TYPE_DELIVERY_MEETING,
         ];
-        foreach ($calendarEvents as $ce) {
+        $calendarSchedule = [
+            // Today: 3 events to show in day/list views
+            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 2, 'duration' => 45, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'offset_hours' => 5, 'duration' => 20, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['type' => CalendarEvent::TYPE_PAYMENT_CALL, 'offset_hours' => 10, 'duration' => 30, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            // This week: 4 more events
+            ['type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'offset_hours' => 26, 'duration' => 60, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 50, 'duration' => 45, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'offset_hours' => 74, 'duration' => 15, 'status' => CalendarEvent::STATUS_COMPLETED],
+            ['type' => CalendarEvent::TYPE_PAYMENT_CALL, 'offset_hours' => 98, 'duration' => 25, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            // Past: 1 completed event for visual reference
+            ['type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'offset_hours' => -24, 'duration' => 45, 'status' => CalendarEvent::STATUS_COMPLETED],
+        ];
+        $eventIndex = 0;
+        foreach ($calendarSchedule as $ce) {
             $start = $today->copy()->addHours($ce['offset_hours'])->setMinute(0)->setSecond(0);
+            $req = $requests[$eventIndex % $requests->count()] ?? $requests->first();
             CalendarEvent::create([
                 'type' => $ce['type'],
-                'quote_request_id' => $firstRequest?->id,
+                'quote_request_id' => $req?->id,
                 'assigned_to' => $sales->id,
                 'created_by' => $sales->id,
                 'starts_at' => $start,
@@ -143,6 +193,7 @@ class E2eSeeder extends Seeder
                 'status' => $ce['status'],
                 'notes' => 'رویداد نمونه برای بررسی بصری تقویم.',
             ]);
+            $eventIndex++;
         }
     }
 

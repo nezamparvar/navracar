@@ -28,7 +28,7 @@ export default defineConfig({
         // flat ~13s delay to EVERY navigation on machines with an HTTPS_PROXY env var set but no
         // HTTP_PROXY (this sandbox's setup) — reproduced directly, confirmed fixed by this flag
         // alone. All navigations in this suite target 127.0.0.1 only, so a proxy is never wanted.
-        launchOptions: { args: ['--no-proxy-server'] },
+        launchOptions: { args: ['--no-proxy-server'], executablePath: '/opt/pw-browsers/chromium' },
     },
     webServer: {
         command: 'node tests/e2e/serve.mjs',
