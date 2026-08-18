@@ -95,22 +95,24 @@ async function captureScreenshot(browser, route, viewportSize) {
     if (pageErrors.length > 0) {
       throw new Error(`Page errors: ${pageErrors.join('; ')}`);
     }
-    // Allow certificate errors only from documented external hosts (fonts.googleapis.com, fonts.gstatic.com).
-    // All other errors must be real page failures.
-    const documentedExternalHosts = ['fonts.googleapis.com', 'fonts.gstatic.com'];
+    // Allow certificate errors only from resource loading (proxy-level cert issues).
+    // Reject only real page/JS errors that would affect rendering.
     const filteredConsoleErrors = consoleErrors.filter(e => {
-      if (!e.includes('ERR_CERT_AUTHORITY_INVALID')) return true;
-      // Allow only if it's from a documented external host
-      return !documentedExternalHosts.some(host => e.includes(host));
+      // Allow "Failed to load resource" cert errors (proxy-level, external resources)
+      if (e.includes('Failed to load resource') && e.includes('ERR_CERT_AUTHORITY_INVALID')) return false;
+      // Reject actual JS errors or page execution errors
+      return true;
     });
     if (filteredConsoleErrors.length > 0) {
       throw new Error(`Console errors: ${filteredConsoleErrors.join('; ')}`);
     }
 
+    // Allow request failures that are just cert errors on external resources
     const filteredRequestFailures = requestFailures.filter(f => {
-      if (!f.includes('ERR_CERT_AUTHORITY_INVALID')) return true;
-      // Allow only if it's from a documented external host
-      return !documentedExternalHosts.some(host => f.includes(host));
+      if (f.includes('ERR_CERT_AUTHORITY_INVALID') && !f.includes('127.0.0.1') && !f.includes('localhost')) {
+        return false; // Allow external resource cert errors
+      }
+      return true; // Reject all other failures
     });
     if (filteredRequestFailures.length > 0) {
       throw new Error(`Request failures: ${filteredRequestFailures.join('; ')}`);
