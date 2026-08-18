@@ -114,7 +114,7 @@ jobs:
         with:
           node-version: '22'
           cache: npm
-      - run: composer install --no-interaction --prefer-source --no-progress
+      - run: composer install --no-interaction --prefer-dist --no-progress
       - run: npm ci
       - run: npm run build
       - run: npx playwright install --with-deps chromium
