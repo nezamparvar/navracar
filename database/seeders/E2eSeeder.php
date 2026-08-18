@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\AdminUser;
 use App\Models\CalculationLog;
+use App\Models\CalendarEvent;
 use App\Models\CarListing;
 use App\Models\CarListingImage;
 use App\Models\QuoteRequest;
@@ -52,7 +53,7 @@ class E2eSeeder extends Seeder
                 'published_at' => now(),
             ],
         );
-        $this->attachCoverImage($original, 'BMW X4', '#0A1B32');
+        $this->attachGallery($original, 'BMW X4', '#0A1B32');
 
         // Additional synthetic listings so list/grid/detail pages have enough populated cards
         // for a real visual-parity comparison (a single card cannot demonstrate grid density).
@@ -86,7 +87,7 @@ class E2eSeeder extends Seeder
                     'published_at' => now()->subDays(random_int(0, 10)),
                 ],
             );
-            $this->attachCoverImage($listing, $d['label'], $d['color']);
+            $this->attachGallery($listing, $d['label'], $d['color']);
         }
 
         // Non-zero, meaningful admin/sales dashboard KPIs — visual hierarchy can't be judged
@@ -120,61 +121,115 @@ class E2eSeeder extends Seeder
         }
 
         VinCheck::create(['vin' => 'WBAJU7101M9E12345']);
+
+        $firstRequest = QuoteRequest::first();
+        $today = now();
+        $calendarEvents = [
+            ['type' => CalendarEvent::TYPE_FOLLOW_UP_CALL, 'offset_hours' => 2, 'duration' => 15, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 26, 'duration' => 60, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['type' => CalendarEvent::TYPE_PAYMENT_CALL, 'offset_hours' => 50, 'duration' => 20, 'status' => CalendarEvent::STATUS_SCHEDULED],
+            ['type' => CalendarEvent::TYPE_DELIVERY_MEETING, 'offset_hours' => -24, 'duration' => 45, 'status' => CalendarEvent::STATUS_COMPLETED],
+            ['type' => CalendarEvent::TYPE_CONSULTATION_MEETING, 'offset_hours' => 96, 'duration' => 30, 'status' => CalendarEvent::STATUS_SCHEDULED],
+        ];
+        foreach ($calendarEvents as $ce) {
+            $start = $today->copy()->addHours($ce['offset_hours'])->setMinute(0)->setSecond(0);
+            CalendarEvent::create([
+                'type' => $ce['type'],
+                'quote_request_id' => $firstRequest?->id,
+                'assigned_to' => $sales->id,
+                'created_by' => $sales->id,
+                'starts_at' => $start,
+                'ends_at' => $start->copy()->addMinutes($ce['duration']),
+                'status' => $ce['status'],
+                'notes' => 'رویداد نمونه برای بررسی بصری تقویم.',
+            ]);
+        }
     }
 
-    private function attachCoverImage(CarListing $listing, string $label, string $color): void
+    /**
+     * Attaches a small multi-shot gallery (front / side / rear / interior) per listing, not just
+     * a single cover image, so the real thumbnail-gallery UI on the vehicle-detail page has
+     * something to actually render (see docs/design-v2 remediation notes).
+     */
+    private function attachGallery(CarListing $listing, string $label, string $color): void
     {
         if ($listing->images()->exists()) {
             return;
         }
 
-        $path = 'car-listings-demo/'.$listing->slug.'.png';
-        if (! Storage::disk('public')->exists($path)) {
-            Storage::disk('public')->put($path, $this->placeholderImage($label, $color));
-        }
+        $angles = ['Front', 'Side', 'Rear', 'Interior'];
 
-        CarListingImage::create([
-            'car_listing_id' => $listing->id,
-            'local_path' => $path,
-            'source_url' => 'https://example.test/'.$listing->slug.'.png',
-            'sort_order' => 0,
-            'is_cover' => true,
-        ]);
+        foreach ($angles as $i => $angle) {
+            $path = 'car-listings-demo/'.$listing->slug.'-'.$i.'.png';
+            if (! Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->put($path, $this->placeholderImage($label, $angle, $color));
+            }
+
+            CarListingImage::create([
+                'car_listing_id' => $listing->id,
+                'local_path' => $path,
+                'source_url' => 'https://example.test/'.$listing->slug.'-'.$i.'.png',
+                'sort_order' => $i,
+                'is_cover' => $i === 0,
+            ]);
+        }
     }
 
     /**
-     * A simple generated placeholder (solid color + label) so screenshots show a real loaded
-     * image instead of a broken link — this sandbox has no outbound access to real photo hosts.
-     * Not a real vehicle photo; purely a QA fixture.
+     * A generated placeholder (gradient background + car silhouette + angle label) so screenshots
+     * show a real loaded image instead of a broken link — this sandbox has no outbound access to
+     * real photo hosts. Not a real vehicle photo; purely a QA fixture.
      */
-    private function placeholderImage(string $label, string $hexColor): string
+    private function placeholderImage(string $label, string $angle, string $hexColor): string
     {
-        // GD's built-in bitmap font only supports Latin-1, so $label must be ASCII (the
-        // English make/model, never title_fa) — Persian text renders as garbage otherwise.
-        $width = 640;
-        $height = 480;
+        // GD's built-in bitmap font only supports Latin-1, so all drawn text must be ASCII
+        // (the English make/model and angle name, never title_fa) — Persian text renders as
+        // garbage otherwise.
+        $width = 800;
+        $height = 600;
         $image = imagecreatetruecolor($width, $height);
 
         [$r, $g, $b] = sscanf($hexColor, '#%02x%02x%02x');
-        $bg = imagecolorallocate($image, $r, $g, $b);
-        imagefill($image, 0, 0, $bg);
+        $rLight = min(255, $r + 40);
+        $gLight = min(255, $g + 40);
+        $bLight = min(255, $b + 40);
+
+        // Vertical gradient background so the placeholder reads as a lit photo studio backdrop
+        // rather than a flat color swatch.
+        for ($y = 0; $y < $height; $y++) {
+            $ratio = $y / $height;
+            $row = imagecolorallocate(
+                $image,
+                (int) ($r + ($rLight - $r) * (1 - $ratio)),
+                (int) ($g + ($gLight - $g) * (1 - $ratio)),
+                (int) ($b + ($bLight - $b) * (1 - $ratio)),
+            );
+            imageline($image, 0, $y, $width, $y, $row);
+        }
+
+        // Studio "floor" shadow ellipse under the car.
+        $shadow = imagecolorallocatealpha($image, 0, 0, 0, 55);
+        imagefilledellipse($image, (int) ($width / 2), (int) ($height * 0.78), 560, 60, $shadow);
 
         // A simple car-body silhouette so the placeholder reads as "a car photo slot",
         // not just a color swatch — cabin + body + two wheels.
-        $silhouette = imagecolorallocatealpha($image, 255, 255, 255, 105);
+        $silhouette = imagecolorallocatealpha($image, 255, 255, 255, 90);
         $cx = $width / 2;
-        $cy = $height / 2;
-        imagefilledellipse($image, (int) $cx, (int) $cy + 10, 420, 140, $silhouette);
-        imagefilledrectangle($image, (int) $cx - 110, (int) $cy - 60, (int) $cx + 110, (int) $cy + 20, $silhouette);
-        $wheel = imagecolorallocatealpha($image, 2, 11, 24, 40);
-        imagefilledellipse($image, (int) $cx - 130, (int) $cy + 60, 70, 70, $wheel);
-        imagefilledellipse($image, (int) $cx + 130, (int) $cy + 60, 70, 70, $wheel);
+        $cy = $height * 0.55;
+        imagefilledellipse($image, (int) $cx, (int) $cy + 10, 520, 170, $silhouette);
+        imagefilledrectangle($image, (int) $cx - 140, (int) $cy - 80, (int) $cx + 140, (int) $cy + 20, $silhouette);
+        $wheel = imagecolorallocatealpha($image, 2, 11, 24, 35);
+        imagefilledellipse($image, (int) $cx - 165, (int) $cy + 70, 90, 90, $wheel);
+        imagefilledellipse($image, (int) $cx + 165, (int) $cy + 70, 90, 90, $wheel);
 
         $accent = imagecolorallocate($image, 22, 119, 255);
-        imagefilledrectangle($image, 0, $height - 10, $width, $height, $accent);
+        imagefilledrectangle($image, 0, $height - 14, $width, $height, $accent);
 
         $text = imagecolorallocate($image, 248, 250, 252);
-        imagestring($image, 5, 24, $height - 34, $label, $text);
+        imagestring($image, 5, 24, $height - 40, $label, $text);
+        $badge = imagecolorallocatealpha($image, 10, 27, 50, 30);
+        imagefilledrectangle($image, $width - 130, 20, $width - 20, 52, $badge);
+        imagestring($image, 4, $width - 122, 28, $angle, $text);
 
         ob_start();
         imagepng($image);

@@ -9,9 +9,6 @@
         $breadcrumbItems[] = ['label' => $brandLabel, 'url' => route('public.car-prices.brand', $l->make)];
     }
     $breadcrumbItems[] = ['label' => $l->title_fa, 'url' => route('public.car-prices.show', $l)];
-    $waMessage = rawurlencode("سلام، درباره خودروی «{$l->title_fa}» (قیمت ".number_format((float) $l->price_aed)." درهم) توضیحات بیشتری می‌خوام: ".route('public.car-prices.show', $l));
-    $waUae = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappUae).'?text='.$waMessage;
-    $waIran = 'https://wa.me/'.str_replace([' ', '+'], '', $whatsappIran).'?text='.$waMessage;
 @endphp
 
 <x-layouts.public :title="$title">
@@ -81,47 +78,12 @@
             </div>
         @endif
 
+        {{--
+            RTL grid track order is mirrored: the first DOM child of a multi-column grid renders
+            as the RIGHTMOST visual column. The reference shows the gallery on the left and the
+            info column on the right, so the info block is placed FIRST in DOM order here.
+        --}}
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div class="space-y-5">
-                @if ($l->images->isNotEmpty())
-                    <div x-data="carGallery" data-images='@json($l->images->map(fn($i) => $i->url())->values())' class="space-y-2">
-                        <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-v2-surface">
-                            <img :src="images[active]" alt="{{ $l->title_fa }}" class="h-full w-full object-cover">
-                        </div>
-                        @if ($l->images->count() > 1)
-                            <div class="flex gap-2 overflow-x-auto pb-1">
-                                <template x-for="(img, i) in images" :key="i">
-                                    <button type="button" @click="active = i"
-                                            class="h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2"
-                                            :class="active === i ? 'border-v2-primary' : 'border-transparent'">
-                                        <img :src="img" class="h-full w-full object-cover">
-                                    </button>
-                                </template>
-                            </div>
-                        @endif
-                    </div>
-                @else
-                    <div class="flex aspect-[4/3] items-center justify-center rounded-2xl bg-v2-surface text-v2-text-muted">
-                        <x-icon name="car" class="w-14 h-14" />
-                    </div>
-                @endif
-
-                <div class="flex flex-wrap gap-3">
-                    <a href="{{ route('public.lead-form') }}" class="inline-flex items-center gap-2 rounded-xl bg-v2-primary px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
-                        ثبت درخواست
-                    </a>
-                    <a href="{{ route('public.calculator') }}" class="inline-flex items-center gap-2 rounded-xl border border-v2-border bg-v2-elevated px-5 py-3 text-sm font-bold text-v2-text hover:border-v2-primary">
-                        <x-icon name="calculator" class="w-4 h-4" /> محاسبه هزینه
-                    </a>
-                    <a href="{{ $waUae }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-xs font-bold text-white hover:brightness-105">
-                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> واتساپ (امارات)
-                    </a>
-                    <a href="{{ $waIran }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-xs font-bold text-white hover:brightness-105">
-                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> واتساپ (ایران)
-                    </a>
-                </div>
-            </div>
-
             <div class="space-y-5">
                 <div>
                     <div class="flex items-start justify-between gap-3">
@@ -170,19 +132,84 @@
                         <a href="{{ $l->source_url }}" target="_blank" rel="nofollow noopener" class="text-v2-primary hover:underline">دابیزل امارات</a>
                         @if($l->posted_on_dubizzle) · تاریخ ثبت آگهی: {{ $l->posted_on_dubizzle }} @endif
                     </p>
-                </div>
 
+                    <div class="mt-5 flex flex-wrap gap-3">
+                        <a href="{{ route('public.lead-form') }}" class="inline-flex items-center gap-2 rounded-xl bg-v2-primary px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
+                            ثبت درخواست
+                        </a>
+                        <a href="{{ route('public.calculator') }}" class="inline-flex items-center gap-2 rounded-xl border border-v2-border bg-v2-elevated px-5 py-3 text-sm font-bold text-v2-text hover:border-v2-primary">
+                            <x-icon name="calculator" class="w-4 h-4" /> محاسبه هزینه
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                @if ($l->images->isNotEmpty())
+                    <div x-data="carGallery" data-images='@json($l->images->map(fn($i) => $i->url())->values())' class="space-y-2">
+                        <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-v2-surface">
+                            <img :src="images[active]" alt="{{ $l->title_fa }}" class="h-full w-full object-cover">
+                        </div>
+                        @if ($l->images->count() > 1)
+                            <div class="flex gap-2 overflow-x-auto pb-1">
+                                <template x-for="(img, i) in images" :key="i">
+                                    <button type="button" @click="active = i"
+                                            class="h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2"
+                                            :class="active === i ? 'border-v2-primary' : 'border-transparent'">
+                                        <img :src="img" class="h-full w-full object-cover">
+                                    </button>
+                                </template>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    <div class="flex aspect-[4/3] items-center justify-center rounded-2xl bg-v2-surface text-v2-text-muted">
+                        <x-icon name="car" class="w-14 h-14" />
+                    </div>
+                @endif
+            </div>
+        </div>
+
+        {{--
+            مشخصات فنی: real structured spec columns (DubizzleTranslator-labelled, same $specs
+            the controller already builds — no data duplicated here).
+            تجهیزات و امکانات: CarListing has no curated features/amenities field (specs_json is
+            just the raw, uncurated import payload, not fit for public display) — an honest empty
+            state is shown instead of fabricating a list. See GAP_REPORT.md.
+            معرفی خودرو: real description_en when the import provided one, else an honest empty
+            state.
+        --}}
+        <div x-data="{ tab: 'specs' }" class="mt-8">
+            <div class="flex gap-1 overflow-x-auto rounded-xl bg-v2-elevated p-1">
+                <button type="button" @click="tab = 'specs'" class="shrink-0 rounded-lg px-4 py-2 text-xs font-bold transition" :class="tab === 'specs' ? 'bg-v2-primary text-white' : 'text-v2-text-muted'">مشخصات فنی</button>
+                <button type="button" @click="tab = 'features'" class="shrink-0 rounded-lg px-4 py-2 text-xs font-bold transition" :class="tab === 'features' ? 'bg-v2-primary text-white' : 'text-v2-text-muted'">تجهیزات و امکانات</button>
+                <button type="button" @click="tab = 'about'" class="shrink-0 rounded-lg px-4 py-2 text-xs font-bold transition" :class="tab === 'about' ? 'bg-v2-primary text-white' : 'text-v2-text-muted'">معرفی خودرو</button>
+            </div>
+
+            <div x-show="tab === 'specs'" class="mt-4 rounded-2xl border border-v2-border bg-v2-surface p-4 sm:p-5">
                 @if (! empty($specs))
-                    <x-card variant="v2" title="مشخصات فنی" icon="list">
-                        <dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
-                            @foreach ($specs as $spec)
-                                <div class="flex items-center justify-between border-b border-v2-border pb-2">
-                                    <dt class="text-xs font-bold text-v2-text-muted">{{ $spec['label'] }}</dt>
-                                    <dd class="text-sm font-extrabold text-v2-text">{{ $spec['value'] }}</dd>
-                                </div>
-                            @endforeach
-                        </dl>
-                    </x-card>
+                    <dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
+                        @foreach ($specs as $spec)
+                            <div class="flex items-center justify-between border-b border-v2-border pb-2">
+                                <dt class="text-xs font-bold text-v2-text-muted">{{ $spec['label'] }}</dt>
+                                <dd class="text-sm font-extrabold text-v2-text num-font">{{ $spec['value'] }}</dd>
+                            </div>
+                        @endforeach
+                    </dl>
+                @else
+                    <x-empty-state variant="v2" icon="list" title="مشخصات فنی برای این خودرو ثبت نشده است." />
+                @endif
+            </div>
+
+            <div x-show="tab === 'features'" class="mt-4 rounded-2xl border border-v2-border bg-v2-surface p-4 sm:p-5">
+                <x-empty-state variant="v2" icon="check-circle" title="تجهیزات و امکانات این خودرو هنوز ثبت نشده است." />
+            </div>
+
+            <div x-show="tab === 'about'" class="mt-4 rounded-2xl border border-v2-border bg-v2-surface p-4 sm:p-5">
+                @if (! empty($l->description_en))
+                    <p class="text-sm leading-7 text-v2-text-muted">{{ $l->description_en }}</p>
+                @else
+                    <x-empty-state variant="v2" icon="info" title="توضیحاتی برای این خودرو ثبت نشده است." />
                 @endif
             </div>
         </div>
