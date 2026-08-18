@@ -10,7 +10,7 @@ class VinCheck extends Model
 
     protected $fillable = [
         'vin', 'make', 'model', 'model_year', 'plant_country', 'verdict', 'source',
-        'country', 'city', 'ip_address', 'created_at',
+        'country', 'city', 'ip_address',
     ];
 
     protected function casts(): array

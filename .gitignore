@@ -29,3 +29,4 @@ yarn-error.log
 /.gradle
 /platforms/android
 /dist
+database.sqlite

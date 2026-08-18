@@ -78,15 +78,8 @@
             </div>
         @endif
 
-        {{--
-            Gallery with vertical thumbnails on left:
-            - In RTL (visual left = DOM right), thumbnails column comes SECOND in DOM
-            - Hero image is large in the center/left area
-            - Info column is FIRST in DOM (visual right)
-            - On mobile, stacks to hero image on top, thumbnails below, then info below that
-        --}}
-        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-4">
-            <div class="space-y-3">
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-4">
+            <div class="space-y-3 lg:col-span-2">
                 <div>
                     <div class="flex items-start justify-between gap-3">
                         <h1 class="text-lg font-black text-v2-text sm:text-2xl">{{ $l->title_fa }}</h1>
@@ -146,23 +139,23 @@
                 </div>
             </div>
 
-            <div class="lg:grid lg:grid-cols-[80px_1fr] lg:gap-3">
+            <div class="lg:col-span-1">
                 @if ($l->images->isNotEmpty())
-                    <div x-data="carGallery" data-images='@json($l->images->map(fn($i) => $i->url())->values())' class="grid grid-cols-[1fr] lg:grid-cols-[80px_1fr] gap-2 lg:gap-3">
+                    <div x-data="carGallery" data-images='@json($l->images->map(fn($i) => $i->url())->values())'>
+                        <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-v2-surface mb-3">
+                            <img :src="images[active]" alt="{{ $l->title_fa }}" class="h-full w-full object-cover">
+                        </div>
                         @if ($l->images->count() > 1)
-                            <div class="order-2 lg:order-1 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0">
+                            <div class="flex flex-col gap-2 overflow-y-auto">
                                 <template x-for="(img, i) in images" :key="i">
                                     <button type="button" @click="active = i"
-                                            class="h-16 w-20 lg:w-16 lg:h-16 shrink-0 overflow-hidden rounded-lg border-2"
+                                            class="h-16 w-full shrink-0 overflow-hidden rounded-lg border-2"
                                             :class="active === i ? 'border-v2-primary' : 'border-transparent'">
                                         <img :src="img" class="h-full w-full object-cover">
                                     </button>
                                 </template>
                             </div>
                         @endif
-                        <div class="order-1 lg:order-2 aspect-[4/3] overflow-hidden rounded-2xl bg-v2-surface">
-                            <img :src="images[active]" alt="{{ $l->title_fa }}" class="h-full w-full object-cover">
-                        </div>
                     </div>
                 @else
                     <div class="flex aspect-[4/3] items-center justify-center rounded-2xl bg-v2-surface text-v2-text-muted">
