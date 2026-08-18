@@ -1,25 +1,24 @@
 import { chromium } from '@playwright/test';
 import { createHash } from 'crypto';
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
+import { mkdirSync, writeFileSync, existsSync } from 'fs';
 import { join } from 'path';
+import { tmpdir } from 'os';
 
 const baseURL = 'http://127.0.0.1:8000';
 const outputDir = join(process.cwd(), 'docs/design-v2/implementation/screenshots/round6-visual-parity');
-mkdirSync(outputDir, { recursive: true });
+
+// Parse CLI arguments: --route=NAME --viewport=SIZE
+const args = process.argv.slice(2);
+const cliRoute = args.find(a => a.startsWith('--route='))?.split('=')[1];
+const cliViewport = args.find(a => a.startsWith('--viewport='))?.split('=')[1];
 
 // Batch 1 acceptance: Strict documented allowlist of external hosts.
-// Currently EMPTY: all external resources must be self-hosted or unavailable.
-// No bypasses, no generalized suppression. Certificate or DNS errors from ANY host fail immediately.
-const EXTERNAL_HOST_ALLOWLIST = [
-  // EMPTY FOR BATCH 1: No external dependencies expected.
-];
+const EXTERNAL_HOST_ALLOWLIST = [];
 
 // Batch 1 Required Priority Routes (8 routes × 2 sizes × 2 viewport types = 32 screenshots)
 const routes = [
-  // Public routes (no auth required)
   { path: '/car-prices', name: 'vehicle-list', auth: false, sizes: [390, 1440], requiresHeading: 'قیمت خودروها' },
   { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, sizes: [390, 1440], requiresHeading: 'بی‌ام‌و X4 تست' },
-  // Admin routes (require strict authentication)
   { path: '/admin', name: 'admin-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد مدیریت', requiresUrl: /^https?:\/\/[^\/]+\/admin($|\?)/ },
   { path: '/admin/sales-dashboard', name: 'sales-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد فروش', requiresUrl: /^https?:\/\/[^\/]+\/admin\/sales-dashboard/ },
   { path: '/admin/content-dashboard', name: 'content-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد محتوا', requiresUrl: /^https?:\/\/[^\/]+\/admin\/content-dashboard/ },
@@ -33,60 +32,53 @@ const viewportSizes = {
   1440: { width: 1440, height: 900 },
 };
 
+function getFileSHA256(data) {
+  return createHash('sha256').update(data).digest('hex');
+}
+
+function getPNGDimensions(buffer) {
+  if (buffer.length < 24) return null;
+  const width = buffer.readUInt32BE(16);
+  const height = buffer.readUInt32BE(20);
+  return { width, height };
+}
+
 async function authenticateAndSaveState(browser) {
   const authContext = await browser.newContext();
   const authPage = await authContext.newPage();
 
+  // Route interception: block all external requests
+  await authPage.route('**/*', route => {
+    const url = new URL(route.request().url());
+    const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
+    if (isLocalhost) {
+      route.continue();
+    } else {
+      route.abort('blockedbyclient');
+    }
+  });
+
   try {
-    // Block all external requests during authentication
-    await authPage.route('**/*', route => {
-      const url = new URL(route.request().url());
-      const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
-
-      if (isLocalhost) {
-        route.continue();
-      } else {
-        route.abort('blockedbyclient');
-      }
-    });
-
     // Navigate to login
     await authPage.goto(`${baseURL}/admin/login`, { waitUntil: 'domcontentloaded', timeout: 10000 });
 
-    // Fill login form
+    // Fill login credentials first
     await authPage.locator('input[name="username"]').fill('admin');
     await authPage.locator('input[name="password"]').fill('password');
 
-    // Click submit and wait for URL change (not navigation event which might not fire)
-    const submitButton = authPage.locator('button[type="submit"]');
-    await submitButton.click();
+    // Fill and submit form, wait for navigation to admin dashboard
+    await Promise.all([
+      authPage.waitForURL(
+        url => url.origin === new URL(baseURL).origin && url.pathname === '/admin',
+        { waitUntil: 'domcontentloaded', timeout: 15000 }
+      ),
+      authPage.locator('button[type="submit"]').click(),
+    ]);
 
-    // Wait for URL to change away from login page with fast polling
-    let attempts = 0;
-    const maxAttempts = 200; // 10 seconds at 50ms intervals
-    const pollInterval = 50;
-    while (attempts < maxAttempts) {
-      const currentUrl = authPage.url();
-      if (!currentUrl.includes('/admin/login')) {
-        break;
-      }
-      await authPage.waitForTimeout(pollInterval);
-      attempts++;
-    }
-
-    // Verify authenticated state
-    const finalUrl = authPage.url();
-    if (finalUrl.includes('/admin/login')) {
-      throw new Error(`Authentication failed: still on login page after ${attempts * pollInterval}ms at ${finalUrl}`);
-    }
-
-    // Wait for authenticated UI shell with longer timeout
-    await authPage.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {});
-    const hasSidebar = await authPage.locator('aside').isVisible({ timeout: 5000 }).catch(() => false);
-    const hasPageTitle = await authPage.locator('h1').isVisible({ timeout: 5000 }).catch(() => false);
-    if (!hasSidebar && !hasPageTitle) {
-      throw new Error(`Authentication verification failed: authenticated UI shell not found at ${finalUrl}`);
-    }
+    // Wait for authenticated UI shell
+    await authPage.locator('aside').waitFor({ state: 'visible', timeout: 5000 });
+    await authPage.getByRole('heading', { name: 'داشبورد مدیریت' })
+      .waitFor({ state: 'visible', timeout: 5000 });
 
     // Save authenticated session state
     const storageState = await authContext.storageState();
@@ -99,42 +91,18 @@ async function authenticateAndSaveState(browser) {
   }
 }
 
-function getFileSHA256(data) {
-  return createHash('sha256').update(data).digest('hex');
-}
-
-function getPNGDimensions(buffer) {
-  if (buffer.length < 24) return null;
-  const width = buffer.readUInt32BE(16);
-  const height = buffer.readUInt32BE(20);
-  return { width, height };
-}
-
 async function waitForRouteReady(page, route) {
-  // Wait for essential DOM and fonts to be ready
-  await page.evaluate(() => {
-    return Promise.all([
-      document.fonts.ready,
-      new Promise(resolve => {
-        if (document.readyState === 'complete') {
-          resolve();
-        } else {
-          document.addEventListener('load', resolve, { once: true });
-        }
-      })
-    ]);
-  });
+  // Wait for fonts and heading only - no arbitrary sleeps or networkidle
+  await page.evaluate(() => document.fonts.ready);
 
-  // Route-specific readiness assertions
   if (route.requiresHeading) {
-    await page.getByRole('heading', { name: new RegExp(route.requiresHeading, 'i') }).first().waitFor({ timeout: 5000 });
+    await page.getByRole('heading', { name: new RegExp(route.requiresHeading, 'i') })
+      .first()
+      .waitFor({ state: 'visible', timeout: 5000 });
   }
-
-  // Wait for any dynamic content to stabilize (dashboard widgets, lists, etc.)
-  await page.waitForLoadState('networkidle', { timeout: 5000 }).catch(() => {});
 }
 
-async function captureScreenshot(browser, route, viewportSize, storageState) {
+async function captureScreenshot(browser, route, viewportSize, storageState, outputDir) {
   const viewport = viewportSizes[viewportSize];
   const context = await browser.newContext({
     viewport,
@@ -144,33 +112,36 @@ async function captureScreenshot(browser, route, viewportSize, storageState) {
   const page = await context.newPage();
   const results = [];
   let hasError = false;
-
-  // Track all blocked/failed requests
   const blockedRequests = [];
-  const failedRequests = [];
+  const pageErrors = [];
+  const consoleErrors = [];
 
   // Route interception: block all external requests
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
     const isLocalhost = url.hostname === 'localhost' || url.hostname === '127.0.0.1';
-
     if (isLocalhost) {
       route.continue();
     } else {
-      blockedRequests.push({ url: url.href, hostname: url.hostname });
+      blockedRequests.push(url.hostname);
       route.abort('blockedbyclient');
     }
   });
 
-  // Track request failures (network errors, timeouts)
+  page.on('pageerror', err => {
+    pageErrors.push(`Page error: ${err.message}`);
+  });
+
   page.on('requestfailed', req => {
     const urlMatch = req.url().match(/https?:\/\/([^\/:?]+)/);
     const hostname = urlMatch ? urlMatch[1] : 'unknown';
-    failedRequests.push({
-      url: req.url(),
-      hostname,
-      error: req.failure()?.errorText
-    });
+    consoleErrors.push(`Request failed: ${hostname} (${req.failure()?.errorText})`);
+  });
+
+  page.on('console', msg => {
+    if (msg.type() === 'error') {
+      consoleErrors.push(`Console error: ${msg.text()}`);
+    }
   });
 
   try {
@@ -180,7 +151,7 @@ async function captureScreenshot(browser, route, viewportSize, storageState) {
       throw new Error(`Failed to load ${route.path}: HTTP ${response?.status()}`);
     }
 
-    // Wait for route-specific readiness
+    // Wait for route-specific readiness (fonts + heading)
     await waitForRouteReady(page, route);
 
     // Validate final URL
@@ -198,15 +169,17 @@ async function captureScreenshot(browser, route, viewportSize, storageState) {
       throw new Error(`Page error detected on ${route.path}`);
     }
 
-    // Record any blocked external requests (informational, not a failure)
-    if (blockedRequests.length > 0) {
-      console.log(`  ℹ Blocked ${blockedRequests.length} external request(s) (expected): ${blockedRequests.map(r => r.hostname).join(', ')}`);
+    // Check for captured errors
+    if (pageErrors.length > 0) {
+      throw new Error(`Page errors: ${pageErrors.join('; ')}`);
+    }
+    if (consoleErrors.length > 0) {
+      throw new Error(`Console/request errors: ${consoleErrors.join('; ')}`);
     }
 
-    // Failed requests that aren't blocked are a real error
-    if (failedRequests.length > 0) {
-      const failedHostnames = failedRequests.map(r => `${r.hostname} (${r.error})`).join('; ');
-      throw new Error(`Request failures on external hosts: ${failedHostnames}. Allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'EMPTY'}`);
+    // Blocked external requests are expected (logged only)
+    if (blockedRequests.length > 0) {
+      console.log(`  ℹ Blocked ${blockedRequests.length} external request(s): ${[...new Set(blockedRequests)].join(', ')}`);
     }
 
     // Capture viewport-sized screenshot
@@ -253,11 +226,16 @@ async function main() {
     launchOptions.executablePath = sandboxBrowser;
   }
 
+  // Determine output directory (temp for smoke tests, final for full run)
+  const finalOutputDir = outputDir;
+  const workingOutputDir = cliRoute ? join(tmpdir(), 'navracar-smoke-test') : finalOutputDir;
+  mkdirSync(workingOutputDir, { recursive: true });
+
   const browser = await chromium.launch(launchOptions);
   const allResults = [];
   let totalFailed = 0;
 
-  console.log(`\nCapturing screenshots to: ${outputDir}\n`);
+  console.log(`\nCapturing screenshots to: ${workingOutputDir}\n`);
 
   // Authenticate once and reuse session state
   let storageState;
@@ -267,13 +245,29 @@ async function main() {
     console.log('✓ Admin session authenticated and saved\n');
   } catch (err) {
     console.error(`✗ Authentication failed: ${err.message}`);
+    await browser.close();
     process.exit(1);
   }
 
-  // Capture each route
-  for (const route of routes) {
-    for (const size of route.sizes) {
-      const { results, hasError } = await captureScreenshot(browser, route, size, storageState);
+  // Determine routes to capture (CLI filtered or all)
+  const routesToCapture = cliRoute
+    ? routes.filter(r => r.name === cliRoute)
+    : routes;
+
+  if (cliRoute && routesToCapture.length === 0) {
+    console.error(`✗ Route '${cliRoute}' not found`);
+    process.exit(1);
+  }
+
+  // Capture routes
+  for (const route of routesToCapture) {
+    const sizesToCapture = cliViewport ? [parseInt(cliViewport)] : route.sizes;
+    for (const size of sizesToCapture) {
+      if (!route.sizes.includes(size)) {
+        console.error(`✗ Route ${route.name} does not support viewport ${size}`);
+        process.exit(1);
+      }
+      const { results, hasError } = await captureScreenshot(browser, route, size, storageState, workingOutputDir);
       if (hasError) {
         totalFailed++;
       } else {
@@ -285,8 +279,8 @@ async function main() {
   await browser.close();
 
   // Verify capture counts
-  const expectedViewportCount = routes.reduce((sum, r) => sum + r.sizes.length, 0);
-  const expectedFullPageCount = routes.reduce((sum, r) => sum + r.sizes.length, 0);
+  const expectedViewportCount = routesToCapture.reduce((sum, r) => sum + (cliViewport ? 1 : r.sizes.length), 0);
+  const expectedFullPageCount = routesToCapture.reduce((sum, r) => sum + (cliViewport ? 1 : r.sizes.length), 0);
   const totalExpected = expectedViewportCount + expectedFullPageCount;
   const totalCaptured = allResults.length;
 
