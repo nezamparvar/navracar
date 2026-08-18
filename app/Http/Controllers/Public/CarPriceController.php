@@ -126,6 +126,7 @@ class CarPriceController extends Controller
             'specs' => $specs,
             'freeRate' => $freeRate,
             'customsRate' => $customsRate,
+            'pricingTotals' => $carListing->pricingTotals($freeRate, $customsRate),
             'whatsappUae' => Setting::get(Setting::WHATSAPP_UAE),
             'whatsappIran' => Setting::get(Setting::WHATSAPP_IRAN),
             'brandLabel' => $brandLabel,
@@ -143,13 +144,37 @@ class CarPriceController extends Controller
         return Response::make($xml, 200, ['Content-Type' => 'application/xml']);
     }
 
+    private const SORT_OPTIONS = [
+        'newest' => 'جدیدترین',
+        'price_asc' => 'قیمت: کم به زیاد',
+        'price_desc' => 'قیمت: زیاد به کم',
+    ];
+
     /**
      * @param  array{0: string, 1?: mixed}  $canonicalRoute
      * @param  array<int, array{label: string, url: string}>  $breadcrumbs
      */
     private function renderIndex(Builder $query, string $title, string $heading, string $description, array $canonicalRoute, array $breadcrumbs)
     {
-        $listings = $query->with('images')->latest('published_at')->paginate(12)->withQueryString();
+        $q = (string) request()->string('q', '');
+        if ($q !== '') {
+            $query->where(function (Builder $w) use ($q) {
+                $w->where('title_fa', 'like', "%{$q}%")
+                    ->orWhere('make', 'like', "%{$q}%")
+                    ->orWhere('model', 'like', "%{$q}%")
+                    ->orWhere('slug', 'like', "%{$q}%");
+            });
+        }
+
+        $sort = request()->string('sort', 'newest')->value();
+        $sort = array_key_exists($sort, self::SORT_OPTIONS) ? $sort : 'newest';
+        match ($sort) {
+            'price_asc' => $query->orderBy('price_aed'),
+            'price_desc' => $query->orderByDesc('price_aed'),
+            default => $query->latest('published_at'),
+        };
+
+        $listings = $query->with('images')->paginate(12)->withQueryString();
 
         return view('public.car-prices.index', [
             'title' => $title,
@@ -161,6 +186,9 @@ class CarPriceController extends Controller
             'quickFilters' => $this->quickFilters(),
             'freeRate' => (float) Setting::get(Setting::FREE_RATE),
             'customsRate' => (float) Setting::get(Setting::CUSTOMS_RATE),
+            'searchQuery' => $q,
+            'sort' => $sort,
+            'sortOptions' => self::SORT_OPTIONS,
         ]);
     }
 

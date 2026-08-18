@@ -62,29 +62,30 @@
         <x-schema-breadcrumbs :items="$breadcrumbItems" />
     @endpush
 
-    <div class="mx-auto max-w-6xl px-4 py-8">
-        <nav class="mb-4 text-xs text-ink-500">
+    <div class="bg-v2-bg px-4 py-8">
+    <div class="mx-auto max-w-6xl">
+        <nav class="mb-4 text-xs text-v2-text-muted">
             @foreach ($breadcrumbItems as $i => $crumb)
                 @if ($i > 0)<span class="mx-1">/</span>@endif
                 @if ($i === count($breadcrumbItems) - 1)
-                    <span class="font-bold text-ink-800">{{ $crumb['label'] }}</span>
+                    <span class="font-bold text-v2-text">{{ $crumb['label'] }}</span>
                 @else
-                    <a href="{{ $crumb['url'] }}" class="hover:text-brand-700">{{ $crumb['label'] }}</a>
+                    <a href="{{ $crumb['url'] }}" class="hover:text-v2-primary">{{ $crumb['label'] }}</a>
                 @endif
             @endforeach
         </nav>
 
         @if($l->status !== 'published')
-            <div class="mb-4 rounded-xl bg-rose-100 px-4 py-2.5 text-xs font-bold text-rose-700">
+            <div class="mb-4 rounded-xl bg-v2-error/15 px-4 py-2.5 text-xs font-bold text-v2-error">
                 این صفحه هنوز منتشر نشده — فقط برای پیش‌نمایش ادمین قابل مشاهده است.
             </div>
         @endif
 
         <div class="grid grid-cols-1 gap-8 lg:grid-cols-2">
-            <div class="space-y-6">
+            <div class="space-y-5">
                 @if ($l->images->isNotEmpty())
                     <div x-data="carGallery" data-images='@json($l->images->map(fn($i) => $i->url())->values())' class="space-y-2">
-                        <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-ink-100">
+                        <div class="aspect-[4/3] overflow-hidden rounded-2xl bg-v2-surface">
                             <img :src="images[active]" alt="{{ $l->title_fa }}" class="h-full w-full object-cover">
                         </div>
                         @if ($l->images->count() > 1)
@@ -92,69 +93,92 @@
                                 <template x-for="(img, i) in images" :key="i">
                                     <button type="button" @click="active = i"
                                             class="h-16 w-20 shrink-0 overflow-hidden rounded-lg border-2"
-                                            :class="active === i ? 'border-amber-500' : 'border-transparent'">
+                                            :class="active === i ? 'border-v2-primary' : 'border-transparent'">
                                         <img :src="img" class="h-full w-full object-cover">
                                     </button>
                                 </template>
                             </div>
                         @endif
                     </div>
+                @else
+                    <div class="flex aspect-[4/3] items-center justify-center rounded-2xl bg-v2-surface text-v2-text-muted">
+                        <x-icon name="car" class="w-14 h-14" />
+                    </div>
                 @endif
 
-                <div>
-                    <h1 class="text-xl font-black text-ink-900 sm:text-2xl">{{ $l->title_fa }}</h1>
-                    <div class="mt-3 flex flex-wrap items-baseline gap-3">
-                        <span class="text-2xl font-black text-brand-700 num-font">{{ number_format((float) $l->price_aed) }} <span class="text-sm font-bold">درهم</span></span>
-                        <span class="text-sm text-ink-500 num-font">≈ {{ number_format($priceToman) }} تومان (نرخ روز)</span>
-                    </div>
-                    <div class="mt-3 flex flex-wrap gap-2">
-                        @if ($brandLabel)
-                            <a href="{{ route('public.car-prices.brand', $l->make) }}" class="rounded-full bg-brand-50 px-3 py-1.5 text-[11px] font-bold text-brand-700 hover:bg-brand-100 dark:bg-brand-500/10 dark:text-brand-300">
-                                {{ $brandLabel }}
-                            </a>
-                        @endif
-                        @if ($l->category_id)
-                            <a href="{{ route('public.car-prices.category', $l->category_id) }}" class="rounded-full bg-violet-50 px-3 py-1.5 text-[11px] font-bold text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:text-violet-300">
-                                {{ $l->categoryLabel() }}
-                            </a>
-                        @endif
-                        @if ($priceBracketId)
-                            <a href="{{ route('public.car-prices.price', $priceBracketId) }}" class="rounded-full bg-amber-50 px-3 py-1.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:text-amber-300">
-                                {{ $priceBracketLabel }}
-                            </a>
-                        @endif
-                    </div>
-                    <p class="mt-2 text-[11px] text-ink-400">
-                        منبع:
-                        <a href="{{ $l->source_url }}" target="_blank" rel="nofollow noopener" class="text-brand-600 hover:underline">دابیزل امارات</a>
-                        @if($l->posted_on_dubizzle) · تاریخ ثبت آگهی: {{ $l->posted_on_dubizzle }} @endif
-                    </p>
-                    @if($l->delivery_days)
-                        <div class="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-brand-50 px-3 py-1.5 text-xs font-bold text-brand-700 dark:bg-brand-500/10 dark:text-brand-300">
-                            <x-icon name="check-circle" class="w-4 h-4" />
-                            مدت زمان تحویل تخمینی: <span class="num-font">{{ $l->delivery_days }}</span> روز کاری
-                        </div>
-                    @endif
-                </div>
-
                 <div class="flex flex-wrap gap-3">
-                    <a href="{{ $waUae }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
-                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> مشاوره واتساپ (امارات)
+                    <a href="{{ route('public.lead-form') }}" class="inline-flex items-center gap-2 rounded-xl bg-v2-primary px-5 py-3 text-sm font-bold text-white shadow-glow-v2 hover:brightness-110">
+                        ثبت درخواست
                     </a>
-                    <a href="{{ $waIran }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-5 py-3 text-sm font-bold text-white shadow-soft hover:brightness-105">
-                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> مشاوره واتساپ (ایران)
+                    <a href="{{ route('public.calculator') }}" class="inline-flex items-center gap-2 rounded-xl border border-v2-border bg-v2-elevated px-5 py-3 text-sm font-bold text-v2-text hover:border-v2-primary">
+                        <x-icon name="calculator" class="w-4 h-4" /> محاسبه هزینه
+                    </a>
+                    <a href="{{ $waUae }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-xs font-bold text-white hover:brightness-105">
+                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> واتساپ (امارات)
+                    </a>
+                    <a href="{{ $waIran }}" target="_blank" class="inline-flex items-center gap-2 rounded-xl bg-[#25D366] px-4 py-3 text-xs font-bold text-white hover:brightness-105">
+                        <x-icon name="whatsapp-fill" class="w-4 h-4" /> واتساپ (ایران)
                     </a>
                 </div>
             </div>
 
-            <div>
+            <div class="space-y-5">
+                <div>
+                    <div class="flex items-start justify-between gap-3">
+                        <h1 class="text-xl font-black text-v2-text sm:text-2xl">{{ $l->title_fa }}</h1>
+                        @if ($brandLabel)
+                            <span class="shrink-0 rounded-full bg-v2-elevated px-3 py-1 text-[11px] font-bold text-v2-text-muted">{{ $brandLabel }}</span>
+                        @endif
+                    </div>
+
+                    @if (! empty($specs))
+                        <div class="mt-3 flex flex-wrap gap-1.5">
+                            @foreach (array_slice($specs, 0, 6) as $spec)
+                                <span class="rounded-md bg-v2-elevated px-2 py-1 text-[11px] font-bold text-v2-text-muted">{{ $spec['value'] }}</span>
+                            @endforeach
+                        </div>
+                    @endif
+
+                    <div class="mt-4 rounded-2xl border border-v2-border bg-v2-surface p-4">
+                        <div class="text-xs font-bold text-v2-text-muted">قیمت خودرو</div>
+                        <div class="mt-1 text-2xl font-black text-v2-text num-font">{{ number_format((float) $l->price_aed) }} <span class="text-sm font-bold text-v2-text-muted">درهم</span></div>
+                        <div class="mt-0.5 text-xs text-v2-text-muted num-font">≈ {{ number_format($priceToman) }} تومان (نرخ روز)</div>
+                    </div>
+
+                    <div class="mt-3 flex flex-wrap gap-2">
+                        @if ($l->category_id)
+                            <a href="{{ route('public.car-prices.category', $l->category_id) }}" class="rounded-full border border-v2-border bg-v2-elevated px-3 py-1.5 text-[11px] font-bold text-v2-text-muted hover:border-v2-primary hover:text-v2-text">
+                                {{ $l->categoryLabel() }}
+                            </a>
+                        @endif
+                        @if ($priceBracketId)
+                            <a href="{{ route('public.car-prices.price', $priceBracketId) }}" class="rounded-full border border-v2-border bg-v2-elevated px-3 py-1.5 text-[11px] font-bold text-v2-text-muted hover:border-v2-primary hover:text-v2-text">
+                                {{ $priceBracketLabel }}
+                            </a>
+                        @endif
+                    </div>
+
+                    @if($l->delivery_days)
+                        <div class="mt-3 inline-flex items-center gap-1.5 rounded-xl bg-v2-success/15 px-3 py-1.5 text-xs font-bold text-v2-success">
+                            <x-icon name="check-circle" class="w-4 h-4" />
+                            مدت زمان تحویل تخمینی: <span class="num-font">{{ $l->delivery_days }}</span> روز کاری
+                        </div>
+                    @endif
+
+                    <p class="mt-2 text-[11px] text-v2-text-muted">
+                        منبع:
+                        <a href="{{ $l->source_url }}" target="_blank" rel="nofollow noopener" class="text-v2-primary hover:underline">دابیزل امارات</a>
+                        @if($l->posted_on_dubizzle) · تاریخ ثبت آگهی: {{ $l->posted_on_dubizzle }} @endif
+                    </p>
+                </div>
+
                 @if (! empty($specs))
-                    <x-card title="مشخصات فنی" icon="list">
+                    <x-card variant="v2" title="مشخصات فنی" icon="list">
                         <dl class="grid grid-cols-1 gap-x-6 gap-y-3 sm:grid-cols-2">
                             @foreach ($specs as $spec)
-                                <div class="flex items-center justify-between border-b border-ink-100 pb-2 dark:border-white/5">
-                                    <dt class="text-xs font-bold text-ink-500">{{ $spec['label'] }}</dt>
-                                    <dd class="text-sm font-extrabold text-ink-900 dark:text-white">{{ $spec['value'] }}</dd>
+                                <div class="flex items-center justify-between border-b border-v2-border pb-2">
+                                    <dt class="text-xs font-bold text-v2-text-muted">{{ $spec['label'] }}</dt>
+                                    <dd class="text-sm font-extrabold text-v2-text">{{ $spec['value'] }}</dd>
                                 </div>
                             @endforeach
                         </dl>
@@ -163,10 +187,45 @@
             </div>
         </div>
 
+        {{--
+            Real 3-category summary only (DESIGN_SPEC.md §4): vehicle price / total customs
+            clearance costs / plate costs. Values come straight from
+            CarListing::pricingTotals() -> VehiclePricingService, the single source of the
+            formula — nothing here recomputes anything. The service-fee row is never read from
+            $pricingTotals for display, matching the existing breakdownForDisplay() precedent
+            (see QuoteRequest::breakdownForDisplay). The full interactive multi-field calculator
+            (x-car-calculator) is intentionally not embedded here — the reference and
+            DESIGN_SPEC.md §4 show only this summary plus the "محاسبه هزینه" secondary CTA to the
+            dedicated calculator page, which still owns the full interactive form.
+        --}}
         <div class="mt-8">
-            <x-card title="جدول محاسبه هزینه واردات" icon="calculator" subtitle="قیمت خودرو به‌صورت خودکار از قیمت درهم این آگهی پر شده — همه مقادیر قابل ویرایش هستند.">
-                <x-car-calculator :listing="$l" :free-rate="$freeRate" :customs-rate="$customsRate" />
+            <x-card variant="v2" title="خلاصه هزینه‌های واردات (تقریبی)" icon="calculator" subtitle="بر اساس نرخ ارز امروز؛ برای محاسبه دقیق‌تر یا تغییر مفروضات از «محاسبه هزینه» استفاده کنید.">
+                @php
+                    $costRows = [
+                        ['label' => 'قیمت خودرو', 'value' => $pricingTotals['realPriceToman'], 'color' => '#1677FF'],
+                        ['label' => 'جمع هزینه‌های ترخیص', 'value' => $pricingTotals['customsSubtotalToman'], 'color' => '#20C7E9'],
+                        ['label' => 'هزینه‌های پلاک', 'value' => $pricingTotals['plateSubtotalToman'], 'color' => '#8B5CF6'],
+                    ];
+                    $costTotal = max(1, array_sum(array_column($costRows, 'value')));
+                @endphp
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                    @foreach ($costRows as $row)
+                        @php $pct = round($row['value'] / $costTotal * 100); @endphp
+                        <div class="flex flex-col items-center rounded-xl bg-v2-bg p-4 text-center">
+                            <div class="relative flex h-20 w-20 items-center justify-center rounded-full"
+                                 style="background: conic-gradient({{ $row['color'] }} {{ $pct * 3.6 }}deg, #0A1B32 0deg)">
+                                <div class="flex h-14 w-14 items-center justify-center rounded-full bg-v2-surface text-sm font-black text-v2-text num-font">{{ $pct }}%</div>
+                            </div>
+                            <div class="mt-3 text-xs font-bold text-v2-text-muted">{{ $row['label'] }}</div>
+                            <div class="mt-1 text-sm font-black text-v2-text num-font">{{ number_format($row['value']) }} <span class="text-[11px] font-bold text-v2-text-muted">تومان</span></div>
+                        </div>
+                    @endforeach
+                </div>
+                <p class="mt-4 text-[11px] text-v2-text-muted">
+                    نرخ ارز: <span class="num-font">{{ number_format($freeRate) }}</span> تومان — آخرین به‌روزرسانی طبق تنظیمات نرخ ارز پنل مدیریت.
+                </p>
             </x-card>
         </div>
+    </div>
     </div>
 </x-layouts.public>

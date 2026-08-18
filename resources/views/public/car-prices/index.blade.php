@@ -38,12 +38,34 @@
         <p class="mt-2 max-w-2xl text-sm text-v2-text-muted">{{ $description }}</p>
 
         {{--
-            Only the filter dimensions that actually exist server-side (brand/category/price-bracket
-            routes) are rendered. The reference's free-text search + fuel-type/engine-volume/price-range
-            combinable filter bar needs new query-string filter support on CarPriceController — that's
-            real Phase 4 backend work, not a restyle, so it isn't faked here. See GAP_REPORT.md §7.
+            Real search (title/make/model/slug) and sort now exist server-side
+            (CarPriceController::renderIndex — q + sort query params, works on this page and on
+            the brand/category/price-bracket filtered variants via withQueryString()). Brand/
+            engine-category/price-bracket stay as the real routes that already existed; there is
+            still no combinable fuel-type/engine-volume/year filter — those columns don't exist
+            on CarListing at all, so they are not rendered as dead controls. See GAP_REPORT.md §7.
         --}}
-        <div class="mt-5 space-y-2.5">
+        <form method="GET" class="mt-5 flex flex-wrap items-center gap-2">
+            <label for="car-search" class="sr-only">جستجو بر اساس برند، مدل یا کد خودرو</label>
+            <div class="relative min-w-[220px] flex-1">
+                <x-icon name="search" class="pointer-events-none absolute inset-y-0 right-3 my-auto h-4 w-4 text-v2-text-muted" />
+                <input id="car-search" type="search" name="q" value="{{ $searchQuery }}" placeholder="جست‌وجو بر اساس برند، مدل یا کد خودرو"
+                       class="min-h-[44px] w-full rounded-xl border border-v2-border bg-v2-elevated py-2 pe-9 ps-3 text-sm text-v2-text placeholder:text-v2-text-muted focus:border-v2-primary focus:outline-none focus:ring-2 focus:ring-v2-primary/30">
+            </div>
+            <label for="car-sort" class="sr-only">مرتب‌سازی</label>
+            <select id="car-sort" name="sort" onchange="this.form.submit()"
+                    class="min-h-[44px] rounded-xl border border-v2-border bg-v2-elevated px-3 text-sm text-v2-text focus:border-v2-primary focus:outline-none">
+                @foreach ($sortOptions as $value => $label)
+                    <option value="{{ $value }}" @selected($sort === $value)>{{ $label }}</option>
+                @endforeach
+            </select>
+            <button type="submit" class="min-h-[44px] rounded-xl bg-v2-primary px-4 text-sm font-bold text-white hover:brightness-110">جست‌وجو</button>
+            @if ($searchQuery !== '' || $sort !== 'newest')
+                <a href="{{ url()->current() }}" class="text-xs font-bold text-v2-text-muted hover:text-v2-text">پاک کردن فیلترها</a>
+            @endif
+        </form>
+
+        <div class="mt-4 space-y-2.5">
             <div class="flex flex-wrap items-center gap-1.5">
                 <span class="text-[11px] font-bold text-v2-text-muted">برند:</span>
                 @foreach ($quickFilters['brands'] as $chip)

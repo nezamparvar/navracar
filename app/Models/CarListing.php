@@ -95,6 +95,16 @@ class CarListing extends Model
      */
     public function estimatedLandedCostToman(float $freeRate, float $customsRate): float
     {
+        return $this->pricingTotals($freeRate, $customsRate)['finalTotalToman'];
+    }
+
+    /**
+     * Full totals array from the central pricing service — used by public views that need the
+     * 3 allowed display categories (vehicle price / customs clearance total / plate costs)
+     * without duplicating any formula. The service is the only place the formula lives.
+     */
+    public function pricingTotals(float $freeRate, float $customsRate): array
+    {
         $settings = VehiclePricingSettings::current()->withExchangeRates($freeRate, $customsRate);
         $result = app(VehiclePricingService::class)->calculate(new VehiclePricingInput(
             realPriceAed: (float) $this->price_aed,
@@ -102,7 +112,7 @@ class CarListing extends Model
             categoryId: $this->category_id,
         ), $settings);
 
-        return $result->totals['finalTotalToman'];
+        return $result->totals;
     }
 
     public static function categoryCoef(string $categoryId): float

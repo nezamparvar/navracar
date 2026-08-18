@@ -31,6 +31,10 @@ if (seedE2e.status !== 0) {
     process.exit(seedE2e.status ?? 1);
 }
 
+// E2eSeeder attaches real cover images to demo listings; without this symlink
+// Storage::disk('public')->url() points at a path the dev server can't serve.
+spawnSync(php, ['artisan', 'storage:link'], { cwd: root, env, stdio: 'inherit' });
+
 const server = spawn(php, [
     '-S', '127.0.0.1:8000',
     path.resolve(root, 'vendor', 'laravel', 'framework', 'src', 'Illuminate', 'Foundation', 'resources', 'server.php'),

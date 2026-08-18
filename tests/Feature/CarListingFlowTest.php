@@ -75,9 +75,14 @@ class CarListingFlowTest extends TestCase
         $show->assertOk();
         $show->assertSee($listing->title_fa, false);
         $show->assertSee('113,000');
-        // The live rate is rendered client-side by Alpine (x-text), so the server HTML only carries
-        // it as JSON inside the x-data attribute — assert the admin-configured rate reached the page.
-        $show->assertSee('freeRate\\u0022:55000', false);
+        // The vehicle-detail page shows a server-rendered 3-category cost summary (not the
+        // interactive calculator) — assert the admin-configured rate reached the page via its
+        // "نرخ ارز" line, and that the summary carries live pricing-service totals rather than
+        // a hardcoded/stale figure.
+        $show->assertSee('55,000');
+        $show->assertSee('قیمت خودرو');
+        $show->assertSee('جمع هزینه‌های ترخیص');
+        $show->assertSee('هزینه‌های پلاک');
 
         $index = $this->get(route('public.car-prices.index'));
         $index->assertOk();
