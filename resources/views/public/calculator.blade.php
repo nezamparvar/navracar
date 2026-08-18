@@ -20,7 +20,7 @@
   --}}
   :root{
     --ink:#F8FAFC; --ink-soft:#9AAAC1; --bg:#020B18; --surface:#0A1B32; --surface-alt:#061426;
-    --border:#1A3554; --primary:#1677FF; --primary-dark:#0D3FA8; --primary-light:#5B9BFF;
+    --border:#1A3554; --primary:#1677FF; --primary-dark:#5B9BFF; --primary-light:#0D3FA8;
     {{--
         --amber/--amber-dark/--amber-light/--violet are repurposed here to the V2 primary
         blue / accent cyan (DESIGN_SPEC.md §2 keeps yellow/purple out of the primary visual
@@ -30,7 +30,7 @@
         (CTA buttons, emblems, badges, icon chips), not a warning state; real warning colors
         (.disclaimer-box, .vin-msg.warn) already use literal amber hex values, untouched here.
     --}}
-    --amber:#1677FF; --amber-dark:#0D3FA8; --amber-light:#5B9BFF; --violet:#20C7E9; --green:#22C55E;
+    --amber:#1677FF; --amber-dark:#5B9BFF; --amber-light:#0D3FA8; --violet:#20C7E9; --green:#22C55E;
     --dash-1:#061426; --dash-2:#0A1B32;
     --print-ink:#1A1730; --print-ink-soft:#6B6584; --print-surface:#FFFFFF; --print-surface-alt:#F1EDE6;
     --print-border:#E4DFD3; --print-primary:#2D2657; --print-primary-dark:#171433; --print-primary-light:#EDE9F7;
@@ -52,8 +52,8 @@
   .brand-text{min-width:0;}
   .brand-text .name{font-weight:900;font-size:1.3rem;letter-spacing:.3px;}
   .brand-text .tag{font-size:.78rem;color:#C9D6FF;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .print-btn{background:var(--amber);color:#fff;border:none;padding:11px 18px;border-radius:999px;font-family:inherit;font-weight:800;font-size:.88rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.2s transform,.2s background;flex-shrink:0;box-shadow:0 6px 16px -6px rgba(22,119,255,.5);}
-  .print-btn:hover{background:#3D8CFF;transform:translateY(-1px);}
+  .print-btn{background:var(--amber-light);color:#fff;border:none;padding:11px 18px;border-radius:999px;font-family:inherit;font-weight:800;font-size:.88rem;cursor:pointer;display:flex;align-items:center;gap:6px;transition:.2s transform,.2s background;flex-shrink:0;box-shadow:0 6px 16px -6px rgba(22,119,255,.5);}
+  .print-btn:hover{background:#0A2D7F;transform:translateY(-1px);}
   .print-btn svg{width:16px;height:16px;}
   .print-btn .lbl-full{display:inline;}
   @media(max-width:420px){.print-btn .lbl-full{display:none;}}

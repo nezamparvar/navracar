@@ -7,6 +7,8 @@ use App\Models\CalculationLog;
 use App\Models\CalendarEvent;
 use App\Models\CarListing;
 use App\Models\CarListingImage;
+use App\Models\HomeSlide;
+use App\Models\ImportQueueItem;
 use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
 use App\Models\VinCheck;
@@ -171,6 +173,51 @@ class E2eSeeder extends Seeder
         }
 
         VinCheck::create(['vin' => 'WBAJU7101M9E12345']);
+
+        // Content dashboard seed data: import queue and home slides for deterministic content dashboard
+        $importQueueStatuses = ['pending', 'captured', 'parsed', 'needs_review', 'ready', 'published'];
+        for ($i = 0; $i < 8; $i++) {
+            ImportQueueItem::create([
+                'user_id' => $sales->id,
+                'source' => 'dubizzle',
+                'source_platform' => 'web',
+                'capture_method' => 'link',
+                'source_url' => 'https://dubizzle.ae/motors/cars/'.$i,
+                'status' => $importQueueStatuses[$i % count($importQueueStatuses)],
+                'payload_json' => ['title' => 'Sample Car '.$i, 'price' => 100000 + ($i * 10000)],
+                'parsed_json' => ['make' => 'toyota', 'model' => 'camry', 'year' => 2024 - ($i % 3)],
+                'warnings_json' => [],
+                'confidence' => 0.85 + ($i * 0.01),
+                'error' => $i === 5 ? 'Network timeout' : null,
+                'published_listing_id' => $i % 2 === 0 ? ($i < 3 ? CarListing::where('slug', 'e2e-bmw-x4')->first()?->id : null) : null,
+                'images_imported' => $i % 2 === 0,
+                'created_at' => now()->subDays($i % 7)->addHours((9 + ($i * 2)) % 24)->setMinute(0)->setSecond(0),
+            ]);
+        }
+
+        // Home slides for carousel on public homepage
+        $homeSlideData = [
+            ['title' => 'محاسبه هزینه واردات', 'subtitle' => 'هزینه دقیق را محاسبه کنید', 'cta_label' => 'شروع کنید', 'cta_url' => '/calculator', 'sort_order' => 1],
+            ['title' => 'قیمت خودروها', 'subtitle' => 'فهرست خودروهای مجاز', 'cta_label' => 'مشاهده', 'cta_url' => '/car-prices', 'sort_order' => 2],
+            ['title' => 'ارتباط با متخصصین', 'subtitle' => 'مشاوره رایگان', 'cta_label' => 'تماس بگیرید', 'cta_url' => '/contact', 'sort_order' => 3],
+        ];
+        foreach ($homeSlideData as $slide) {
+            $imagePath = 'home-slides/slide-'.$slide['sort_order'].'.png';
+            if (! Storage::disk('public')->exists($imagePath)) {
+                Storage::disk('public')->put($imagePath, $this->placeholderImage($slide['title'], 'Slide', '#1677FF'));
+            }
+            HomeSlide::updateOrCreate(
+                ['sort_order' => $slide['sort_order']],
+                [
+                    'title' => $slide['title'],
+                    'subtitle' => $slide['subtitle'],
+                    'image_path' => $imagePath,
+                    'cta_label' => $slide['cta_label'],
+                    'cta_url' => $slide['cta_url'],
+                    'is_active' => true,
+                ]
+            );
+        }
 
         // Rich calendar events for day/week/list views: today + this week + next week, mixed statuses
         $requests = QuoteRequest::limit(10)->get();
