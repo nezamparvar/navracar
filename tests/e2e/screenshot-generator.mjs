@@ -1,7 +1,7 @@
 import { chromium } from '@playwright/test';
 import { createHash } from 'crypto';
 import { mkdirSync, writeFileSync, existsSync, rmSync } from 'fs';
-import { join } from 'path';
+import { join, basename } from 'path';
 import { tmpdir } from 'os';
 import { randomUUID } from 'crypto';
 import { execSync } from 'child_process';
@@ -584,10 +584,11 @@ async function main() {
 
   // Atomically swap staging directory with final directory (with recovery on failure)
   const finalOutputParent = join(finalOutputDir, '..');
-  const finalDirBasename = finalOutputDir.split('/').pop();
+  const finalDirBasename = basename(finalOutputDir);
   const backupDir = join(finalOutputParent, `.${finalDirBasename}-backup-${Date.now()}`);
 
   let promotionSuccessful = false;
+  let promotionError = null;
   try {
     // Backup existing final directory if it exists
     if (existsSync(finalOutputDir)) {
@@ -600,6 +601,7 @@ async function main() {
     promotionSuccessful = true;
     console.log(`✓ Atomic swap complete: ${stagingDir} → ${finalOutputDir}`);
   } catch (err) {
+    promotionError = err;
     // If promotion failed and we have a backup, try to restore it
     if (existsSync(backupDir)) {
       console.error(`✗ Promotion failed: ${err.message}`);
@@ -612,11 +614,12 @@ async function main() {
         // Restore the backup
         await fs.rename(backupDir, finalOutputDir);
         console.log(`✓ Successfully restored backup to ${finalOutputDir}`);
-        throw new Error(`Promotion failed and backup restored. Original error: ${err.message}`);
       } catch (restoreErr) {
         console.error(`✗ Failed to restore backup: ${restoreErr.message}`);
-        throw restoreErr;
+        throw new Error(`Backup restoration failed: ${restoreErr.message}. Original promotion error: ${err.message}`);
       }
+      // After successful restore, propagate the original promotion error
+      throw new Error(`Promotion failed and backup restored. Original error: ${err.message}`);
     } else {
       throw err;
     }

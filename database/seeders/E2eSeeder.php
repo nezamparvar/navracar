@@ -178,23 +178,24 @@ class E2eSeeder extends Seeder
         VinCheck::create(['vin' => 'WBAJU7101M9E12345']);
 
         // Content dashboard seed data: import queue with deterministic, varied records
+        // Multiple needs_review items to populate the review queue widget (controller filters by status='needs_review')
         $importQueueRecords = [
-            // pending: just captured, awaiting parsing
-            ['status' => 'pending', 'title' => 'BMW X5 2024', 'make' => 'bmw', 'model' => 'x5', 'year' => 2024, 'price' => 450000, 'mileage' => 0, 'engine' => 3.0, 'images' => 6, 'error' => null, 'day' => 0, 'hour' => 9],
-            // captured: raw data received
-            ['status' => 'captured', 'title' => 'Mercedes GLE 450', 'make' => 'mercedes', 'model' => 'gle', 'year' => 2023, 'price' => 380000, 'mileage' => 5000, 'engine' => 3.0, 'images' => 4, 'error' => null, 'day' => 1, 'hour' => 11],
-            // parsed: extracted but needs review
-            ['status' => 'parsed', 'title' => 'Lexus LX600', 'make' => 'lexus', 'model' => 'lx', 'year' => 2024, 'price' => 420000, 'mileage' => 100, 'engine' => 3.5, 'images' => 5, 'error' => null, 'day' => 2, 'hour' => 14],
-            // needs_review: confidence < threshold
+            // needs_review: confidence < threshold (multiple items for review queue widget)
+            ['status' => 'needs_review', 'title' => 'BMW X5 2024', 'make' => 'bmw', 'model' => 'x5', 'year' => 2024, 'price' => 450000, 'mileage' => 0, 'engine' => 3.0, 'images' => 6, 'error' => null, 'day' => 0, 'hour' => 9],
+            // needs_review: raw data received, needs QA verification
+            ['status' => 'needs_review', 'title' => 'Mercedes GLE 450', 'make' => 'mercedes', 'model' => 'gle', 'year' => 2023, 'price' => 380000, 'mileage' => 5000, 'engine' => 3.0, 'images' => 4, 'error' => null, 'day' => 1, 'hour' => 11],
+            // needs_review: partial data, awaiting verification
+            ['status' => 'needs_review', 'title' => 'Lexus LX600', 'make' => 'lexus', 'model' => 'lx', 'year' => 2024, 'price' => 420000, 'mileage' => 100, 'engine' => 3.5, 'images' => 5, 'error' => null, 'day' => 2, 'hour' => 14],
+            // needs_review: low confidence, flagged for manual review
             ['status' => 'needs_review', 'title' => 'Porsche Cayenne', 'make' => 'porsche', 'model' => 'cayenne', 'year' => 2022, 'price' => 390000, 'mileage' => 8000, 'engine' => 2.9, 'images' => 3, 'error' => null, 'day' => 3, 'hour' => 10],
-            // ready: parsed and confident, can be published
-            ['status' => 'ready', 'title' => 'Audi Q7 55', 'make' => 'audi', 'model' => 'q7', 'year' => 2023, 'price' => 350000, 'mileage' => 3000, 'engine' => 3.2, 'images' => 8, 'error' => null, 'day' => 4, 'hour' => 13],
-            // published: successfully converted to listing
-            ['status' => 'published', 'title' => 'Range Rover Sport', 'make' => 'range-rover', 'model' => 'sport', 'year' => 2023, 'price' => 360000, 'mileage' => 6000, 'engine' => 3.0, 'images' => 7, 'error' => null, 'day' => 5, 'hour' => 15],
-            // failed: image import failed
-            ['status' => 'failed', 'title' => 'Volvo XC90', 'make' => 'volvo', 'model' => 'xc90', 'year' => 2021, 'price' => 295000, 'mileage' => 12000, 'engine' => 2.0, 'images' => 0, 'error' => 'Image import timeout', 'day' => 6, 'hour' => 9],
-            // image_importing: in progress
-            ['status' => 'image_importing', 'title' => 'Tesla Model X', 'make' => 'tesla', 'model' => 'model-x', 'year' => 2024, 'price' => 500000, 'mileage' => 50, 'engine' => null, 'images' => 2, 'error' => null, 'day' => 0, 'hour' => 16],
+            // needs_review: high-value import awaiting approval
+            ['status' => 'needs_review', 'title' => 'Audi Q7 55', 'make' => 'audi', 'model' => 'q7', 'year' => 2023, 'price' => 350000, 'mileage' => 3000, 'engine' => 3.2, 'images' => 8, 'error' => null, 'day' => 4, 'hour' => 13],
+            // needs_review: premium listing in review
+            ['status' => 'needs_review', 'title' => 'Range Rover Sport', 'make' => 'range-rover', 'model' => 'sport', 'year' => 2023, 'price' => 360000, 'mileage' => 6000, 'engine' => 3.0, 'images' => 7, 'error' => null, 'day' => 5, 'hour' => 15],
+            // needs_review: image quality verification pending
+            ['status' => 'needs_review', 'title' => 'Volvo XC90', 'make' => 'volvo', 'model' => 'xc90', 'year' => 2021, 'price' => 295000, 'mileage' => 12000, 'engine' => 2.0, 'images' => 5, 'error' => null, 'day' => 6, 'hour' => 9],
+            // needs_review: recent capture awaiting processing
+            ['status' => 'needs_review', 'title' => 'Tesla Model X', 'make' => 'tesla', 'model' => 'model-x', 'year' => 2024, 'price' => 500000, 'mileage' => 50, 'engine' => null, 'images' => 2, 'error' => null, 'day' => 0, 'hour' => 16],
         ];
 
         foreach ($importQueueRecords as $idx => $record) {
@@ -361,6 +362,9 @@ class E2eSeeder extends Seeder
      * Attaches a small multi-shot gallery (front / side / rear / interior) per listing, not just
      * a single cover image, so the real thumbnail-gallery UI on the vehicle-detail page has
      * something to actually render (see docs/design-v2 remediation notes).
+     *
+     * Uses design-derived vehicle images extracted from the approved design reference commit
+     * (1cdab114920cdc2431f983a1c1ea9efb88e26f82) instead of GD-generated silhouettes.
      */
     private function attachGallery(CarListing $listing, string $label, string $color): void
     {
@@ -369,7 +373,42 @@ class E2eSeeder extends Seeder
         }
 
         $angles = ['Front', 'Side', 'Rear', 'Interior'];
+        static $vehicleImageIndex = 0;
 
+        // Try to use extracted design-derived vehicle images first
+        $designVehicles = glob(storage_path('app/public/e2e/design-derived-vehicles/vehicle-*.png'));
+        if (empty($designVehicles)) {
+            // Fallback to GD generation if extracted images not available
+            $this->attachGalleryWithPlaceholders($listing, $label, $color, $angles);
+            return;
+        }
+
+        // Use extracted images in round-robin fashion across the 8 demo listings
+        $vehicleImagePath = $designVehicles[$vehicleImageIndex % count($designVehicles)];
+        $vehicleImageIndex++;
+        $vehicleContent = file_get_contents($vehicleImagePath);
+
+        foreach ($angles as $i => $angle) {
+            $path = 'car-listings-demo/'.$listing->slug.'-'.$i.'.png';
+            if (! Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->put($path, $vehicleContent);
+            }
+
+            CarListingImage::create([
+                'car_listing_id' => $listing->id,
+                'local_path' => $path,
+                'source_url' => 'https://example.test/'.$listing->slug.'-'.$i.'.png',
+                'sort_order' => $i,
+                'is_cover' => $i === 0,
+            ]);
+        }
+    }
+
+    /**
+     * Fallback gallery generation using GD silhouettes when design-derived images unavailable.
+     */
+    private function attachGalleryWithPlaceholders(CarListing $listing, string $label, string $color, array $angles): void
+    {
         foreach ($angles as $i => $angle) {
             $path = 'car-listings-demo/'.$listing->slug.'-'.$i.'.png';
             if (! Storage::disk('public')->exists($path)) {
