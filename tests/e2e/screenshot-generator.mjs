@@ -4,25 +4,28 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 
 const baseURL = 'http://127.0.0.1:8000';
-const outputDir = join(process.cwd(), 'docs/design-v2/implementation/screenshots/round5-remediation');
+const outputDir = join(process.cwd(), 'docs/design-v2/implementation/screenshots/round6-visual-parity');
 mkdirSync(outputDir, { recursive: true });
 
+// Batch 1 acceptance: Strict documented allowlist of external hosts expected to load.
+// Certificate errors only allowed from these exact hosts; unknown hosts always fail.
+// Localhost/127.0.0.1 cert errors ALWAYS fail (no exception).
+const EXTERNAL_HOST_ALLOWLIST = [
+  // No external hosts currently required for Batch 1 priority routes.
+  // This list must remain finite and explicitly documented.
+  // Add hosts ONLY with explicit business justification + PR review.
+];
+
+// Batch 1 Priority Routes (visual parity matrix) — 6 routes × 2 sizes × 2 viewport types = 24 screenshots
 const routes = [
-  // Public routes
+  // Public routes (no auth required)
   { path: '/', name: 'homepage', auth: false, sizes: [390, 1440] },
   { path: '/car-prices', name: 'vehicle-list', auth: false, sizes: [390, 1440] },
   { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, sizes: [390, 1440] },
   { path: '/calculator', name: 'calculator', auth: false, sizes: [390, 1440] },
-  { path: '/lead-form', name: 'lead-form', auth: false, sizes: [390, 1440] },
-  { path: '/track/1?phone=09120000000', name: 'request-tracking', auth: false, sizes: [390, 1440] },
-  // Admin routes (need login)
+  // Admin routes (require login)
   { path: '/admin', name: 'admin-dashboard', auth: true, sizes: [390, 1440] },
   { path: '/admin/sales-dashboard', name: 'sales-dashboard', auth: true, sizes: [390, 1440] },
-  { path: '/admin/content-dashboard', name: 'content-dashboard', auth: true, sizes: [390, 1440] },
-  { path: '/admin/calendar?view=day', name: 'calendar-day', auth: true, sizes: [390, 1440] },
-  { path: '/admin/calendar?view=week', name: 'calendar-week', auth: true, sizes: [390, 1440] },
-  { path: '/admin/calendar?view=list', name: 'calendar-list', auth: true, sizes: [390, 1440] },
-  { path: '/admin/kanban', name: 'kanban', auth: true, sizes: [390, 1440] },
 ];
 
 const viewportSizes = {
@@ -107,15 +110,25 @@ async function captureScreenshot(browser, route, viewportSize) {
       throw new Error(`Console errors: ${filteredConsoleErrors.join('; ')}`);
     }
 
-    // Allow request failures that are just cert errors on external resources
+    // Batch 1 enforcement: only allow cert errors from explicitly allowlisted external hosts.
+    // Localhost/127.0.0.1 cert errors always fail. Unknown hosts always fail.
     const filteredRequestFailures = requestFailures.filter(f => {
-      if (f.includes('ERR_CERT_AUTHORITY_INVALID') && !f.includes('127.0.0.1') && !f.includes('localhost')) {
-        return false; // Allow external resource cert errors
+      // Cert error from localhost/127.0.0.1 always fails (these should work).
+      if ((f.includes('127.0.0.1') || f.includes('localhost')) && f.includes('ERR_CERT_AUTHORITY_INVALID')) {
+        return true; // Reject (fail the screenshot).
       }
-      return true; // Reject all other failures
+      // Cert error from allowlisted external host is acceptable.
+      if (f.includes('ERR_CERT_AUTHORITY_INVALID')) {
+        const hostMatches = EXTERNAL_HOST_ALLOWLIST.some(host => f.includes(host));
+        if (hostMatches) {
+          return false; // Allow (don't reject).
+        }
+      }
+      // All other failures rejected (non-cert errors, or cert errors from unknown hosts).
+      return true;
     });
     if (filteredRequestFailures.length > 0) {
-      throw new Error(`Request failures: ${filteredRequestFailures.join('; ')}`);
+      throw new Error(`Request failures (cert errors only allowed from allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'NONE'}): ${filteredRequestFailures.join('; ')}`);
     }
 
     // Capture viewport-sized screenshot
