@@ -9,8 +9,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     setupAuthListeners();
   } else {
     showAuthenticatedState();
-    await checkCurrentPage();
     setupAuthenticatedListeners();
+    await checkCurrentPage();
   }
 });
 
@@ -71,8 +71,8 @@ async function connectToNavraCar() {
     document.getElementById('auth-error').classList.remove('show');
 
     showAuthenticatedState();
-    await checkCurrentPage();
     setupAuthenticatedListeners();
+    await checkCurrentPage();
   } catch (error) {
     showAuthError('خطا در اتصال: ' + error.message);
   } finally {
@@ -191,16 +191,47 @@ function checkMissingFields(capture) {
 }
 
 function setupAuthenticatedListeners() {
-  document.getElementById('send-btn').addEventListener('click', sendCapture);
-  document.getElementById('preview-btn').addEventListener('click', showFullPreview);
-  document.getElementById('settings-btn').addEventListener('click', showSettings);
-  document.getElementById('disconnect-btn').addEventListener('click', disconnect);
-  document.getElementById('back-btn').addEventListener('click', hideSettings);
-  document.getElementById('clear-history-btn').addEventListener('click', clearHistory);
-  document.getElementById('batch-btn').addEventListener('click', showBatchCapture);
-  document.getElementById('batch-back-btn').addEventListener('click', hideBatchCapture);
-  document.getElementById('batch-cancel-btn').addEventListener('click', hideBatchCapture);
-  document.getElementById('batch-send-btn').addEventListener('click', sendBatchCapture);
+  const listeners = [
+    ['send-btn', sendCapture],
+    ['preview-btn', showFullPreview],
+    ['settings-btn', showSettings],
+    ['disconnect-btn', disconnect],
+    ['back-btn', hideSettings],
+    ['clear-history-btn', clearHistory],
+    ['batch-btn', showBatchCapture],
+    ['batch-back-btn', hideBatchCapture],
+    ['batch-cancel-btn', hideBatchCapture],
+    ['batch-send-btn', sendBatchCapture],
+  ];
+
+  listeners.forEach(([id, handler]) => {
+    const element = document.getElementById(id);
+    if (!element || element.dataset.navraListenerBound === 'true') return;
+    element.addEventListener('click', handler);
+    element.dataset.navraListenerBound = 'true';
+  });
+}
+
+function sendRuntimeMessage(message, timeoutMs = 15000) {
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      reject(new Error('Message timeout'));
+    }, timeoutMs);
+
+    chrome.runtime.sendMessage(message, (response) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message || 'Extension message failed'));
+        return;
+      }
+      resolve(response);
+    });
+  });
 }
 
 async function sendCapture() {
@@ -210,10 +241,9 @@ async function sendCapture() {
   btn.classList.add('loading');
 
   try {
-    const response = await new Promise((resolve) => {
-      chrome.runtime.sendMessage({ action: 'sendCaptureToNavraCar', payload: currentCapture }, (response) => {
-        resolve(response);
-      });
+    const response = await sendRuntimeMessage({
+      action: 'sendCaptureToNavraCar',
+      payload: currentCapture,
     });
 
     if (response?.status === 'success' && response.data?.queue_item_id && response.data?.review_url) {
@@ -230,9 +260,19 @@ async function sendCapture() {
 }
 
 function showFullPreview() {
-  if (!currentCapture) return;
-  // This would open a new tab with full preview
-  console.log('Full preview:', currentCapture);
+  if (!currentCapture) {
+    alert('اطلاعات آگهی هنوز آماده نشده است؛ چند لحظه بعد دوباره تلاش کنید.');
+    return;
+  }
+
+  const vehicle = currentCapture.vehicle || {};
+  alert([
+    vehicle.title || 'بدون عنوان',
+    `${vehicle.make || '-'} / ${vehicle.model || '-'}`,
+    `سال: ${vehicle.year || '-'}`,
+    `قیمت: ${vehicle.price_aed ? Number(vehicle.price_aed).toLocaleString() + ' AED' : '-'}`,
+    `تصاویر: ${(currentCapture.images || []).length}`,
+  ].join('\n'));
 }
 
 function showSettings() {

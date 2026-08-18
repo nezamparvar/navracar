@@ -240,6 +240,46 @@ const Extractors = {
     return slugMatch ? slugMatch[1] : null;
   },
 
+  extractDubizzleNextDataImages(listingId) {
+    if (!listingId) return [];
+
+    const script = document.getElementById('__NEXT_DATA__');
+    if (!script?.textContent) return [];
+
+    try {
+      const root = JSON.parse(script.textContent);
+      const normalizedListingId = String(listingId).toLowerCase();
+      const results = [];
+      const seenNodes = new Set();
+      const photoUrl = (photo) => {
+        if (typeof photo === 'string') return photo;
+        if (!photo || typeof photo !== 'object') return null;
+        return photo.url || photo.src || photo.image_url || photo.imageUrl || null;
+      };
+
+      const visit = (node) => {
+        if (!node || typeof node !== 'object' || seenNodes.has(node)) return;
+        seenNodes.add(node);
+
+        const nodeId = node.uuid || node.id || node.listing_id || node.listingId;
+        if (nodeId && String(nodeId).toLowerCase() === normalizedListingId) {
+          const photos = Array.isArray(node.photos)
+            ? node.photos
+            : (Array.isArray(node.photos_combined) ? node.photos_combined : []);
+          photos.map(photoUrl).filter(Boolean).forEach((url) => results.push(url));
+        }
+
+        Object.values(node).forEach(visit);
+      };
+
+      visit(root);
+      return [...new Set(results)];
+    } catch (error) {
+      console.error('[Navra Capture] Invalid Dubizzle __NEXT_DATA__:', error);
+      return [];
+    }
+  },
+
   extractImages(source, listingId = null, preferredImages = []) {
     const images = [];
     const seen = new Set();
@@ -411,7 +451,10 @@ function captureDubizzle() {
     captured_at: new Date().toISOString(),
     page_title: document.title,
     vehicle,
-    images: Extractors.extractImages('dubizzle', listingId, Extractors.extractSchemaImages(jsonLd)).map((url) => ({ url, confidence: 'high' })),
+    images: Extractors.extractImages('dubizzle', listingId, [
+      ...Extractors.extractDubizzleNextDataImages(listingId),
+      ...Extractors.extractSchemaImages(jsonLd),
+    ]).map((url) => ({ url, confidence: 'high' })),
     diagnostics: generateDiagnostics(vehicle),
   };
 

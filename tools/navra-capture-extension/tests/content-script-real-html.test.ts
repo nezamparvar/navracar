@@ -63,6 +63,52 @@ describe('content script extraction from supplied marketplace HTML structures', 
     ]);
   });
 
+  it('extracts every image for the current Dubizzle listing from __NEXT_DATA__ only', () => {
+    const listingId = 'c2aebb1222834b9ba34735033d2da5cd';
+    const currentImages = Array.from(
+      { length: 6 },
+      (_, index) => `https://dbz-images.dubizzle.com/images/current-${index + 1}.jpg`,
+    );
+
+    document.head.innerHTML = `
+      <script type="application/ld+json">
+        {"@type":"Vehicle","name":"2024 Mazda 3","image":"${currentImages[0]}"}
+      </script>
+      <script id="__NEXT_DATA__" type="application/json">
+        ${JSON.stringify({
+          props: {
+            pageProps: {
+              actions: [
+                {
+                  type: 'listings/detailRequest/fulfilled',
+                  payload: { listing: { uuid: listingId, photos: currentImages } },
+                },
+                {
+                  type: 'recommendations/fulfilled',
+                  payload: {
+                    listing: {
+                      uuid: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+                      photos: ['https://dbz-images.dubizzle.com/images/other-listing.jpg'],
+                    },
+                  },
+                },
+              ],
+            },
+          },
+        })}
+      </script>`;
+    document.body.innerHTML = `<img data-testid="dpv-view-main-image" src="${currentImages[0]}">`;
+    window.history.replaceState({}, '', `/motors/used-cars/mazda/3/2024/8/17/car-${listingId}/`);
+
+    const { captureDubizzle } = loadContentScript();
+    const payload = captureDubizzle();
+
+    expect(payload.images.map((image: { url: string }) => image.url)).toEqual(currentImages);
+    expect(payload.images.map((image: { url: string }) => image.url)).not.toContain(
+      'https://dbz-images.dubizzle.com/images/other-listing.jpg',
+    );
+  });
+
   it('extracts the DubiCars vehicle from its @graph when data-field elements are absent', () => {
     document.head.innerHTML = `
       <script type="application/ld+json">
