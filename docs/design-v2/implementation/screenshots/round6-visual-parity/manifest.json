@@ -1,0 +1,32 @@
+{
+  "batch": "Round 6 Batch 1 Priority Routes",
+  "timestamp": "2026-08-18T21:04:01Z",
+  "total_screenshots": 24,
+  "routes": 6,
+  "screenshots": [
+    {"file": "admin-dashboard-full-1440w.png", "sha256": "59a84062f47cc154f12eba74bb46781d8c7ed50aff6401f39c606b563b6d42bd", "size_bytes": 302294},
+    {"file": "admin-dashboard-full-390w.png", "sha256": "284ab3b22ee7e9980027c66fa502221b3b8b76d2a5e76209f0194692324afb4b", "size_bytes": 240808},
+    {"file": "admin-dashboard-viewport-1440x900.png", "sha256": "f08eb9f1c5ae7de930c25c6df9e9ec363c731d0ff3fbc6db33358cd332598da3", "size_bytes": 116750},
+    {"file": "admin-dashboard-viewport-390x844.png", "sha256": "41f6ca70de8f30171029d5d3d35739c8c35ab8db74ce5eed8995dc2a7ca907df", "size_bytes": 50149},
+    {"file": "calculator-full-1440w.png", "sha256": "244726d3877efe034f5190db065ef560e989751f3656be3048b06c89a171cdd8", "size_bytes": 372420},
+    {"file": "calculator-full-390w.png", "sha256": "d9502415837739033a97a6c1756cdf34fb98380ce2a0badefea201142c1572ff", "size_bytes": 238925},
+    {"file": "calculator-viewport-1440x900.png", "sha256": "692062a995f1f788c7b3b6506150bd75f6b9cc2561b818baabc9050d7b9efcf4", "size_bytes": 309391},
+    {"file": "calculator-viewport-390x844.png", "sha256": "a42a02f0fd973ee6b36b9bfbcb04c856a76ef47588585c77855965cad38e181b", "size_bytes": 164606},
+    {"file": "homepage-full-1440w.png", "sha256": "2688d5bc82417b74b4fe7518b5165b479c24eb8a3405adccb95e986f39351c1f", "size_bytes": 468831},
+    {"file": "homepage-full-390w.png", "sha256": "73848a2abad044afa4f821eb49f6f603fc52c579f8d0643d01b33bc1ae180d74", "size_bytes": 204832},
+    {"file": "homepage-viewport-1440x900.png", "sha256": "9c5c0f9939452768bb402d1a05232d39e8b63f87afc6efbe1c4f1b41247524e9", "size_bytes": 327439},
+    {"file": "homepage-viewport-390x844.png", "sha256": "2f039a616c317f57badf4cbc181e85f2fa5510fb6b4a154551296b035be58ead", "size_bytes": 91093},
+    {"file": "sales-dashboard-full-1440w.png", "sha256": "5d53e2a9db73208f468f51f897967076fb22389d391e93d65140c86344377c01", "size_bytes": 261064},
+    {"file": "sales-dashboard-full-390w.png", "sha256": "a84c4f24d3ed7af120305dd797c1d54efd56e6c0a9b0ddbadc5787468e47a856", "size_bytes": 66696},
+    {"file": "sales-dashboard-viewport-1440x900.png", "sha256": "5d53e2a9db73208f468f51f897967076fb22389d391e93d65140c86344377c01", "size_bytes": 261064},
+    {"file": "sales-dashboard-viewport-390x844.png", "sha256": "a84c4f24d3ed7af120305dd797c1d54efd56e6c0a9b0ddbadc5787468e47a856", "size_bytes": 66696},
+    {"file": "vehicle-detail-full-1440w.png", "sha256": "6575e9fddaa49aaaf373b417675aab78fee1d8690616d7d9031108dccea6b0ee", "size_bytes": 151085},
+    {"file": "vehicle-detail-full-390w.png", "sha256": "0924fa92b77f1b62231a376eabdb382fda28db748adadb5cbef0f762f3dbf6f8", "size_bytes": 128057},
+    {"file": "vehicle-detail-viewport-1440x900.png", "sha256": "4151428b2c8c616217c26a1e8935d26cc723991f011b2a22129556cfe13987ca", "size_bytes": 102075},
+    {"file": "vehicle-detail-viewport-390x844.png", "sha256": "0b03dff203f7a9a113a8c555fa56de73a790e7d61fe7579031277a3d22422fd2", "size_bytes": 53275},
+    {"file": "vehicle-list-full-1440w.png", "sha256": "26746c7249b6ba3d47447001056077edb3ae8e8631c48309750394a8f595427d", "size_bytes": 153088},
+    {"file": "vehicle-list-full-390w.png", "sha256": "48cee017219f2e1e83c5ab56c139813a7791b52d53022cd19f168a0565c0472b", "size_bytes": 128126},
+    {"file": "vehicle-list-viewport-1440x900.png", "sha256": "6785599095e51814d1f4e93b7aeea4b4257d8e25c53d71b5f4a5e1a621907b2c", "size_bytes": 124876},
+    {"file": "vehicle-list-viewport-390x844.png", "sha256": "51f0bcacb1fcf0ab83664c0a3bf6d281db8287766b22b2f337eb89032aa41875", "size_bytes": 73208}
+  ]
+}
