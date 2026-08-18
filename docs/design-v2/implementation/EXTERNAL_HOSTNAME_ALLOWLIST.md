@@ -16,19 +16,25 @@ This enforcement:
 3. **Maintains determinism** — fixtures and screenshots are reproducible with known inputs, no hidden external state
 4. **Supports evidence audits** — reviewers can verify that locked-reference screenshots were generated without unauthorized external integrations
 
-## Allowlist
+## Allowlist (Batch 1)
 
-Currently: **Empty** (no external resources expected for Batch 1 priority routes).
+**Status: EMPTY** — No external resources permitted for Batch 1 priority routes.
 
-If a route requires an external resource (e.g., a CDN, API, third-party embed), add the hostname here with:
-- **Host:** exact domain (e.g., `cdn.example.com`)
-- **Justification:** why this host is required
-- **PR:** link to the PR that approved the dependency
-- **Cert Status:** is cert error expected/acceptable on this host?
+**Why empty?** Batch 1 establishes deterministic, reproducible evidence. External dependencies introduce:
+- Network variability (DNS, cert, timeout failures)
+- CDN state (versioning, cached versions)
+- Transient errors (429 rate-limiting)
 
-| Host | Justification | Approved PR | Notes |
-|------|---------------|------------|-------|
-| *(none)* | Batch 1 uses only local resources | — | If a Batch 1 route loads external resources, screenshot generation will fail with a clear error message. |
+**Solution:** Self-host or use system fonts. Any external dependency requires:
+1. Explicit business justification
+2. Evidence that self-hosting is not possible
+3. Documented fallback behavior
+4. Separate commit to this allowlist
+5. PR review + sign-off before adding to Batch 1 evidence
+
+| Host | Justification | Approved PR | Status |
+|------|---------------|------------|--------|
+| *(none)* | Empty for Batch 1 | — | Self-host or system fonts only |
 
 ## Enforcement Rules
 

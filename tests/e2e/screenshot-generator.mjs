@@ -7,24 +7,27 @@ const baseURL = 'http://127.0.0.1:8000';
 const outputDir = join(process.cwd(), 'docs/design-v2/implementation/screenshots/round6-visual-parity');
 mkdirSync(outputDir, { recursive: true });
 
-// Batch 1 acceptance: Strict documented allowlist of external hosts expected to load.
-// Certificate errors only allowed from these exact hosts; unknown hosts always fail.
-// Localhost/127.0.0.1 cert errors ALWAYS fail (no exception).
+// Batch 1 acceptance: Strict documented allowlist of external hosts.
+// Currently EMPTY: all external resources must be self-hosted or unavailable.
+// No bypasses, no generalized suppression. Certificate or DNS errors from ANY host fail immediately.
+// Localhost/127.0.0.1 errors ALWAYS fail.
 const EXTERNAL_HOST_ALLOWLIST = [
-  'fonts.googleapis.com',  // Persian font loading (Vazirmatn) — needed for RTL rendering parity
-  'fonts.gstatic.com',     // Font delivery — paired with googleapis.com
+  // EMPTY FOR BATCH 1: No external dependencies expected.
+  // Add hostnames ONLY with explicit business justification + audit trail in docs/design-v2/implementation/EXTERNAL_HOSTNAME_ALLOWLIST.md
 ];
 
-// Batch 1 Priority Routes (visual parity matrix) — 6 routes × 2 sizes × 2 viewport types = 24 screenshots
+// Batch 1 Required Priority Routes (8 routes × 2 sizes × 2 viewport types = 32 screenshots)
 const routes = [
   // Public routes (no auth required)
-  { path: '/', name: 'homepage', auth: false, sizes: [390, 1440] },
-  { path: '/car-prices', name: 'vehicle-list', auth: false, sizes: [390, 1440] },
-  { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, sizes: [390, 1440] },
-  { path: '/calculator', name: 'calculator', auth: false, sizes: [390, 1440] },
-  // Admin routes (require login)
-  { path: '/admin', name: 'admin-dashboard', auth: true, sizes: [390, 1440] },
-  { path: '/admin/sales-dashboard', name: 'sales-dashboard', auth: true, sizes: [390, 1440] },
+  { path: '/car-prices', name: 'vehicle-list', auth: false, sizes: [390, 1440], requiresHeading: 'لیست قیمت ها' },
+  { path: '/car-prices/e2e-bmw-x4', name: 'vehicle-detail', auth: false, sizes: [390, 1440], requiresHeading: 'e2e-bmw-x4' },
+  // Admin routes (require strict authentication)
+  { path: '/admin', name: 'admin-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد مدیریت', requiresUrl: /^https?:\/\/[^\/]+\/admin($|\?)/ },
+  { path: '/admin/sales-dashboard', name: 'sales-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد فروش', requiresUrl: /^https?:\/\/[^\/]+\/admin\/sales-dashboard/ },
+  { path: '/admin/content-dashboard', name: 'content-dashboard', auth: true, sizes: [390, 1440], requiresHeading: 'داشبورد محتوا', requiresUrl: /^https?:\/\/[^\/]+\/admin\/content-dashboard/ },
+  { path: '/admin/calendar?view=day', name: 'calendar-day', auth: true, sizes: [390, 1440], requiresHeading: 'تقویم', requiresUrl: /^https?:\/\/[^\/]+\/admin\/calendar.*view=day/ },
+  { path: '/admin/calendar?view=week', name: 'calendar-week', auth: true, sizes: [390, 1440], requiresHeading: 'تقویم', requiresUrl: /^https?:\/\/[^\/]+\/admin\/calendar.*view=week/ },
+  { path: '/admin/calendar?view=list', name: 'calendar-list', auth: true, sizes: [390, 1440], requiresHeading: 'تقویم', requiresUrl: /^https?:\/\/[^\/]+\/admin\/calendar.*view=list/ },
 ];
 
 const viewportSizes = {
@@ -38,12 +41,20 @@ async function loginAdmin(page) {
   await page.locator('input[name="password"]').fill('password');
   const submitButton = page.locator('button[type="submit"]');
   await submitButton.click({ timeout: 5000 });
-  // Wait for navigation or timeout after 15 seconds
-  try {
-    await page.waitForURL(/\/admin($|\?)/, { timeout: 15000 });
-  } catch (e) {
-    // If login times out, continue anyway (page might still render)
-    console.log('  (login timeout, continuing with unauthenticated access)');
+
+  // Enforce strict authentication: must reach /admin, not stay on /admin/login
+  await page.waitForURL(/^https?:\/\/[^\/]+\/admin($|\?)/, { timeout: 15000 });
+
+  // Verify we're not on the login page
+  const currentUrl = page.url();
+  if (currentUrl.includes('/admin/login')) {
+    throw new Error(`Authentication failed: still on login page at ${currentUrl}`);
+  }
+
+  // Verify authenticated shell is present (sidebar, user menu, etc.)
+  const hasAuthenticatedUI = await page.locator('[data-authenticated="true"], .admin-sidebar, .user-menu').first().isVisible({ timeout: 5000 }).catch(() => false);
+  if (!hasAuthenticatedUI) {
+    throw new Error(`Authentication verification failed: authenticated UI shell not found at ${currentUrl}`);
   }
 }
 
@@ -75,11 +86,15 @@ async function captureScreenshot(browser, route, viewportSize) {
   });
 
   page.on('requestfailed', req => {
-    // Ignore 429 rate-limit errors (temporary transient state)
-    if (req.failure()?.errorText?.includes('429')) {
-      return;
-    }
-    requestFailures.push(`Request failed: ${req.url()} (${req.failure()?.errorText})`);
+    // All request failures recorded with hostname for audit
+    const urlMatch = req.url().match(/https?:\/\/([^\/:?]+)/);
+    const hostname = urlMatch ? urlMatch[1] : 'unknown';
+    requestFailures.push({
+      url: req.url(),
+      hostname,
+      error: req.failure()?.errorText,
+      string: `Request failed: ${req.url()} [${hostname}] (${req.failure()?.errorText})`
+    });
   });
 
   page.on('console', msg => {
@@ -98,6 +113,27 @@ async function captureScreenshot(browser, route, viewportSize) {
       throw new Error(`Failed to load ${route.path}: HTTP ${response?.status()}`);
     }
 
+    // Validate final URL matches expected authenticated route (no login redirect)
+    const finalUrl = page.url();
+    if (route.requiresUrl && !route.requiresUrl.test(finalUrl)) {
+      throw new Error(`Route URL mismatch: expected ${route.requiresUrl}, got ${finalUrl}`);
+    }
+    if (route.auth && finalUrl.includes('/admin/login')) {
+      throw new Error(`Authentication redirect detected: ended up at login page for ${route.name}`);
+    }
+
+    // Validate route-specific heading/landmark is present
+    if (route.requiresHeading) {
+      const headingFound = await page.getByRole('heading', { name: new RegExp(route.requiresHeading, 'i') }).first().isVisible({ timeout: 5000 }).catch(() => false);
+      if (!headingFound) {
+        // Fallback: check page text for the heading
+        const pageText = await page.evaluate(() => document.body.innerText);
+        if (!pageText.includes(route.requiresHeading)) {
+          throw new Error(`Route validation failed: heading "${route.requiresHeading}" not found on ${route.name}`);
+        }
+      }
+    }
+
     // Verify page loaded properly
     const bodyText = await page.evaluate(() => document.body?.innerText ?? '');
     if (bodyText.includes('Whoops') || bodyText.includes('exception') || bodyText.includes('ERR_CONNECTION')) {
@@ -110,46 +146,61 @@ async function captureScreenshot(browser, route, viewportSize) {
     }
     // Allow certificate errors only from resource loading (proxy-level cert issues).
     // Reject only real page/JS errors that would affect rendering.
+    // Strict error enforcement: no bypasses for generic failures
+    // Only allow errors from explicitly allowlisted hosts
     const filteredConsoleErrors = consoleErrors.filter(e => {
-      // Allow "Failed to load resource" errors from external resources (cert + DNS issues in sandbox)
       if (e.includes('Failed to load resource')) {
-        // Allow DNS/cert failures on non-localhost external resources
-        if (e.includes('ERR_NAME_NOT_RESOLVED') || e.includes('ERR_CERT_AUTHORITY_INVALID')) {
-          if (!e.includes('127.0.0.1') && !e.includes('localhost')) {
-            return false;  // Suppress external resource errors
+        // Parse the error to extract hostname
+        const urlMatch = e.match(/https?:\/\/([^\/:?]+)/);
+        const hostname = urlMatch ? urlMatch[1] : null;
+
+        // Reject localhost/127.0.0.1 failures (app server should work)
+        if (hostname && (hostname === 'localhost' || hostname === '127.0.0.1' || hostname.startsWith('127.'))) {
+          return true; // Fail on localhost errors
+        }
+
+        // Check if hostname is in allowlist
+        if (hostname && EXTERNAL_HOST_ALLOWLIST.includes(hostname)) {
+          // Only cert errors are allowed from allowlisted hosts
+          if (e.includes('ERR_CERT_AUTHORITY_INVALID')) {
+            return false; // Suppress cert errors only from allowlisted hosts
           }
         }
-        // Allow transient rate-limit errors (429)
-        if (e.includes('429')) {
-          return false;
-        }
+
+        // All other errors rejected: unknown host, DNS failure, 429, etc.
+        return true;
       }
-      // Reject actual JS errors or page execution errors
-      return true;
+      return true; // All other errors rejected
     });
     if (filteredConsoleErrors.length > 0) {
-      throw new Error(`Console errors: ${filteredConsoleErrors.join('; ')}`);
+      throw new Error(`External resource errors (allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'EMPTY'}): ${filteredConsoleErrors.join('; ')}`);
     }
 
-    // Batch 1 enforcement: only allow cert errors from explicitly allowlisted external hosts.
-    // Localhost/127.0.0.1 cert errors always fail. Unknown hosts always fail.
-    const filteredRequestFailures = requestFailures.filter(f => {
-      // Cert error from localhost/127.0.0.1 always fails (these should work).
-      if ((f.includes('127.0.0.1') || f.includes('localhost')) && f.includes('ERR_CERT_AUTHORITY_INVALID')) {
-        return true; // Reject (fail the screenshot).
+    // Batch 1 strict enforcement: all request failures reject (no allowlist bypass).
+    // Request failures are only suppressed if host is in allowlist AND error is cert-only.
+    const failedRequests = [];
+    for (const f of requestFailures) {
+      const ignoredRequest = {
+        url: f.url,
+        hostname: f.hostname,
+        error: f.error,
+        isAllowlisted: f.hostname && EXTERNAL_HOST_ALLOWLIST.includes(f.hostname),
+        isCertError: f.error && f.error.includes('CERT')
+      };
+
+      // Reject all non-allowlisted hosts
+      if (!ignoredRequest.isAllowlisted) {
+        failedRequests.push(f.string);
       }
-      // Cert error from allowlisted external host is acceptable.
-      if (f.includes('ERR_CERT_AUTHORITY_INVALID')) {
-        const hostMatches = EXTERNAL_HOST_ALLOWLIST.some(host => f.includes(host));
-        if (hostMatches) {
-          return false; // Allow (don't reject).
-        }
+      // Reject non-cert errors even from allowlisted hosts
+      else if (!ignoredRequest.isCertError) {
+        failedRequests.push(f.string);
       }
-      // All other failures rejected (non-cert errors, or cert errors from unknown hosts).
-      return true;
-    });
-    if (filteredRequestFailures.length > 0) {
-      throw new Error(`Request failures (cert errors only allowed from allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'NONE'}): ${filteredRequestFailures.join('; ')}`);
+      // Otherwise: allowlisted + cert-only = suppressed (allowed)
+    }
+
+    if (failedRequests.length > 0) {
+      throw new Error(`Request failures (allowlist: ${EXTERNAL_HOST_ALLOWLIST.join(', ') || 'EMPTY'}): ${failedRequests.join('; ')}`);
     }
 
     // Capture viewport-sized screenshot

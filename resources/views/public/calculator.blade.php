@@ -11,7 +11,8 @@
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>ناوراکار | محاسبه‌گر هزینه واردات خودرو</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap');
+/* Batch 1: External fonts disabled for deterministic screenshot evidence */
+/* @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800;900&display=swap'); */
   {{--
       NavraCar V2 design tokens (docs/design-v2/DESIGN_SPEC.md §2), mapped onto this page's
       existing CSS custom properties — visual re-skin only, no markup/logic changes. The
