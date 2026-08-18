@@ -838,7 +838,7 @@ function selectCategoryById(id){
   document.querySelectorAll('.cat-btn').forEach(b=>b.classList.remove('active'));
   catButtons[id].classList.add('active');
   renderCatConfirm();
-  calc();
+  return calc();
 }
 
 function renderCatConfirm(){
@@ -1458,6 +1458,8 @@ let lastPricingResult = null;
 let calculationSequence = 0;
 
 async function calc(){
+  clearTimeout(calculationTimer);
+  calculationTimer = null;
   const sequence = ++calculationSequence;
   const pricing = {
     real_price_aed: getPriceAED('realPriceAED'),
