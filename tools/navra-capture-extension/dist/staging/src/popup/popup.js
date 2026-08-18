@@ -246,7 +246,6 @@ async function sendCapture() {
   const btn = document.getElementById('send-btn');
   sendInProgress = true;
   btn.classList.add('loading');
-  btn.disabled = true;
 
   try {
     const response = await sendRuntimeMessage({
@@ -265,7 +264,6 @@ async function sendCapture() {
   } finally {
     sendInProgress = false;
     btn.classList.remove('loading');
-    btn.disabled = false;
   }
 }
 

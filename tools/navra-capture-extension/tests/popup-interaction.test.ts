@@ -77,4 +77,16 @@ describe('popup interaction resilience', () => {
 
     expect(sendMessage).toHaveBeenCalledTimes(1);
   });
+
+  it('keeps popup actions enabled while a send operation is pending', () => {
+    const popup = loadPopup(jest.fn());
+    popup.setCurrentCapture({ vehicle: { title: 'Mazda 3' }, images: [] });
+    popup.setupAuthenticatedListeners();
+
+    document.getElementById('send-btn')!.click();
+
+    expect((document.getElementById('send-btn') as HTMLButtonElement).disabled).toBe(false);
+    expect((document.getElementById('preview-btn') as HTMLButtonElement).disabled).toBe(false);
+    expect((document.getElementById('settings-btn') as HTMLButtonElement).disabled).toBe(false);
+  });
 });
