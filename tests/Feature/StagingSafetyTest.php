@@ -22,13 +22,16 @@ class StagingSafetyTest extends TestCase
         $this->assertStringContainsString('android.permission.POST_NOTIFICATIONS', $manifest);
     }
 
-    public function test_staging_candidate_can_use_an_exact_green_branch_head_without_unlocking_production(): void
+    public function test_staging_candidate_requires_the_exact_green_main_head_without_unlocking_production(): void
     {
         $stagingWorkflow = file_get_contents(base_path('.github/workflows/cpanel-staging.yml'));
         $promotionWorkflow = file_get_contents(base_path('.github/workflows/cpanel-promote.yml'));
 
-        $this->assertStringContainsString('SOURCE_REF: ${{ github.ref_name }}', $stagingWorkflow);
-        $this->assertStringContainsString('[[ "$INPUT_COMMIT" == "$BRANCH_HEAD" ]]', $stagingWorkflow);
+        $this->assertStringContainsString("if: github.ref == 'refs/heads/main'", $stagingWorkflow);
+        $this->assertStringContainsString('SOURCE_REF: main', $stagingWorkflow);
+        $this->assertStringContainsString('refs/heads/main:refs/remotes/origin/main', $stagingWorkflow);
+        $this->assertStringContainsString('[[ "$INPUT_COMMIT" == "$MAIN_HEAD" ]]', $stagingWorkflow);
+        $this->assertStringNotContainsString('SOURCE_REF: ${{ github.ref_name }}', $stagingWorkflow);
         $this->assertStringContainsString('ref: ${{ needs.verify-source.outputs.source_commit }}', $stagingWorkflow);
         $this->assertStringContainsString("if: github.ref == 'refs/heads/main'", $promotionWorkflow);
         $this->assertStringContainsString('Release tag does not identify the supplied source commit.', $promotionWorkflow);
