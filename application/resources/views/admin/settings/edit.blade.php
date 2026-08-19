@@ -3,7 +3,7 @@
         @csrf
 
         @if ($errors->any())
-            <div class="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+            <div class="rounded-xl border border-v2-error/30 bg-v2-error/15 p-4 text-sm text-v2-error">
                 <div class="font-extrabold">لطفاً خطاهای تنظیمات را اصلاح کنید.</div>
                 <ul class="mt-2 list-inside list-disc space-y-1">
                     @foreach ($errors->all() as $error)
@@ -32,27 +32,27 @@
             ];
         @endphp
 
-        <x-card title="درصدهای گمرکی، شماره‌گذاری و کارمزد" icon="target"
+        <x-card variant="v2" title="درصدهای گمرکی، شماره‌گذاری و کارمزد" icon="target"
                 subtitle="تمام درصدهای فعال موتور قیمت‌گذاری از این بخش خوانده می‌شوند و بلافاصله روی محاسبات جدید اثر دارند.">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 @foreach ($percentageFields as $key => [$label, $description])
                     <div>
-                        <label class="mb-1 block text-xs font-bold text-ink-500">{{ $label }} (درصد)</label>
+                        <label class="mb-1 block text-xs font-bold text-v2-text-muted">{{ $label }} (درصد)</label>
                         <input type="number" step="0.001" min="0" max="500"
                                name="pricing_percentages[{{ $key }}]"
                                value="{{ old('pricing_percentages.'.$key, $pricingSettings['percentages'][$key]) }}" required
-                               class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                        <p class="mt-1 text-[11px] text-ink-400">{{ $description }}</p>
+                               class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                        <p class="mt-1 text-[11px] text-v2-text-muted">{{ $description }}</p>
                     </div>
                 @endforeach
             </div>
         </x-card>
 
-        <x-card title="جدول تعداد گواهی اسقاط" icon="target"
+        <x-card variant="v2" title="جدول تعداد گواهی اسقاط" icon="target"
                 subtitle="مرز آستانه در حالت مساوی داخل ستون «تا آستانه» باقی می‌ماند.">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="bg-ink-50 text-ink-500 dark:bg-white/5">
+                    <thead class="bg-v2-elevated text-v2-text-muted">
                         <tr>
                             <th class="p-2.5 text-right">رتبه انرژی</th>
                             <th class="p-2.5 text-right">تا و مساوی آستانه (تعداد گواهی)</th>
@@ -61,14 +61,14 @@
                     </thead>
                     <tbody>
                         @foreach (['ab' => 'AB', 'cd' => 'CD', 'efg' => 'EFG'] as $tier => $tierLabel)
-                            <tr class="border-t border-ink-100 dark:border-white/5">
+                            <tr class="border-t border-v2-border">
                                 <td class="p-2.5 font-bold">{{ $tierLabel }}</td>
                                 @foreach (['upto', 'above'] as $bracket)
                                     <td class="p-2.5">
                                         <input type="number" step="1" min="0" max="100"
                                                name="scrap_counts[{{ $tier }}][{{ $bracket }}]"
                                                value="{{ old('scrap_counts.'.$tier.'.'.$bracket, $pricingSettings['scrapCertificateCounts'][$tier][$bracket]) }}" required
-                                               class="w-28 rounded-lg border border-ink-200 bg-ink-50 px-2 py-1.5 num-font dark:border-white/10 dark:bg-white/5">
+                                               class="w-28 rounded-lg border border-v2-border bg-v2-elevated px-2 py-1.5 text-v2-text num-font">
                                     </td>
                                 @endforeach
                             </tr>
@@ -78,112 +78,112 @@
             </div>
         </x-card>
 
-        <x-card title="نرخ ارز" icon="target" class="max-w-lg">
+        <x-card variant="v2" title="نرخ ارز" icon="target" class="max-w-lg">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">نرخ ارز آزاد (تومان به ازای هر درهم)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">نرخ ارز آزاد (تومان به ازای هر درهم)</label>
                     <input type="number" step="1" name="free_rate" value="{{ old('free_rate', $freeRate) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">همین عدد به‌عنوان «نرخ درهم امروز» به مشتری در صفحات قیمت خودروها نمایش داده می‌شود.</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">همین عدد به‌عنوان «نرخ درهم امروز» به مشتری در صفحات قیمت خودروها نمایش داده می‌شود.</p>
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">نرخ ارز گمرک (تومان به ازای هر درهم)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">نرخ ارز گمرک (تومان به ازای هر درهم)</label>
                     <input type="number" step="1" name="customs_rate" value="{{ old('customs_rate', $customsRate) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">درصد کاهش پیشنهادی ارزش گمرکی</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">درصد کاهش پیشنهادی ارزش گمرکی</label>
                     <input type="number" step="0.1" min="0" max="100" name="customs_value_discount_percent" value="{{ old('customs_value_discount_percent', $customsValueDiscountPercent) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">فقط برای پیشنهاد اولیه استفاده می‌شود و کاربر می‌تواند ارزش گمرکی را دستی تغییر دهد.</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">فقط برای پیشنهاد اولیه استفاده می‌شود و کاربر می‌تواند ارزش گمرکی را دستی تغییر دهد.</p>
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">نرخ تبدیل دلار به درهم</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">نرخ تبدیل دلار به درهم</label>
                     <input type="number" step="0.0001" name="usd_to_aed_rate" value="{{ old('usd_to_aed_rate', $usdToAedRate) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">برای کاربرانی که قیمت خودرو را به دلار می‌دانند نه درهم — در محاسبه‌گر و صفحهٔ آگهی قابل انتخاب است.</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">برای کاربرانی که قیمت خودرو را به دلار می‌دانند نه درهم — در محاسبه‌گر و صفحهٔ آگهی قابل انتخاب است.</p>
                 </div>
             </div>
         </x-card>
 
-        <x-card title="تنظیمات وام و اقساط" icon="target"
+        <x-card variant="v2" title="تنظیمات وام و اقساط" icon="target"
                 subtitle="برای نمایش جدول اقساط در صفحهٔ محاسبهٔ هزینهٔ هر آگهی خودرو.">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">حداکثر مبلغ وام (تومان)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">حداکثر مبلغ وام (تومان)</label>
                     <input type="number" step="1" name="loan_max_amount_toman" value="{{ old('loan_max_amount_toman', $loanMaxAmountToman) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">مدت‌های بازپرداخت (سال)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">مدت‌های بازپرداخت (سال)</label>
                     <input type="text" dir="ltr" name="loan_term_years" value="{{ old('loan_term_years', $loanTermYears) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">چند مدت را با کاما جدا بنویسید، مثلاً <span class="num-font">2,3,5</span> — برای هر مدت یک ردیف قسط جداگانه به مشتری نمایش داده می‌شود.</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">چند مدت را با کاما جدا بنویسید، مثلاً <span class="num-font">2,3,5</span> — برای هر مدت یک ردیف قسط جداگانه به مشتری نمایش داده می‌شود.</p>
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">نرخ بهره سالانه (٪)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">نرخ بهره سالانه (٪)</label>
                     <input type="number" step="0.1" name="loan_interest_rate_percent" value="{{ old('loan_interest_rate_percent', $loanInterestRatePercent) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
                 </div>
             </div>
         </x-card>
 
-        <x-card title="هزینه‌های ثابت موتور محاسبات" icon="target"
+        <x-card variant="v2" title="هزینه‌های ثابت موتور محاسبات" icon="target"
                 subtitle="این مقادیر در همه محاسبات عمومی و پیش‌فاکتورها مستقیماً از تنظیمات سرور خوانده می‌شوند و برای مشتری قابل تغییر نیستند.">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">هزینه صدور مجوزها (درهم)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">هزینه صدور مجوزها (درهم)</label>
                     <input type="number" step="1" name="license_fee_aed" value="{{ old('license_fee_aed', $licenseFeeAed) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">حمل دریایی (درهم)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">حمل دریایی (درهم)</label>
                     <input type="number" step="1" name="sea_freight_aed" value="{{ old('sea_freight_aed', $seaFreightAed) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">هزینه‌های دیگر (درهم)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">هزینه‌های دیگر (درهم)</label>
                     <input type="number" step="1" name="other_costs_aed" value="{{ old('other_costs_aed', $otherCostsAed) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">هزینه‌های سایر خدمات یا هزینه‌های جانبی (صفر = بدون هزینه اضافی)</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">هزینه‌های سایر خدمات یا هزینه‌های جانبی (صفر = بدون هزینه اضافی)</p>
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">انبارداری و دموراژ (تومان)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">انبارداری و دموراژ (تومان)</label>
                     <input type="number" step="1" name="storage_toman" value="{{ old('storage_toman', $storageToman) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">مدت زمان تحویل پیش‌فرض (روز کاری)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">مدت زمان تحویل پیش‌فرض (روز کاری)</label>
                     <input type="number" step="1" name="default_delivery_days" value="{{ old('default_delivery_days', $defaultDeliveryDays) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">هنگام ثبت آگهی جدید از دابیزل استفاده می‌شود؛ برای هر آگهی هم قابل تغییر دستی است.</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">هنگام ثبت آگهی جدید از دابیزل استفاده می‌شود؛ برای هر آگهی هم قابل تغییر دستی است.</p>
                 </div>
             </div>
         </x-card>
 
-        <x-card title="گواهی اسقاط خودرو فرسوده" icon="target"
+        <x-card variant="v2" title="گواهی اسقاط خودرو فرسوده" icon="target"
                 subtitle="محاسبه بر اساس رتبه انرژی، آستانه قیمت و جدول تعداد گواهی انجام می‌شود؛ نرخ خرید، آستانه و تعدادها همگی از همین صفحه مدیریت می‌شوند.">
             <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">نرخ خرید هر گواهی اسقاط (تومان)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">نرخ خرید هر گواهی اسقاط (تومان)</label>
                     <input type="number" step="1" name="scrap_cert_price_toman" value="{{ old('scrap_cert_price_toman', $scrapCertPriceToman) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">نرخ روز بازار گواهی اسقاط — حتماً بررسی و به‌روز نگه دارید.</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">نرخ روز بازار گواهی اسقاط — حتماً بررسی و به‌روز نگه دارید.</p>
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">آستانه قیمت گمرکی خودرو (درهم)</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">آستانه قیمت گمرکی خودرو (درهم)</label>
                     <input type="number" step="1" name="scrap_threshold_aed" value="{{ old('scrap_threshold_aed', $scrapThresholdAed) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
-                    <p class="mt-1 text-[11px] text-ink-400">معادل آستانه ۱۵ هزار یورو آیین‌نامه (سواری) — بر اساس نرخ روز یورو/درهم تنظیم کنید.</p>
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text num-font">
+                    <p class="mt-1 text-[11px] text-v2-text-muted">معادل آستانه ۱۵ هزار یورو آیین‌نامه (سواری) — بر اساس نرخ روز یورو/درهم تنظیم کنید.</p>
                 </div>
             </div>
         </x-card>
 
-        <x-card title="دسته‌بندی و تعرفه گمرکی خودرو" icon="car"
+        <x-card variant="v2" title="دسته‌بندی و تعرفه گمرکی خودرو" icon="car"
                 subtitle="عوارض گمرکی بر اساس تعرفه (٪ از ارزش گمرکی) و رتبه انرژی هر دسته (برای محاسبه تعداد گواهی اسقاط) — مستقیم روی جدول هزینه هر خودرو اثر می‌گذارد.">
             <div class="overflow-x-auto">
                 <table class="w-full text-xs sm:text-sm">
-                    <thead class="bg-ink-50 text-ink-500 dark:bg-white/5 dark:text-ink-400">
+                    <thead class="bg-v2-elevated text-v2-text-muted">
                         <tr>
                             <th class="p-2.5 text-right">دسته خودرو</th>
                             <th class="p-2.5 text-right">عوارض گمرکی بر اساس تعرفه (٪)</th>
@@ -192,15 +192,15 @@
                     </thead>
                     <tbody>
                         @foreach ($categories as $id => $cat)
-                            <tr class="border-t border-ink-100 dark:border-white/5">
+                            <tr class="border-t border-v2-border">
                                 <td class="p-2.5 font-semibold">{{ $cat['label'] }}</td>
                                 <td class="p-2.5">
                                     <input type="number" step="0.01" name="tariff_percent[{{ $id }}]"
                                            value="{{ old('tariff_percent.'.$id, $cat['coef'] * 100) }}"
-                                           class="w-24 rounded-lg border border-ink-200 bg-ink-50 px-2 py-1.5 text-sm num-font dark:border-white/10 dark:bg-white/5">
+                                           class="w-24 rounded-lg border border-v2-border bg-v2-elevated px-2 py-1.5 text-sm text-v2-text num-font">
                                 </td>
                                 <td class="p-2.5">
-                                    <select name="scrap_tier[{{ $id }}]" class="rounded-lg border border-ink-200 bg-ink-50 px-2 py-1.5 text-sm dark:border-white/10 dark:bg-white/5">
+                                    <select name="scrap_tier[{{ $id }}]" class="rounded-lg border border-v2-border bg-v2-elevated px-2 py-1.5 text-sm text-v2-text">
                                         <option value="ab" @selected(old('scrap_tier.'.$id, $cat['tier']) === 'ab')>(ای) و (بی) — بهترین</option>
                                         <option value="cd" @selected(old('scrap_tier.'.$id, $cat['tier']) === 'cd')>(سی) و (دی) — میانی</option>
                                         <option value="efg" @selected(old('scrap_tier.'.$id, $cat['tier']) === 'efg')>(ای)،(اف) و (جی) — ضعیف‌ترین</option>
@@ -213,55 +213,55 @@
             </div>
         </x-card>
 
-        <x-card title="شماره‌های تماس سایت" icon="target" class="max-w-lg"
+        <x-card variant="v2" title="شماره‌های تماس سایت" icon="target" class="max-w-lg"
                 subtitle="در صفحه هر آگهی خودرو، صفحه اصلی محاسبه‌گر و فاکتورهای چاپی استفاده می‌شود.">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">شماره واتساپ امارات</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">شماره واتساپ امارات</label>
                     <input type="text" dir="ltr" name="whatsapp_uae_number" value="{{ old('whatsapp_uae_number', $whatsappUae) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-left text-v2-text num-font">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">شماره واتساپ / موبایل ایران</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">شماره واتساپ / موبایل ایران</label>
                     <input type="text" dir="ltr" name="whatsapp_iran_number" value="{{ old('whatsapp_iran_number', $whatsappIran) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-left text-v2-text num-font">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">تلفن دفتر تهران</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">تلفن دفتر تهران</label>
                     <input type="text" dir="ltr" name="tehran_office_phone" value="{{ old('tehran_office_phone', $tehranOfficePhone) }}" required
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left num-font dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-left text-v2-text num-font">
                 </div>
             </div>
         </x-card>
 
-        <x-card title="ربات‌های انتشار محتوا (تلگرام و بله)" icon="message" class="max-w-lg"
+        <x-card variant="v2" title="ربات‌های انتشار محتوا (تلگرام و بله)" icon="message" class="max-w-lg"
                 subtitle="برای ساخت ربات: در تلگرام با @BotFather و در بله با @BaleBotFather یک ربات بسازید، آن را ادمین کانال خود کنید، و توکن + شناسه کانال (مثلاً @channel یا chat id عددی) را اینجا وارد کنید.">
             <div class="space-y-4">
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">توکن ربات تلگرام</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">توکن ربات تلگرام</label>
                     <input type="text" dir="ltr" name="telegram_bot_token" value="{{ old('telegram_bot_token', $telegramBotToken) }}"
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-left text-v2-text">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">شناسه کانال تلگرام</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">شناسه کانال تلگرام</label>
                     <input type="text" dir="ltr" name="telegram_chat_id" value="{{ old('telegram_chat_id', $telegramChatId) }}" placeholder="@my_channel"
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-left text-v2-text">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">توکن ربات بله</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">توکن ربات بله</label>
                     <input type="text" dir="ltr" name="bale_bot_token" value="{{ old('bale_bot_token', $baleBotToken) }}"
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-left text-v2-text">
                 </div>
                 <div>
-                    <label class="mb-1 block text-xs font-bold text-ink-500">شناسه کانال بله</label>
+                    <label class="mb-1 block text-xs font-bold text-v2-text-muted">شناسه کانال بله</label>
                     <input type="text" dir="ltr" name="bale_chat_id" value="{{ old('bale_chat_id', $baleChatId) }}"
-                           class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm text-left dark:border-white/10 dark:bg-white/5">
+                           class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-left text-v2-text">
                 </div>
-                <p class="text-[11px] text-ink-400">واتساپ API رایگان و رسمی برای ارسال خودکار ندارد؛ دکمه واتساپ در صفحه هر آگهی/مطلب فقط متن آماده را در واتساپ باز می‌کند تا عکس را دستی پیوست و ارسال کنید.</p>
+                <p class="text-[11px] text-v2-text-muted">واتساپ API رایگان و رسمی برای ارسال خودکار ندارد؛ دکمه واتساپ در صفحه هر آگهی/مطلب فقط متن آماده را در واتساپ باز می‌کند تا عکس را دستی پیوست و ارسال کنید.</p>
             </div>
         </x-card>
 
-        <x-button type="submit" variant="amber" size="lg">
+        <x-button type="submit" variant="v2-primary" size="lg">
             <x-icon name="check" class="w-4 h-4" /> ذخیره همه تنظیمات
         </x-button>
     </form>

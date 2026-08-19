@@ -1,33 +1,33 @@
 <?php
 
 use App\Http\Controllers\Admin\ActivityLogController;
-use App\Http\Controllers\Admin\BrowserCaptureController;
 use App\Http\Controllers\Admin\CalculationLogController;
+use App\Http\Controllers\Admin\CalendarController;
 use App\Http\Controllers\Admin\CarListingController;
+use App\Http\Controllers\Admin\ContentDashboardController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\ExtensionPairingController;
 use App\Http\Controllers\Admin\HomeSlideController;
-use App\Http\Controllers\Admin\ImportQueueController;
 use App\Http\Controllers\Admin\InvoiceController;
+use App\Http\Controllers\Admin\ImportQueueController;
 use App\Http\Controllers\Admin\KanbanController;
 use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\MessageTemplateController;
-use App\Http\Controllers\Admin\MobileInsightsController;
-use App\Http\Controllers\Admin\MobilePushController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\RequestController;
+use App\Http\Controllers\Admin\SalesDashboardController;
 use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\Admin\BrowserCaptureController;
 use App\Http\Controllers\Admin\TemplateUseController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\VinCheckController;
-use App\Models\QuoteRequest;
 use Illuminate\Support\Facades\Route;
 
 // Only recovery routes may resolve soft-deleted leads. Normal CRM routes keep
 // Laravel's default binding so deleted records remain inaccessible.
 Route::bind('deletedLead', function ($value) {
-    return QuoteRequest::withTrashed()->findOrFail($value);
+    return \App\Models\QuoteRequest::withTrashed()->findOrFail($value);
 });
 
 Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
@@ -36,8 +36,17 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // دقیق‌تر داخل خود کنترلرهاست).
     Route::middleware('sales.role')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+        Route::get('/sales-dashboard', SalesDashboardController::class)->name('sales-dashboard');
         Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban');
         Route::post('/kanban/change-stage', [KanbanController::class, 'updateStage'])->name('kanban.change-stage');
+
+        Route::prefix('calendar')->name('calendar.')->group(function () {
+            Route::get('/', [CalendarController::class, 'index'])->name('index');
+            Route::post('/', [CalendarController::class, 'store'])->name('store');
+            Route::put('/{event}', [CalendarController::class, 'update'])->name('update');
+            Route::post('/{event}/complete', [CalendarController::class, 'complete'])->name('complete');
+            Route::post('/{event}/cancel', [CalendarController::class, 'cancel'])->name('cancel');
+        });
 
         Route::prefix('requests')->name('requests.')->group(function () {
             Route::get('/', [RequestController::class, 'index'])->name('index');
@@ -68,6 +77,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // بخش‌های محتوایی: هم مدیر کامل و هم «مدیر محتوا» به این‌ها دسترسی دارند.
     Route::middleware('content.role')->group(function () {
+        Route::get('/content-dashboard', ContentDashboardController::class)->name('content-dashboard');
+
         Route::prefix('car-listings')->name('car-listings.')->group(function () {
             Route::get('/', [CarListingController::class, 'index'])->name('index');
             Route::post('/', [CarListingController::class, 'store'])->name('store');
@@ -125,9 +136,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::get('/export', ExportController::class)->name('export');
         Route::get('/calculations', [CalculationLogController::class, 'index'])->name('calculations.index');
         Route::get('/vin-checks', [VinCheckController::class, 'index'])->name('vin-checks.index');
-        Route::get('/mobile-insights', [MobileInsightsController::class, 'index'])->name('mobile-insights.index');
-        Route::get('/mobile-insights/summary', [MobileInsightsController::class, 'summary'])->name('mobile-insights.summary');
-        Route::post('/mobile-insights/push', [MobilePushController::class, 'store'])->name('mobile-insights.push.store');
 
         Route::prefix('templates')->name('templates.')->group(function () {
             Route::get('/', [MessageTemplateController::class, 'index'])->name('index');

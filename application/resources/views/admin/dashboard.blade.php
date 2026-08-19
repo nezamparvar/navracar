@@ -1,145 +1,247 @@
 <x-layouts.admin :page-title="$pageTitle" :page-subtitle="$pageSubtitle">
 
-    <div class="mb-6 overflow-hidden rounded-2xl bg-gradient-to-l from-brand-900 to-brand-700 p-6 text-white shadow-soft-lg sm:p-7">
-        <div class="flex flex-wrap items-center justify-between gap-4">
-            <div>
-                <h2 class="flex items-center gap-2 text-base font-extrabold"><x-icon name="phone" class="w-5 h-5" /> فرم عمومی ثبت تماس فروش</h2>
-                <p class="mt-1 max-w-lg text-sm text-brand-100">این لینک را برای فروشنده‌ها بفرستید تا بدون نیاز به ورود، گزارش تماس‌های جدید را ثبت کنند.</p>
-            </div>
-            <x-button :href="route('public.lead-form')" variant="amber" target="_blank">مشاهده فرم ↗</x-button>
-        </div>
-    </div>
-
+    {{-- Dashboard KPIs: exactly 4, matching DESIGN_SPEC.md §5 --}}
     <div class="mb-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <x-stat-card label="درخواست‌های امروز" icon="inbox" note="درخواست با مشخصات تماس">{{ number_format($todayRequests) }}</x-stat-card>
-        <x-stat-card label="محاسبات امروز" icon="calculator" note="با یا بدون ثبت مشخصات">{{ number_format($todayCalcs) }}</x-stat-card>
-        <x-stat-card label="درخواست‌های ۷ روز اخیر" icon="calendar" note="۳۰ روز اخیر: {{ number_format($monthRequests) }}">{{ number_format($weekRequests) }}</x-stat-card>
-        <x-stat-card label="میانگین جمع کل هزینه" icon="trend-up" note="تومان — بر اساس درخواست‌های ثبت‌شده">{{ number_format($avgTotal) }}</x-stat-card>
-        <x-stat-card label="استعلام شاسی امروز" icon="vin" :note="$isAdmin ? number_format($unassignedCount).' درخواست بدون الحاق' : 'گزارش کامل در صفحه شماره‌شاسی‌ها'">{{ number_format($todayVin) }}</x-stat-card>
-        <x-stat-card label="تماس‌های امروز" icon="calendar" accent="amber">
-            {{ number_format($callsToday) }}
-            <x-slot:note><a href="{{ route('admin.requests.index') }}" class="font-bold text-brand-600 dark:text-brand-300">مشاهده لیست</a></x-slot:note>
-        </x-stat-card>
-        <x-stat-card label="سرنخ‌های داغ 🔴" icon="flame" accent="red">
-            {{ number_format($hotLeads) }}
-            <x-slot:note><a href="{{ route('admin.kanban') }}?temp=hot" class="font-bold text-brand-600 dark:text-brand-300">مشاهده در کانبان</a></x-slot:note>
-        </x-stat-card>
+        <x-stat-card variant="v2" label="درخواست‌های جدید" icon="inbox" note="امروز ثبت‌شده">{{ number_format($newRequests) }}</x-stat-card>
+        <x-stat-card variant="v2" label="در حال پیگیری" icon="hourglass" note="فعال و تکمیل‌نشده">{{ number_format($underFollowUp) }}</x-stat-card>
+        <x-stat-card variant="v2" label="آگهی‌های فعال" icon="car" note="منتشر‌شده و موجود">{{ number_format($activeListings) }}</x-stat-card>
+        <x-stat-card variant="v2" label="ایمپورت ناموفق" icon="alert-circle" accent="red" note="نیاز‌به بررسی">{{ number_format($failedImports) }}</x-stat-card>
     </div>
 
+    {{-- Calendar widget + monthly performance chart, matching 02-admin-dashboard-calendar.png row 2 --}}
     <div class="mb-6 grid gap-5 lg:grid-cols-[1.3fr_.7fr]">
-        <x-card title="روند ۱۴ روز اخیر" icon="trend-up">
+        <x-card variant="v2" title="تقویم جلسات و تماس‌ها" icon="calendar" class="min-w-0">
+            <x-slot:subtitle>هفته جاری — <a href="{{ route('admin.calendar.index') }}" class="text-v2-primary hover:underline">مشاهده تقویم کامل</a></x-slot:subtitle>
+            @php
+                $weekDays = collect(range(0, 6))->map(fn ($i) => now()->startOfWeek(\Carbon\Carbon::SATURDAY)->addDays($i));
+                $eventsByDay = $weekEvents->groupBy(fn ($e) => $e->starts_at->toDateString());
+            @endphp
+            <div class="grid grid-cols-7 gap-1.5">
+                @foreach ($weekDays as $day)
+                    <div class="rounded-lg border border-v2-border bg-v2-bg p-1.5 {{ $day->isToday() ? 'ring-2 ring-v2-primary' : '' }}" style="min-height: 90px">
+                        <div class="text-center text-[10px] font-bold text-v2-text-muted">{{ $day->translatedFormat('D') }} <span class="num-font">{{ $day->translatedFormat('j') }}</span></div>
+                        <div class="mt-1 space-y-1">
+                            @foreach ($eventsByDay->get($day->toDateString(), collect())->take(2) as $event)
+                                <div class="truncate rounded bg-v2-primary/15 px-1 py-0.5 text-[9px] font-bold text-v2-primary num-font">{{ $event->starts_at->format('H:i') }} {{ $event->typeLabel() }}</div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endforeach
+            </div>
+            <div class="mt-3">
+                <x-button :href="route('admin.calendar.index')" variant="v2-secondary" size="sm"><x-icon name="calendar" class="w-4 h-4" /> جلسه یا تماس جدید</x-button>
+            </div>
+        </x-card>
+
+        <x-card variant="v2" title="روند ۱۴ روز اخیر" icon="trend-up" class="min-w-0">
             @php $maxVal = max(1, collect($daily)->max(fn ($d) => max($d['requests'], $d['calcs']))); @endphp
-            <div class="rounded-xl bg-ink-50 p-4 dark:bg-white/5">
+            <div class="rounded-xl bg-v2-bg p-4">
                 <div class="space-y-2.5">
                     @foreach ($daily as $d)
                         <div>
                             <div class="mb-1 flex justify-between text-xs">
-                                <span class="font-bold text-ink-500 dark:text-ink-400">{{ \Illuminate\Support\Carbon::parse($d['date'])->translatedFormat('j M') }}</span>
-                                <span class="num-font font-extrabold text-ink-700 dark:text-ink-200">درخواست: {{ $d['requests'] }} | محاسبه: {{ $d['calcs'] }}</span>
+                                <span class="font-bold text-v2-text-muted">{{ \Illuminate\Support\Carbon::parse($d['date'])->translatedFormat('j M') }}</span>
+                                <span class="num-font font-extrabold text-v2-text">{{ $d['requests'] }} / {{ $d['calcs'] }}</span>
                             </div>
                             <div class="flex gap-1">
-                                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-ink-200 dark:bg-white/10">
-                                    <div class="h-full rounded-full bg-amber-500" style="width: {{ max(($d['requests'] / $maxVal) * 100, 2) }}%"></div>
+                                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-v2-elevated">
+                                    <div class="h-full rounded-full bg-v2-accent" style="width: {{ max(($d['requests'] / $maxVal) * 100, 2) }}%"></div>
                                 </div>
-                                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-ink-200 dark:bg-white/10">
-                                    <div class="h-full rounded-full bg-brand-600" style="width: {{ max(($d['calcs'] / $maxVal) * 100, 2) }}%"></div>
+                                <div class="h-2.5 flex-1 overflow-hidden rounded-full bg-v2-elevated">
+                                    <div class="h-full rounded-full bg-v2-primary" style="width: {{ max(($d['calcs'] / $maxVal) * 100, 2) }}%"></div>
                                 </div>
                             </div>
                         </div>
                     @endforeach
                 </div>
                 <div class="mt-4 flex justify-center gap-5 text-xs">
-                    <span class="flex items-center gap-1.5 font-bold text-ink-500 dark:text-ink-400"><i class="h-2.5 w-2.5 rounded-sm bg-amber-500"></i> درخواست استعلام</span>
-                    <span class="flex items-center gap-1.5 font-bold text-ink-500 dark:text-ink-400"><i class="h-2.5 w-2.5 rounded-sm bg-brand-600"></i> محاسبه انجام‌شده</span>
+                    <span class="flex items-center gap-1.5 font-bold text-v2-text-muted"><i class="h-2.5 w-2.5 rounded-sm bg-v2-accent"></i> درخواست استعلام</span>
+                    <span class="flex items-center gap-1.5 font-bold text-v2-text-muted"><i class="h-2.5 w-2.5 rounded-sm bg-v2-primary"></i> محاسبه انجام‌شده</span>
                 </div>
-            </div>
-        </x-card>
-
-        <x-card title="توزیع دسته خودرو" icon="calculator">
-            @php $palette = ['#2952E0', '#FF8A1E', '#8B5CF6', '#16A34A', '#5B6478', '#9FB2FF', '#D9690A', '#0EA5E9']; @endphp
-            <div class="rounded-xl bg-ink-50 p-4 dark:bg-white/5">
-                @if ($catDist->isEmpty())
-                    <x-empty-state icon="calculator" title="هنوز داده‌ای ثبت نشده." />
-                @else
-                    @php $totalCat = $catDist->sum('c'); @endphp
-                    <div class="space-y-2">
-                        @foreach ($catDist as $i => $row)
-                            @php $pct = $totalCat ? round($row->c / $totalCat * 100, 1) : 0; @endphp
-                            <div class="flex items-center gap-2 text-xs">
-                                <span class="h-2.5 w-2.5 shrink-0 rounded-sm" style="background: {{ $palette[$i % count($palette)] }}"></span>
-                                <span class="flex-1 font-semibold text-ink-500 dark:text-ink-400">{{ $row->category }}</span>
-                                <span class="num-font font-extrabold">{{ $row->c }} ({{ $pct }}٪)</span>
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
             </div>
         </x-card>
     </div>
 
+    {{-- Sales pipeline mini-view + latest requests, matching reference row 3 --}}
     <div class="mb-6 grid gap-5 lg:grid-cols-[1.3fr_.7fr]">
-        <x-card title="آخرین درخواست‌های استعلام" icon="inbox">
-            @if ($recentRequests->isEmpty())
-                <x-empty-state icon="inbox" title="هنوز درخواستی ثبت نشده است." />
+        <x-card variant="v2" title="پایپ‌لاین فروش" icon="kanban" class="min-w-0">
+            <x-slot:subtitle><a href="{{ route('admin.kanban') }}" class="text-v2-primary hover:underline">مشاهده کانبان کامل</a></x-slot:subtitle>
+            @if ($pipelineByStage->isEmpty())
+                <x-empty-state variant="v2" icon="kanban" title="سرنخی در پایپ‌لاین نیست." />
             @else
-                <div class="overflow-x-auto">
-                    <table class="w-full text-sm">
-                        <thead>
-                            <tr class="border-b-2 border-ink-100 text-xs font-extrabold text-ink-400 dark:border-white/10 dark:text-ink-500">
-                                <th class="whitespace-nowrap px-2.5 py-2 text-start">تاریخ</th>
-                                <th class="whitespace-nowrap px-2.5 py-2 text-start">نام</th>
-                                <th class="whitespace-nowrap px-2.5 py-2 text-start">تلفن</th>
-                                <th class="whitespace-nowrap px-2.5 py-2 text-start">خودرو</th>
-                                <th class="whitespace-nowrap px-2.5 py-2 text-start">جمع کل</th>
-                                <th class="whitespace-nowrap px-2.5 py-2 text-start">ایمیل</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach ($recentRequests as $r)
-                                <tr class="border-b border-ink-100 hover:bg-ink-50 dark:border-white/5 dark:hover:bg-white/5">
-                                    <td class="px-2.5 py-2.5 text-xs text-ink-500">{{ $r->created_at->translatedFormat('j M') }}</td>
-                                    <td class="px-2.5 py-2.5 font-semibold">{{ $r->name }}</td>
-                                    <td class="num-font px-2.5 py-2.5">{{ $r->phone }}</td>
-                                    <td class="px-2.5 py-2.5">{{ $r->car_label }}</td>
-                                    <td class="num-font px-2.5 py-2.5 font-extrabold text-brand-700 dark:text-brand-300">{{ number_format($r->total_with_profit) }}</td>
-                                    <td class="px-2.5 py-2.5"><x-badge :color="$r->email_sent ? 'green' : 'red'">{{ $r->email_sent ? 'ارسال شد' : 'نامشخص' }}</x-badge></td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-                <div class="mt-4"><x-button :href="route('admin.requests.index')" variant="secondary">مشاهده همه درخواست‌ها</x-button></div>
-            @endif
-        </x-card>
-
-        <x-card title="پرتکرارترین خودروها" icon="car">
-            @if ($topCars->isEmpty())
-                <x-empty-state icon="car" title="داده‌ای موجود نیست." />
-            @else
-                @php $maxCar = $topCars->max('c'); @endphp
-                <div class="space-y-2.5">
-                    @foreach ($topCars as $i => $c)
-                        <div>
-                            <div class="mb-1 flex justify-between text-xs">
-                                <span class="font-bold text-ink-500 dark:text-ink-400">{{ $c->car_label }}</span>
-                                <span class="num-font font-extrabold">{{ $c->c }}</span>
+                <div class="flex gap-3 overflow-x-auto pb-1">
+                    @foreach ($pipelineByStage as $row)
+                        <div class="w-40 shrink-0 rounded-xl border border-v2-border bg-v2-bg p-2.5">
+                            <div class="flex items-center justify-between text-[11px] font-bold text-v2-text-muted">
+                                <span class="truncate">{{ $row['stage']->name }}</span>
+                                <span class="num-font shrink-0 rounded-full bg-v2-elevated px-1.5 text-v2-text">{{ $row['count'] }}</span>
                             </div>
-                            <div class="h-2.5 overflow-hidden rounded-full bg-ink-100 dark:bg-white/10">
-                                <div class="h-full rounded-full" style="width: {{ max(($c->c / $maxCar) * 100, 3) }}%; background: {{ $palette[$i % count($palette)] }}"></div>
+                            <div class="mt-1.5 space-y-1">
+                                @foreach ($row['sample'] as $lead)
+                                    <div class="truncate rounded-lg bg-v2-elevated px-2 py-1 text-[10px] font-semibold text-v2-text">{{ $lead->name ?: 'بدون‌نام' }}</div>
+                                @endforeach
                             </div>
                         </div>
                     @endforeach
                 </div>
             @endif
         </x-card>
+
+        <x-card variant="v2" title="آخرین درخواست‌های استعلام" icon="inbox" class="min-w-0">
+            @if ($recentRequests->isEmpty())
+                <x-empty-state variant="v2" icon="inbox" title="هنوز درخواستی ثبت نشده است." />
+            @else
+                <div class="space-y-2">
+                    @foreach ($recentRequests->take(5) as $r)
+                        <div class="flex items-center justify-between gap-2 rounded-lg bg-v2-bg px-2.5 py-2 text-xs">
+                            <div class="min-w-0">
+                                <div class="truncate font-bold text-v2-text">{{ $r->name }}</div>
+                                <div class="truncate text-v2-text-muted">{{ $r->car_label }}</div>
+                            </div>
+                            <x-badge :color="$r->email_sent ? 'v2-success' : 'v2-error'">{{ $r->email_sent ? 'ارسال شد' : 'نامشخص' }}</x-badge>
+                        </div>
+                    @endforeach
+                </div>
+                <div class="mt-3"><x-button :href="route('admin.requests.index')" variant="v2-secondary" size="sm">مشاهده همه</x-button></div>
+            @endif
+        </x-card>
     </div>
 
-    <x-card title="خروجی اکسل گزارش‌ها" icon="download" subtitle="خروجی فایل اکسل (CSV) از تعداد و جزئیات درخواست‌ها و محاسبات، برای بازه دلخواه.">
+    {{-- برنامه امروز + پیگیری‌های عقب‌افتاده — matches 03-sales-dashboard.png's widgets, real
+         CalendarEvent/QuoteRequest.next_call_date data, scoped the same way as the rest of the
+         dashboard. See GAP_REPORT.md §3 for what's still not built (funnel, reduced sidebar). --}}
+    <div class="mb-6 grid gap-5 lg:grid-cols-2">
+        <x-card variant="v2" title="برنامه امروز" icon="clock" class="min-w-0">
+            @if ($todaySchedule->isEmpty())
+                <x-empty-state variant="v2" icon="clock" title="برای امروز رویدادی برنامه‌ریزی نشده است." />
+            @else
+                <div class="space-y-2">
+                    @foreach ($todaySchedule as $event)
+                        <div class="flex items-center gap-3 rounded-lg bg-v2-bg px-2.5 py-2 text-xs">
+                            <span class="shrink-0 rounded-md bg-v2-primary/15 px-2 py-1 font-black text-v2-primary num-font">{{ $event->starts_at->format('H:i') }}</span>
+                            <div class="min-w-0">
+                                <div class="truncate font-bold text-v2-text">{{ $event->displayTitle() }}</div>
+                                @if ($event->quoteRequest)
+                                    <div class="truncate text-v2-text-muted">{{ $event->quoteRequest->name }} — {{ $event->quoteRequest->car_label }}</div>
+                                @endif
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @endif
+            <div class="mt-3"><x-button :href="route('admin.calendar.index')" variant="v2-secondary" size="sm">مشاهده تقویم</x-button></div>
+        </x-card>
+
+        <x-card variant="v2" title="پیگیری‌های عقب‌افتاده" icon="alert" class="min-w-0">
+            @if ($overdueFollowUps->isEmpty())
+                <x-empty-state variant="v2" icon="check-circle" title="پیگیری عقب‌افتاده‌ای وجود ندارد." />
+            @else
+                <div class="space-y-2">
+                    @foreach ($overdueFollowUps as $r)
+                        <a href="{{ route('admin.requests.show', $r) }}" class="flex items-center justify-between gap-2 rounded-lg bg-v2-bg px-2.5 py-2 text-xs hover:bg-v2-elevated">
+                            <div class="min-w-0">
+                                <div class="truncate font-bold text-v2-text">{{ $r->name ?: 'بدون‌نام' }}</div>
+                                <div class="truncate text-v2-text-muted">{{ $r->car_label }}</div>
+                            </div>
+                            <span class="shrink-0 font-bold text-v2-error num-font">{{ $r->next_call_date->format('Y-m-d') }}</span>
+                        </a>
+                    @endforeach
+                </div>
+            @endif
+        </x-card>
+    </div>
+
+    @if ($isAdmin)
+        <div class="mb-6 grid gap-5 lg:grid-cols-2">
+            <x-card variant="v2" title="وضعیت ایمپورت" icon="inbox" class="min-w-0">
+                <div class="grid grid-cols-3 gap-3 text-center">
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="flex items-center justify-center gap-1.5 text-v2-success"><x-icon name="check-circle" class="w-4 h-4" /> موفق</div>
+                        <div class="mt-1 text-2xl font-black text-v2-text num-font">{{ $importStatus->succeeded ?? 0 }}</div>
+                    </div>
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="flex items-center justify-center gap-1.5 text-v2-warning"><x-icon name="calendar" class="w-4 h-4" /> در صف</div>
+                        <div class="mt-1 text-2xl font-black text-v2-text num-font">{{ $importStatus->queued ?? 0 }}</div>
+                    </div>
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="flex items-center justify-center gap-1.5 text-v2-error"><x-icon name="x" class="w-4 h-4" /> خطا</div>
+                        <div class="mt-1 text-2xl font-black text-v2-text num-font">{{ $importStatus->failed ?? 0 }}</div>
+                    </div>
+                </div>
+            </x-card>
+
+            <x-card variant="v2" title="نرخ‌های امروز" icon="target" subtitle="منبع: تنظیمات نرخ ارز پنل مدیریت." class="min-w-0">
+                <div class="grid grid-cols-2 gap-3 text-center">
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="text-xs font-bold text-v2-text-muted">درهم (AED)</div>
+                        <div class="mt-1 text-xl font-black text-v2-text num-font">{{ number_format($todayRates['aed']) }}</div>
+                        <div class="text-[11px] text-v2-text-muted">تومان</div>
+                    </div>
+                    <div class="rounded-xl bg-v2-bg p-3">
+                        <div class="text-xs font-bold text-v2-text-muted">دلار (USD)</div>
+                        <div class="mt-1 text-xl font-black text-v2-text num-font">{{ number_format($todayRates['usd']) }}</div>
+                        <div class="text-[11px] text-v2-text-muted">تومان</div>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <x-button :href="route('admin.settings.edit')" variant="v2-secondary" size="sm">بروزرسانی نرخ‌ها</x-button>
+                </div>
+            </x-card>
+        </div>
+    @endif
+
+    <details class="mb-6 rounded-2xl border border-v2-border bg-v2-surface p-5">
+        <summary class="cursor-pointer text-sm font-extrabold text-v2-text">جزئیات بیشتر: توزیع دسته خودرو و پرتکرارترین خودروها</summary>
+        <div class="mt-4 grid gap-5 lg:grid-cols-2">
+            <div>
+                @php $palette = ['#1677FF', '#20C7E9', '#22C55E', '#9AAAC1', '#5B8DEF', '#0EA5E9']; @endphp
+                <div class="rounded-xl bg-v2-bg p-4">
+                    @if ($catDist->isEmpty())
+                        <x-empty-state variant="v2" icon="calculator" title="هنوز داده‌ای ثبت نشده." />
+                    @else
+                        @php $totalCat = $catDist->sum('c'); @endphp
+                        <div class="space-y-2">
+                            @foreach ($catDist as $i => $row)
+                                @php $pct = $totalCat ? round($row->c / $totalCat * 100, 1) : 0; @endphp
+                                <div class="flex items-center gap-2 text-xs">
+                                    <span class="h-2.5 w-2.5 shrink-0 rounded-sm" style="background: {{ $palette[$i % count($palette)] }}"></span>
+                                    <span class="flex-1 font-semibold text-v2-text-muted">{{ $row->category }}</span>
+                                    <span class="num-font font-extrabold text-v2-text">{{ $row->c }} ({{ $pct }}٪)</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    @endif
+                </div>
+            </div>
+            <div>
+                @if ($topCars->isEmpty())
+                    <x-empty-state variant="v2" icon="car" title="داده‌ای موجود نیست." />
+                @else
+                    @php $maxCar = $topCars->max('c'); @endphp
+                    <div class="space-y-2.5">
+                        @foreach ($topCars as $i => $c)
+                            <div>
+                                <div class="mb-1 flex justify-between text-xs">
+                                    <span class="font-bold text-v2-text-muted">{{ $c->car_label }}</span>
+                                    <span class="num-font font-extrabold text-v2-text">{{ $c->c }}</span>
+                                </div>
+                                <div class="h-2.5 overflow-hidden rounded-full bg-v2-elevated">
+                                    <div class="h-full rounded-full" style="width: {{ max(($c->c / $maxCar) * 100, 3) }}%; background: {{ $palette[$i % count($palette)] }}"></div>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+            </div>
+        </div>
+    </details>
+
+    <x-card variant="v2" title="خروجی اکسل گزارش‌ها" icon="download" subtitle="خروجی فایل اکسل (CSV) از تعداد و جزئیات درخواست‌ها و محاسبات، برای بازه دلخواه.">
         <div class="flex flex-wrap gap-2.5">
-            <x-button :href="route('admin.export', ['type' => 'requests'])" variant="amber"><x-icon name="download" class="w-4 h-4" /> خروجی همه درخواست‌های استعلام</x-button>
-            <x-button :href="route('admin.export', ['type' => 'calculations'])" variant="amber"><x-icon name="download" class="w-4 h-4" /> خروجی همه محاسبات ثبت‌شده</x-button>
-            <x-button :href="route('admin.export', ['type' => 'requests', 'range' => 'today'])" variant="secondary">خروجی درخواست‌های امروز</x-button>
-            <x-button :href="route('admin.export', ['type' => 'requests', 'range' => 'month'])" variant="secondary">خروجی درخواست‌های ۳۰ روز اخیر</x-button>
+            <x-button :href="route('admin.export', ['type' => 'requests'])" variant="v2-primary"><x-icon name="download" class="w-4 h-4" /> خروجی همه درخواست‌های استعلام</x-button>
+            <x-button :href="route('admin.export', ['type' => 'calculations'])" variant="v2-primary"><x-icon name="download" class="w-4 h-4" /> خروجی همه محاسبات ثبت‌شده</x-button>
+            <x-button :href="route('admin.export', ['type' => 'requests', 'range' => 'today'])" variant="v2-secondary">خروجی درخواست‌های امروز</x-button>
+            <x-button :href="route('admin.export', ['type' => 'requests', 'range' => 'month'])" variant="v2-secondary">خروجی درخواست‌های ۳۰ روز اخیر</x-button>
         </div>
     </x-card>
 
