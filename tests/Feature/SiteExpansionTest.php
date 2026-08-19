@@ -64,6 +64,16 @@ class SiteExpansionTest extends TestCase
         $response->assertSee('مطلب تست');
     }
 
+    public function test_homepage_renders_textual_engine_capacity_without_numeric_error(): void
+    {
+        $this->publishedListing(['engine_capacity_cc' => '2000 - 2499 cc']);
+
+        $response = $this->get(route('public.home'));
+
+        $response->assertOk();
+        $response->assertSee('2000 - 2499 cc');
+    }
+
     public function test_calculator_moved_to_dedicated_route(): void
     {
         $this->get('/calculator')->assertOk();
