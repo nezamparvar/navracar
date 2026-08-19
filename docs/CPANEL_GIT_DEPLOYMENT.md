@@ -104,23 +104,26 @@ After the first successful artifact workflow run:
 
 The one-time branch switch does not modify production. The existing live application and public root remain untouched until **Deploy HEAD Commit** is explicitly selected.
 
-## One-time staging cPanel setup
+## Current staging deployment
 
-Follow `docs/STAGING_SETUP_CPANEL.md`. Staging uses a separate Git clone, Laravel application, database, and storage tree while serving from the same production domain at `https://navracar.com/staging`. Its exact public path is `/home/navrac/public_html/staging`; never point the task at `/home/navrac/public_html` or production storage. Set `APP_URL`/`ASSET_URL` to the `/staging` URL and isolate `SESSION_COOKIE`, `SESSION_PATH`, and `CACHE_PREFIX` as documented.
+Staging no longer uses cPanel or a Production-domain subdirectory. The live
+environment is the CloudPanel site `https://staging.nezamparvar.com/` and is
+deployed over SSH by `navracar-staging-deploy.service`. The branch name
+`cpanel-staging` remains only as the generated artifact ref for compatibility.
+Follow `docs/STAGING_SSH_DEPLOYMENT.md`.
 
 ## Staging candidate workflow
 
 1. Merge the approved PR into protected `main`.
 2. Dispatch **cPanel staging candidate** from `main` with the merged source SHA and a candidate such as `rc-v1.3.0-1`.
 3. Verify the workflow summary, artifact, `DEPLOYMENT-METADATA.json`, and `cpanel-staging` HEAD.
-4. In the staging cPanel clone, click **Update from Remote**, verify the candidate commit, then click **Deploy HEAD Commit**.
+4. Connect to the VPS over SSH, verify Production automation is disabled, and start `navracar-staging-deploy.service` to fetch and deploy the exact candidate.
 5. Complete `docs/STAGING_ACCEPTANCE_CHECKLIST.md`.
 
-The staging-only deployment task automatically locates an available cPanel PHP
-8.3+ CLI, runs outstanding migrations against the staging `.env` database, and
-rebuilds Laravel's configuration, route, and view caches. This makes the flow
-operable on hosting plans without SSH or Terminal. These Artisan commands are
-not added to the production deployment task by this staging recovery change.
+The staging-only SSH deployment service runs with PHP 8.3, applies outstanding
+migrations against the isolated staging database, and rebuilds Laravel's
+configuration, route, and view caches. These commands are not added to the
+Production deployment path.
 
 ## Production promotion workflow
 
@@ -163,7 +166,7 @@ The deployment script also retains scoped previous-item backups under `/home/nav
 
 Do not import a database backup for a normal code rollback. Database restoration is a separate incident procedure.
 
-Staging rollback uses `cpanel-staging-rc-vX.Y.Z-N` in the staging cPanel clone and never involves production. Production rollback continues to use immutable `cpanel-release-vX.Y.Z` refs.
+Staging rollback is performed over SSH using a previously verified staging artifact and never involves Production. Production rollback continues to use immutable `cpanel-release-vX.Y.Z` refs.
 
 ## Never manually edit `cpanel-release`
 
