@@ -1,5 +1,7 @@
 # Design system
 
+> این سند وضعیت فعلی رابط را توضیح می‌دهد. قالب تأییدشده نسخه جدید و برنامه مهاجرت در [پروژه طراحی NavraCar V2](design-v2/README.md) ثبت شده است. تا زمان اجرای مرحله‌ای، توکن‌ها و صفحات فعلی همچنان baseline عملیاتی هستند.
+
 ## Foundations
 
 - Direction: Persian-first RTL.

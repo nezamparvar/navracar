@@ -13,6 +13,7 @@ class DatabaseSeeder extends Seeder
             LossReasonSeeder::class,
             MessageTemplateSeeder::class,
             AdminUserSeeder::class,
+            E2eSeeder::class,
         ]);
     }
 }

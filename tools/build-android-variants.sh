@@ -36,7 +36,7 @@ NODE
     cp "$apk_source" "$output_dir/navracar-${environment}-debug.apk"
 }
 
-build_variant staging 'https://navracar.com/staging'
+build_variant staging 'https://staging.nezamparvar.com'
 build_variant production 'https://navracar.com'
 
 test -s "$output_dir/navracar-staging-debug.apk"

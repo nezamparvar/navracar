@@ -70,22 +70,22 @@ class StagingSafetyTest extends TestCase
         }
     }
 
-    public function test_staging_subdirectory_configuration_is_isolated(): void
+    public function test_staging_subdomain_configuration_is_isolated(): void
     {
         config([
             'app.env' => 'staging',
-            'app.url' => 'https://navracar.com/staging',
+            'app.url' => 'https://staging.nezamparvar.com',
             'session.cookie' => 'navracar_staging_session',
-            'session.path' => '/staging',
+            'session.path' => '/',
             'cache.prefix' => 'navracar_staging_',
-            'filesystems.disks.public.url' => 'https://navracar.com/staging/storage',
+            'filesystems.disks.public.url' => 'https://staging.nezamparvar.com/storage',
         ]);
 
-        $this->assertSame('https://navracar.com/staging', config('app.url'));
-        $this->assertSame('/staging', config('session.path'));
+        $this->assertSame('https://staging.nezamparvar.com', config('app.url'));
+        $this->assertSame('/', config('session.path'));
         $this->assertSame('navracar_staging_session', config('session.cookie'));
         $this->assertSame('navracar_staging_', config('cache.prefix'));
-        $this->assertSame('https://navracar.com/staging/storage/vehicle.jpg', Storage::disk('public')->url('vehicle.jpg'));
+        $this->assertSame('https://staging.nezamparvar.com/storage/vehicle.jpg', Storage::disk('public')->url('vehicle.jpg'));
     }
 
     public function test_staging_public_disk_can_write_directly_to_its_isolated_web_storage(): void
@@ -93,12 +93,12 @@ class StagingSafetyTest extends TestCase
         $root = storage_path('framework/testing/staging-public');
         config([
             'filesystems.disks.public.root' => $root,
-            'filesystems.disks.public.url' => 'https://navracar.com/staging/storage',
+            'filesystems.disks.public.url' => 'https://staging.nezamparvar.com/storage',
         ]);
         Storage::disk('public')->put('car-listings/1/image.gif', 'gif-bytes');
 
         $this->assertFileExists($root.'/car-listings/1/image.gif');
-        $this->assertStringStartsWith('https://navracar.com/staging/storage/', Storage::disk('public')->url('car-listings/1/image.gif'));
+        $this->assertStringStartsWith('https://staging.nezamparvar.com/storage/', Storage::disk('public')->url('car-listings/1/image.gif'));
         $this->assertFileDoesNotExist(storage_path('../navracar-app/storage/app/public/car-listings/1/image.gif'));
     }
 }

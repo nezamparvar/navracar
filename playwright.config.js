@@ -1,6 +1,7 @@
 import { defineConfig } from '@playwright/test';
 
 const responsiveViewports = [
+    ['320x568', 320, 568],
     ['360x800', 360, 800],
     ['375x812', 375, 812],
     ['390x844', 390, 844],
@@ -14,6 +15,22 @@ const responsiveViewports = [
     ['1920x1080', 1920, 1080],
 ];
 
+import { existsSync } from 'fs';
+
+const launchOptions = { args: ['--no-proxy-server'] };
+// Use pre-installed Chromium in sandboxed environments (check if file exists)
+// Local dev and Windows CI will download browsers normally via Playwright.
+// Sandboxed envs have a pre-installed browser at /opt/pw-browsers/chromium
+// Environment-based override: export CHROMIUM_PATH=/path/to/chromium
+const sandboxBrowser = '/opt/pw-browsers/chromium';
+if (process.env.CHROMIUM_PATH) {
+    // Explicit path override takes precedence
+    launchOptions.executablePath = process.env.CHROMIUM_PATH;
+} else if (existsSync(sandboxBrowser)) {
+    // Auto-detect sandboxed browser if it exists
+    launchOptions.executablePath = sandboxBrowser;
+}
+
 export default defineConfig({
     testDir: './tests/e2e',
     fullyParallel: false,
@@ -23,6 +40,11 @@ export default defineConfig({
         baseURL: 'http://127.0.0.1:8000',
         trace: 'retain-on-failure',
         screenshot: 'only-on-failure',
+        // --no-proxy-server: without it, Chromium's default system-proxy auto-detection adds a
+        // flat ~13s delay to EVERY navigation on machines with an HTTPS_PROXY env var set but no
+        // HTTP_PROXY (this sandbox's setup) — reproduced directly, confirmed fixed by this flag
+        // alone. All navigations in this suite target 127.0.0.1 only, so a proxy is never wanted.
+        launchOptions,
     },
     webServer: {
         command: 'node tests/e2e/serve.mjs',

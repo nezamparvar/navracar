@@ -26,14 +26,21 @@ if (migrate.status !== 0) {
     process.exit(migrate.status ?? 1);
 }
 
-const seedE2e = spawnSync(php, ['artisan', 'db:seed', '--class=Database\\Seeders\\E2eSeeder', '--force'], { cwd: root, env, stdio: 'inherit' });
-if (seedE2e.status !== 0) {
-    process.exit(seedE2e.status ?? 1);
-}
+// Note: E2eSeeder is already run by 'migrate:fresh --seed', no need to run it again
+// Explicit re-run causes unique constraint violations on invoice numbers
 
+// E2eSeeder attaches real cover images to demo listings; without this symlink
+// Storage::disk('public')->url() points at a path the dev server can't serve.
+spawnSync(php, ['artisan', 'storage:link'], { cwd: root, env, stdio: 'inherit' });
+
+// router.php is a copy of Laravel's own server.php that additionally forces
+// "Connection: close" — php -S's single-threaded server has a long-standing keep-alive bug
+// that makes a second request over a reused connection take ~30s instead of responding
+// immediately, which was hanging every authenticated-route test. See router.php for the
+// full explanation. Test-only infra; staging/production run php-fpm behind nginx, not php -S.
 const server = spawn(php, [
     '-S', '127.0.0.1:8000',
-    path.resolve(root, 'vendor', 'laravel', 'framework', 'src', 'Illuminate', 'Foundation', 'resources', 'server.php'),
+    path.resolve(root, 'tests', 'e2e', 'router.php'),
 ], { cwd: path.resolve(root, 'public'), env, stdio: 'ignore' });
 for (const signal of ['SIGINT', 'SIGTERM']) {
     process.on(signal, () => server.kill(signal));

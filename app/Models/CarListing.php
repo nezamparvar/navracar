@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Services\VehiclePricing\VehiclePricingCatalog;
-use App\Services\VehiclePricing\VehiclePricingInput;
 use App\Services\VehiclePricing\VehiclePricingService;
 use App\Services\VehiclePricing\VehiclePricingSettings;
 use Illuminate\Database\Eloquent\Builder;
@@ -95,14 +94,43 @@ class CarListing extends Model
      */
     public function estimatedLandedCostToman(float $freeRate, float $customsRate): float
     {
-        $settings = VehiclePricingSettings::current()->withExchangeRates($freeRate, $customsRate);
-        $result = app(VehiclePricingService::class)->calculate(new VehiclePricingInput(
-            realPriceAed: (float) $this->price_aed,
-            customsPriceAed: (float) $this->price_aed,
-            categoryId: $this->category_id,
-        ), $settings);
+        return $this->pricingTotals($freeRate, $customsRate)['finalTotalToman'];
+    }
 
-        return $result->totals['finalTotalToman'];
+    /**
+     * Full totals array from the central pricing service. Uses inputFromArray() (not a direct
+     * VehiclePricingInput) so a missing customs_price_aed goes through the service's real
+     * suggestCustomsPrice() default discount, same as every other pricing entry point — a
+     * listing without an explicit customs price must not be priced as if customsPriceAed
+     * equalled the full realPriceAed.
+     */
+    public function pricingTotals(float $freeRate, float $customsRate): array
+    {
+        return $this->pricingResult($freeRate, $customsRate)->totals;
+    }
+
+    /**
+     * The 3-category public display summary (vehicle price / customs clearance total, with the
+     * service fee folded in, never shown as its own line / plate costs) — see
+     * VehiclePricingResult::publicDisplaySummary() and PublicCostDisplayTest for the contract
+     * this must follow. Public views must use this, not the raw totals array, for the 3-category
+     * breakdown so the displayed categories still sum to the real grand total.
+     */
+    public function publicPricingSummary(float $freeRate, float $customsRate): array
+    {
+        return $this->pricingResult($freeRate, $customsRate)->publicDisplaySummary();
+    }
+
+    private function pricingResult(float $freeRate, float $customsRate): \App\Services\VehiclePricing\VehiclePricingResult
+    {
+        $settings = VehiclePricingSettings::current()->withExchangeRates($freeRate, $customsRate);
+        $service = app(VehiclePricingService::class);
+
+        return $service->calculate($service->inputFromArray([
+            'real_price_aed' => (float) $this->price_aed,
+            'customs_price_aed' => $this->customs_price_aed !== null ? (float) $this->customs_price_aed : null,
+            'category' => $this->category_id,
+        ], $settings), $settings);
     }
 
     public static function categoryCoef(string $categoryId): float

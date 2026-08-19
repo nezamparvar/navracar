@@ -2,7 +2,9 @@
 
 use App\Http\Controllers\Admin\ActivityLogController;
 use App\Http\Controllers\Admin\CalculationLogController;
+use App\Http\Controllers\Admin\CalendarController;
 use App\Http\Controllers\Admin\CarListingController;
+use App\Http\Controllers\Admin\ContentDashboardController;
 use App\Http\Controllers\Admin\DashboardController;
 use App\Http\Controllers\Admin\ExportController;
 use App\Http\Controllers\Admin\ExtensionPairingController;
@@ -14,6 +16,7 @@ use App\Http\Controllers\Admin\MenuItemController;
 use App\Http\Controllers\Admin\MessageTemplateController;
 use App\Http\Controllers\Admin\PostController;
 use App\Http\Controllers\Admin\RequestController;
+use App\Http\Controllers\Admin\SalesDashboardController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\Admin\BrowserCaptureController;
 use App\Http\Controllers\Admin\TemplateUseController;
@@ -33,8 +36,17 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // دقیق‌تر داخل خود کنترلرهاست).
     Route::middleware('sales.role')->group(function () {
         Route::get('/', DashboardController::class)->name('dashboard');
+        Route::get('/sales-dashboard', SalesDashboardController::class)->name('sales-dashboard');
         Route::get('/kanban', [KanbanController::class, 'index'])->name('kanban');
         Route::post('/kanban/change-stage', [KanbanController::class, 'updateStage'])->name('kanban.change-stage');
+
+        Route::prefix('calendar')->name('calendar.')->group(function () {
+            Route::get('/', [CalendarController::class, 'index'])->name('index');
+            Route::post('/', [CalendarController::class, 'store'])->name('store');
+            Route::put('/{event}', [CalendarController::class, 'update'])->name('update');
+            Route::post('/{event}/complete', [CalendarController::class, 'complete'])->name('complete');
+            Route::post('/{event}/cancel', [CalendarController::class, 'cancel'])->name('cancel');
+        });
 
         Route::prefix('requests')->name('requests.')->group(function () {
             Route::get('/', [RequestController::class, 'index'])->name('index');
@@ -65,6 +77,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // بخش‌های محتوایی: هم مدیر کامل و هم «مدیر محتوا» به این‌ها دسترسی دارند.
     Route::middleware('content.role')->group(function () {
+        Route::get('/content-dashboard', ContentDashboardController::class)->name('content-dashboard');
+
         Route::prefix('car-listings')->name('car-listings.')->group(function () {
             Route::get('/', [CarListingController::class, 'index'])->name('index');
             Route::post('/', [CarListingController::class, 'store'])->name('store');

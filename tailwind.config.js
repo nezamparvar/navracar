@@ -56,6 +56,24 @@ export default {
                     900: '#161a27',
                     950: '#0a0d17',
                 },
+                // NavraCar V2 design tokens (docs/design-v2/DESIGN_SPEC.md §2).
+                // Additive only — brand/amber/ink stay in place until each page
+                // migrates, per docs/design-v2/IMPLEMENTATION_PLAN.md فاز یک.
+                v2: {
+                    bg: '#020B18',
+                    surface: '#061426',
+                    elevated: '#0A1B32',
+                    primary: '#1677FF',
+                    'primary-text': '#5B9BFF',
+                    'primary-action': '#0D3FA8',
+                    accent: '#20C7E9',
+                    text: '#F8FAFC',
+                    'text-muted': '#9AAAC1',
+                    border: '#1A3554',
+                    success: '#22C55E',
+                    warning: '#EAB308',
+                    error: '#EF4444',
+                },
             },
             boxShadow: {
                 soft: '0 10px 30px -12px rgba(16, 22, 60, .18)',
@@ -63,6 +81,7 @@ export default {
                 'soft-dark': '0 10px 30px -12px rgba(0, 0, 0, .55)',
                 'glow-amber': '0 8px 22px -8px rgba(255, 138, 30, .55)',
                 'glow-brand': '0 8px 22px -8px rgba(41, 82, 224, .5)',
+                'glow-v2': '0 8px 22px -8px rgba(22, 119, 255, .5)',
             },
             borderRadius: {
                 xl2: '1.25rem',

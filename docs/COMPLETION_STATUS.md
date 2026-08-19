@@ -1,5 +1,10 @@
 # Navracar completion status
 
+> Historical release record. The current live Staging environment is
+> `https://staging.nezamparvar.com/` on CloudPanel and is deployed over SSH.
+> Use `docs/STAGING_SSH_DEPLOYMENT.md`; cPanel UI instructions below describe
+> superseded historical incidents and must not be used for current deployment.
+
 Last updated: 2026-08-17
 
 ## Current release state
@@ -17,7 +22,7 @@ Last updated: 2026-08-17
 - Candidate `rc-v1.3.0-3` was published successfully, but a live route probe still returned 404 for the new pipeline-stage endpoint. This proves the cPanel working copy had not activated that candidate, so the previously reported 405/delete/pipeline symptoms were still from the older deployed code.
 - The next remediation also separates clearance/payment/timeline presentation per owner acceptance, exposes all three marketplace import paths, normalizes read permissions only inside Staging public media, and emits candidate/source response headers so the active deployment can be verified remotely.
 - PR #31 merged to `main` as `551fcfb59b27a496adda1631b9fb3c0d31a1168c`. Protected [PR CI run #122](https://github.com/nezamparvar/navracar/actions/runs/32009758004) and [main CI run #123](https://github.com/nezamparvar/navracar/actions/runs/32009908365) passed all six jobs.
-- Staging acceptance remains rejected until the next immutable candidate is built, its exact commit is activated through both **Update from Remote** and **Deploy HEAD Commit**, and the response headers plus full acceptance checklist are verified.
+- Staging acceptance remains rejected until the next immutable candidate is built, its exact commit is activated over SSH by `navracar-staging-deploy.service`, and the response headers plus full acceptance checklist are verified.
 
 ## Staging incident evidence — 2026-08-17
 
@@ -119,7 +124,7 @@ Artifacts were generated from exact merged SHA `551fcfb59b27a496adda1631b9fb3c0d
 
 1. Protected CI has passed and PR #31 is merged.
 2. Build immutable candidate `rc-v1.3.0-4` from `551fcfb59b27a496adda1631b9fb3c0d31a1168c`; never reuse or mutate an earlier candidate.
-3. In the Staging cPanel clone, use **Update from Remote** and **Deploy HEAD Commit**. The deployment must report successful migrations and cache generation.
+3. Publish the immutable `cpanel-staging` artifact, then deploy it over SSH with `navracar-staging-deploy.service`. The service must report successful validation, migrations, cache generation, and the exact deployed artifact commit.
 4. Repeat the full Staging acceptance checklist, including the formerly failing admin, import queue, customs-price persistence, and four PDF variants.
 5. Test the extension and Android client against the accepted Staging candidate.
 6. Mostafa signs off Staging. Only then may the exact accepted artifact be promoted to Production without rebuilding it.

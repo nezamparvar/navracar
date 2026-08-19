@@ -32,25 +32,41 @@ test('standalone calculator renders the authoritative backend total', async ({ p
     await expect(page.locator('#s_total')).toHaveText(Math.round(result.finalTotalToman).toLocaleString('en-US'));
 });
 
-test('listing calculator renders the same authoritative backend result', async ({ page }, testInfo) => {
+test('listing detail page renders the same authoritative backend cost categories', async ({ page }, testInfo) => {
     test.skip(testInfo.project.use.viewport.width !== 1280, 'One representative Dubizzle listing covers the shared endpoint.');
 
+    // The vehicle-detail page renders its 3-category cost summary server-side (no client-side
+    // calculator/XHR since the V2 redesign — see CarListing::publicPricingSummary()). This test
+    // proves the displayed numbers still come from the single authoritative pricing service by
+    // independently calling the same public endpoint with the listing's real inputs and
+    // asserting the page shows matching formatted totals.
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
-    const [pricingResponse] = await Promise.all([
-        page.waitForResponse(response => response.url().includes('/vehicle-pricing/calculate') && response.ok()),
-        page.goto('/car-prices/e2e-bmw-x4'),
-    ]);
-    const pricing = await pricingResponse.json();
+
+    await page.goto('/car-prices/e2e-bmw-x4');
+    const pricing = await page.evaluate(async () => {
+        const token = document.querySelector('meta[name="csrf-token"]').content;
+        const res = await fetch('/vehicle-pricing/calculate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': token },
+            body: JSON.stringify({ real_price_aed: 100000, category: 'c2000' }),
+        });
+        if (!res.ok) throw new Error(`vehicle-pricing/calculate failed: HTTP ${res.status}`);
+        return res.json();
+    });
 
     expect(pricing.input.realPriceAed).toBe(100000);
-    // When listing.customs_price_aed is NULL, UI defaults to settings discount (30%):
-    // 100000 * (1 - 30/100) = 70000
+    // customs_price_aed is omitted above (listing.customs_price_aed is NULL), so the service
+    // applies its settings discount (30%): 100000 * (1 - 30/100) = 70000.
     expect(pricing.input.customsPriceAed).toBe(70000);
     expect(pricing.category.id).toBe('c2000');
-    await expect(page.locator('[x-text*="results.totalWithProfit"]')).toHaveText(
-        Math.round(pricing.finalTotalToman).toLocaleString('en-US') + ' تومان',
-    );
+
+    const carPriceText = Math.round(pricing.publicSummary.car_price_toman).toLocaleString('en-US');
+    const clearanceText = Math.round(pricing.publicSummary.clearance_total_toman).toLocaleString('en-US');
+    const plateText = Math.round(pricing.publicSummary.plate_total_toman).toLocaleString('en-US');
+    await expect(page.getByText(carPriceText, { exact: false }).first()).toBeVisible();
+    await expect(page.getByText(clearanceText, { exact: false }).first()).toBeVisible();
+    await expect(page.getByText(plateText, { exact: false }).first()).toBeVisible();
     expect(errors).toEqual([]);
 });
 
@@ -81,6 +97,34 @@ test('admin login rejects invalid credentials without disclosing an account', as
     await expect(page.locator('.bg-rose-50')).toBeVisible();
 });
 
+test('admin creates a calendar event and sees it in the list view', async ({ page }, testInfo) => {
+    test.skip(testInfo.project.use.viewport.width !== 1280, 'One desktop flow covers the calendar create/list contract.');
+
+    await page.goto('/admin/login');
+    await page.locator('input[name="username"]').fill('admin');
+    await page.locator('input[name="password"]').fill('password');
+    await page.locator('button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/admin$/);
+
+    await page.goto('/admin/calendar?view=list');
+    await page.getByRole('button', { name: 'جلسه یا تماس جدید' }).click();
+
+    const dialog = page.getByRole('dialog', { name: 'رویداد جدید' });
+    await expect(dialog).toBeVisible();
+    await dialog.locator('#ce-type').selectOption({ index: 0 });
+    const assigneeSelect = dialog.locator('#ce-assignee');
+    if (await assigneeSelect.count()) {
+        await assigneeSelect.selectOption({ index: 0 });
+    }
+    await dialog.locator('#ce-start').fill('2026-12-01T10:00');
+    await dialog.locator('#ce-end').fill('2026-12-01T10:30');
+    await dialog.locator('#ce-notes').fill('Playwright calendar event');
+    await dialog.getByRole('button', { name: 'ثبت رویداد' }).click();
+
+    await expect(page).toHaveURL(/\/admin\/calendar/);
+    await expect(page.getByText('رویداد با موفقیت ثبت شد.')).toBeVisible();
+});
+
 test('admin can authenticate, use a core list, and log out', async ({ page }) => {
     await page.goto('/admin/login');
     await page.locator('input[name="username"]').fill('admin');
@@ -98,7 +142,10 @@ test('admin can authenticate, use a core list, and log out', async ({ page }) =>
     if (page.viewportSize().width < 1024) {
         await page.getByRole('button', { name: 'باز کردن منوی مدیریت' }).click();
     }
-    await page.locator('form[action$="/admin/logout"] button').click();
+    // The admin shell has two logout forms — one in the sidebar footer, one in the header's
+    // user-info dropdown (closed by default) — both real, visible UI, not a bug; .first()
+    // targets the sidebar's (the one just made visible by opening the mobile drawer above).
+    await page.locator('form[action$="/admin/logout"] button').first().click();
     await expect(page).toHaveURL(/\/admin\/login$/);
 });
 

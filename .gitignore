@@ -29,3 +29,5 @@ yarn-error.log
 /.gradle
 /platforms/android
 /dist
+database.sqlite
+docs/design-v2/implementation/screenshots/.round6-visual-parity-backup-*/

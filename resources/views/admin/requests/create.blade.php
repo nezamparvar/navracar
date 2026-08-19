@@ -1,37 +1,37 @@
 <x-layouts.admin :page-title="$pageTitle" page-subtitle="برای مشتریانی که تلفنی یا حضوری تماس می‌گیرند، اینجا ثبتشان کنید تا وارد چرخه پیگیری CRM شوند.">
 
     <div x-data="leadForm" class="mx-auto max-w-3xl">
-        <x-card x-show="!success">
-            <div x-show="error" x-cloak class="mb-4 rounded-xl bg-rose-50 px-4 py-2.5 text-sm font-bold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300" x-text="error"></div>
+        <x-card x-show="!success" variant="v2">
+            <div x-show="error" x-cloak class="mb-4 rounded-xl border border-v2-error/30 bg-v2-error/15 px-4 py-2.5 text-sm font-bold text-v2-error" x-text="error"></div>
 
             <form @submit.prevent="submit" class="space-y-4">
                 <div class="grid gap-4 sm:grid-cols-2">
                     <div>
-                        <label class="mb-1.5 block text-sm font-bold">نام و نام خانوادگی <span class="text-rose-500">*</span></label>
-                        <input x-model="form.name" required class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <label class="mb-1.5 block text-sm font-bold">نام و نام خانوادگی <span class="text-v2-error">*</span></label>
+                        <input x-model="form.name" required class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                     </div>
                     <div>
-                        <label class="mb-1.5 block text-sm font-bold">شماره تماس <span class="text-rose-500">*</span></label>
-                        <input x-model="form.phone" required class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <label class="mb-1.5 block text-sm font-bold">شماره تماس <span class="text-v2-error">*</span></label>
+                        <input x-model="form.phone" required class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">ایمیل (اختیاری)</label>
-                        <input x-model="form.email" type="email" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <input x-model="form.email" type="email" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">منبع تماس</label>
-                        <select x-model="form.source" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <select x-model="form.source" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                             <option>تماس تلفنی</option><option>حضوری</option><option>سایت</option>
                             <option>معرفی مشتری</option><option>شبکه‌های اجتماعی</option><option>سایر</option>
                         </select>
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">خودروی مورد نظر</label>
-                        <input x-model="form.car_label" placeholder="مثلاً Toyota Land Cruiser 300" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <input x-model="form.car_label" placeholder="مثلاً Toyota Land Cruiser 300" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">دسته خودرو</label>
-                        <select x-model="form.category" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <select x-model="form.category" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                             <option value="">— نامشخص —</option>
                             <option>هیبرید / برقی</option><option>زیر ۱۵۰۰ سی‌سی</option><option>۱۵۰۰ تا ۲۰۰۰ سی‌سی</option>
                             <option>۲۰۰۰ تا ۲۵۰۰ سی‌سی</option><option>۲۵۰۰ تا ۳۰۰۰ سی‌سی</option><option>بالای ۳۰۰۰ سی‌سی</option>
@@ -39,7 +39,7 @@
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">بودجه تقریبی</label>
-                        <select x-model="form.budget_range" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <select x-model="form.budget_range" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                             <option value="">— نامشخص —</option>
                             <option>زیر ۱۰ میلیارد تومان</option>
                             <option>۱۰ تا ۲۰ میلیارد تومان</option>
@@ -51,31 +51,31 @@
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">کشور</label>
-                        <select x-model="form.country" @change="form.city = ''" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <select x-model="form.country" @change="form.city = ''" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                             <option value="">— نامشخص —</option>
                             @foreach ($countries as $c)<option>{{ $c }}</option>@endforeach
                         </select>
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">شهر</label>
-                        <select x-show="form.country === 'ایران' || !form.country" x-model="form.city" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <select x-show="form.country === 'ایران' || !form.country" x-model="form.city" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                             <option value="">— نامشخص —</option>
                             @foreach ($cities as $c)<option>{{ $c }}</option>@endforeach
                         </select>
-                        <input x-show="form.country && form.country !== 'ایران'" x-model="form.city" placeholder="نام شهر" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <input x-show="form.country && form.country !== 'ایران'" x-model="form.city" placeholder="نام شهر" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">برآورد جمع کل (تومان — اختیاری)</label>
-                        <input x-model="form.total_with_profit" placeholder="مثلاً 900000000" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <input x-model="form.total_with_profit" placeholder="مثلاً 900000000" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                     </div>
                     <div>
                         <label class="mb-1.5 block text-sm font-bold">تاریخ تماس بعدی (اختیاری)</label>
-                        <input x-model="form.next_call_date" type="date" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                        <input x-model="form.next_call_date" type="date" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                     </div>
                     @if (auth()->user()->isAdmin())
                         <div>
                             <label class="mb-1.5 block text-sm font-bold">الحاق به</label>
-                            <select x-model="form.assigned_to" class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5">
+                            <select x-model="form.assigned_to" class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text">
                                 <option value="">— خودم —</option>
                                 @foreach ($staffList as $s)<option value="{{ $s->id }}">{{ $s->displayName() }}</option>@endforeach
                             </select>
@@ -84,24 +84,24 @@
                 </div>
                 <div>
                     <label class="mb-1.5 block text-sm font-bold">توضیحات</label>
-                    <textarea x-model="form.notes" rows="3" placeholder="جزئیات گفتگو با مشتری..." class="w-full rounded-xl border border-ink-200 bg-ink-50 px-3.5 py-2.5 text-sm dark:border-white/10 dark:bg-white/5"></textarea>
+                    <textarea x-model="form.notes" rows="3" placeholder="جزئیات گفتگو با مشتری..." class="w-full rounded-xl border border-v2-border bg-v2-elevated px-3.5 py-2.5 text-sm text-v2-text"></textarea>
                 </div>
-                <x-button type="submit" variant="amber" :disabled="false" x-bind:disabled="loading">
+                <x-button type="submit" variant="v2-primary" :disabled="false" x-bind:disabled="loading">
                     <span x-show="!loading">ثبت مشتری</span>
                     <span x-show="loading" x-cloak>در حال ثبت...</span>
                 </x-button>
             </form>
         </x-card>
 
-        <x-card x-show="success" x-cloak class="text-center">
-            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-300">
+        <x-card x-show="success" x-cloak variant="v2" class="text-center">
+            <div class="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-v2-success/15 text-v2-success">
                 <x-icon name="check-circle" class="w-7 h-7" />
             </div>
-            <h2 class="mb-1 text-lg font-extrabold text-brand-900 dark:text-white">مشتری با موفقیت ثبت شد</h2>
-            <p class="mb-5 text-sm text-ink-500">می‌توانید فرصت جدید دیگری ثبت کنید یا جزئیات همین یکی را ببینید.</p>
+            <h2 class="mb-1 text-lg font-extrabold text-v2-text">مشتری با موفقیت ثبت شد</h2>
+            <p class="mb-5 text-sm text-v2-text-muted">می‌توانید فرصت جدید دیگری ثبت کنید یا جزئیات همین یکی را ببینید.</p>
             <div class="flex justify-center gap-3">
-                <x-button variant="amber" @click="reset">ثبت مشتری جدید</x-button>
-                <a :href="'{{ route('admin.requests.index') }}/' + newId" class="inline-flex items-center justify-center rounded-xl border border-ink-200 px-4 py-2.5 text-sm font-bold text-ink-700 hover:bg-ink-50 dark:border-white/10 dark:text-ink-200 dark:hover:bg-white/10">مشاهده جزئیات →</a>
+                <x-button variant="v2-primary" @click="reset">ثبت مشتری جدید</x-button>
+                <a :href="'{{ route('admin.requests.index') }}/' + newId" class="inline-flex items-center justify-center rounded-xl border border-v2-border px-4 py-2.5 text-sm font-bold text-v2-text hover:bg-v2-elevated">مشاهده جزئیات →</a>
             </div>
         </x-card>
     </div>

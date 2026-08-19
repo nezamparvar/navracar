@@ -28,25 +28,25 @@ class SalesDashboardScopingTest extends TestCase
         $salesA = $this->makeUser('sales', 'sales-a-dashboard');
         $salesB = $this->makeUser('sales', 'sales-b-dashboard');
 
-        QuoteRequest::create([
+        $leadA = QuoteRequest::create([
             'name' => 'Lead A',
             'phone' => '0910',
             'assigned_to' => $salesA->id,
-            'created_at' => now(),
         ]);
+        $leadA->forceFill(['created_at' => now()])->save();
 
-        QuoteRequest::create([
+        $leadB = QuoteRequest::create([
             'name' => 'Lead B',
             'phone' => '0911',
             'assigned_to' => $salesB->id,
-            'created_at' => now(),
         ]);
+        $leadB->forceFill(['created_at' => now()])->save();
 
         $responseA = $this->actingAs($salesA)->get(route('admin.dashboard'));
         $responseB = $this->actingAs($salesB)->get(route('admin.dashboard'));
 
-        $responseA->assertOk()->assertViewHas('todayRequests', 1);
-        $responseB->assertOk()->assertViewHas('todayRequests', 1);
+        $responseA->assertOk()->assertViewHas('newRequests', 1);
+        $responseB->assertOk()->assertViewHas('newRequests', 1);
     }
 
     public function test_sales_cannot_see_calculation_logs(): void
@@ -57,8 +57,7 @@ class SalesDashboardScopingTest extends TestCase
             'ip_address' => '127.0.0.1',
             'country' => 'IR',
             'city' => 'Tehran',
-            'created_at' => now(),
-        ]);
+        ])->forceFill(['created_at' => now()])->save();
 
         $response = $this->actingAs($salesA)->get(route('admin.dashboard'));
         $response->assertOk()
@@ -77,8 +76,7 @@ class SalesDashboardScopingTest extends TestCase
 
         VinCheck::create([
             'vin' => 'ABC123',
-            'created_at' => now(),
-        ]);
+        ])->forceFill(['created_at' => now()])->save();
 
         $response = $this->actingAs($salesA)->get(route('admin.dashboard'));
         $response->assertOk()->assertViewHas('todayVin', 0);
@@ -89,35 +87,35 @@ class SalesDashboardScopingTest extends TestCase
         $admin = $this->makeUser('admin', 'admin-all-data');
         $salesA = $this->makeUser('sales', 'sales-a-for-admin');
 
-        QuoteRequest::create([
+        $req1 = QuoteRequest::create([
             'name' => 'Lead A',
             'phone' => '0910',
             'assigned_to' => $salesA->id,
-            'created_at' => now(),
         ]);
+        $req1->forceFill(['created_at' => now()])->save();
 
-        QuoteRequest::create([
+        $req2 = QuoteRequest::create([
             'name' => 'Lead B',
             'phone' => '0911',
             'assigned_to' => null,
-            'created_at' => now(),
         ]);
+        $req2->forceFill(['created_at' => now()])->save();
 
-        CalculationLog::create([
+        $calcLog = CalculationLog::create([
             'ip_address' => '127.0.0.1',
             'country' => 'IR',
             'city' => 'Tehran',
-            'created_at' => now(),
         ]);
+        $calcLog->forceFill(['created_at' => now()])->save();
 
-        VinCheck::create([
+        $vinCheck = VinCheck::create([
             'vin' => 'ABC123',
-            'created_at' => now(),
         ]);
+        $vinCheck->forceFill(['created_at' => now()])->save();
 
         $response = $this->actingAs($admin)->get(route('admin.dashboard'));
         $response->assertOk()
-            ->assertViewHas('todayRequests', 2)
+            ->assertViewHas('newRequests', 2)
             ->assertViewHas('todayCalcs', 1)
             ->assertViewHas('todayVin', 1)
             ->assertViewHas('unassignedCount', 1);
@@ -133,16 +131,16 @@ class SalesDashboardScopingTest extends TestCase
             'phone' => '0910',
             'assigned_to' => $salesA->id,
             'total_with_profit' => 10000000,
-            'created_at' => now(),
         ]);
+        $leadA->forceFill(['created_at' => now()])->save();
 
         $leadB = QuoteRequest::create([
             'name' => 'Lead B',
             'phone' => '0911',
             'assigned_to' => $salesB->id,
             'total_with_profit' => 20000000,
-            'created_at' => now(),
         ]);
+        $leadB->forceFill(['created_at' => now()])->save();
 
         $responseA = $this->actingAs($salesA)->get(route('admin.dashboard'));
         $recentRequestsA = $responseA->viewData('recentRequests');
