@@ -34,7 +34,7 @@ class CarListingController extends Controller
         $listings = CarListing::with('images')->latest()->paginate(20);
 
         return view('admin.car-listings.index', [
-            'pageTitle' => 'آگهی‌های دابیزل (قیمت خودروها)',
+            'pageTitle' => 'آگهی‌ها و ایمپورت خودرو',
             'listings' => $listings,
         ]);
     }
@@ -209,7 +209,19 @@ class CarListingController extends Controller
 
     public function publish(CarListing $carListing)
     {
+        $seo = [];
+        if (blank($carListing->meta_title)) {
+            $seo['meta_title'] = $carListing->title_fa.' | ناوراکار';
+        }
+        if (blank($carListing->meta_description)) {
+            $seo['meta_description'] = $this->mapper->buildMetaDescription(
+                $carListing->toArray(),
+                $carListing->title_fa,
+            );
+        }
+
         $carListing->update([
+            ...$seo,
             'status' => 'published',
             'published_at' => $carListing->published_at ?? now(),
         ]);
@@ -474,4 +486,3 @@ class CarListingController extends Controller
         }
     }
 }
-

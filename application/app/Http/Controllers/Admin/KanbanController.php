@@ -10,6 +10,7 @@ use App\Models\PipelineStage;
 use App\Models\QuoteRequest;
 use App\Support\ActivityLogger;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class KanbanController extends Controller
 {
@@ -18,7 +19,7 @@ class KanbanController extends Controller
         $user = $request->user();
         $stages = PipelineStage::where('is_active', true)->orderBy('sort_order')->get();
 
-        $query = QuoteRequest::query()->with('assignee');
+        $query = QuoteRequest::query()->with('assignee')->where('is_archived', false);
 
         if (! $user->isAdmin()) {
             $query->where('assigned_to', $user->id);
@@ -70,9 +71,7 @@ class KanbanController extends Controller
         if (! $lead) {
             return response()->json(['success' => false, 'message' => 'سرنخ یافت نشد.'], 404);
         }
-        if (! $user->isAdmin() && $lead->assigned_to !== $user->id) {
-            return response()->json(['success' => false, 'message' => 'این سرنخ به شما الحاق نشده است.'], 403);
-        }
+        $this->authorize('updateStatus', $lead);
 
         $stage = PipelineStage::find($data['stageId']);
         if (! $stage) {
@@ -100,5 +99,67 @@ class KanbanController extends Controller
         ActivityLogger::info('تغییر مرحله پایپ‌لاین', ['lead' => $lead->id, 'stage' => $stage->slug]);
 
         return response()->json(['success' => true]);
+    }
+
+    public function updateStageName(Request $request, PipelineStage $stage)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+        ]);
+
+        $oldName = $stage->name;
+        $stage->update(['name' => $data['name']]);
+
+        ActivityLogger::info('تغییر نام مرحله پایپ‌لاین', ['stage_id' => $stage->id, 'old_name' => $oldName, 'new_name' => $data['name']]);
+
+        return response()->json(['success' => true, 'message' => 'نام مرحله به‌روزرسانی شد.']);
+    }
+
+    public function storeStage(Request $request)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:100'],
+        ]);
+
+        if (PipelineStage::where('is_active', true)->count() >= 20) {
+            return back()->withErrors(['stage' => 'حداکثر ۲۰ ستون فعال می‌توان ایجاد کرد.']);
+        }
+
+        $stage = PipelineStage::create([
+            'name' => trim($data['name']),
+            'slug' => 'custom-'.Str::lower(Str::random(12)),
+            'sort_order' => ((int) PipelineStage::max('sort_order')) + 1,
+            'sla_hours' => 24,
+            'is_active' => true,
+        ]);
+
+        ActivityLogger::info('افزودن مرحله پایپ‌لاین', ['stage_id' => $stage->id, 'name' => $stage->name]);
+
+        return redirect()->route('admin.kanban')->with('success', 'ستون جدید با موفقیت اضافه شد.');
+    }
+
+    public function destroyStage(Request $request, PipelineStage $stage)
+    {
+        abort_unless($request->user()->isAdmin(), 403);
+
+        if (PipelineStage::where('is_active', true)->count() <= 1) {
+            return back()->withErrors(['stage' => 'آخرین ستون پایپ‌لاین قابل حذف نیست.']);
+        }
+
+        if ($stage->leads()->exists()) {
+            return back()->withErrors(['stage' => 'این ستون دارای درخواست است؛ ابتدا کارت‌ها را به ستون دیگری منتقل کنید.']);
+        }
+
+        $stageId = $stage->id;
+        $stageName = $stage->name;
+        $stage->delete();
+
+        ActivityLogger::info('حذف مرحله پایپ‌لاین', ['stage_id' => $stageId, 'name' => $stageName]);
+
+        return redirect()->route('admin.kanban')->with('success', 'ستون پایپ‌لاین با موفقیت حذف شد.');
     }
 }

@@ -8,6 +8,7 @@ ensure_staging_runtime_dirs() {
     local relative path
     local -a required=(
         'storage/app/public'
+        'storage/fonts'
         'storage/framework/cache/data'
         'storage/framework/sessions'
         'storage/framework/views'
@@ -37,5 +38,42 @@ ensure_staging_runtime_dirs() {
             echo "Refusing staging deployment: public disk root is not writable: $public_disk_root." >&2
             return 1
         }
+
+        # Imported media may come from a File Manager/database snapshot with
+        # owner-only modes. Normalize only the isolated Staging public disk so
+        # LiteSpeed/WCDN can read images while the cPanel user retains writes.
+        chmod 0755 -- "$public_disk_root" || return 1
+        find "$public_disk_root" -type d -exec chmod 0755 -- {} + || return 1
+        find "$public_disk_root" -type f -exec chmod 0644 -- {} + || return 1
     fi
+}
+
+# cPanel Git deployments do not inherit the MultiPHP web handler path. Locate
+# an explicit PHP 8.3+ CLI so the owner never needs SSH or cPanel Terminal.
+resolve_staging_php_bin() {
+    local candidate path_php
+    local -a candidates=()
+
+    if [[ -n "${NAVRACAR_PHP_BIN:-}" ]]; then
+        candidates+=("$NAVRACAR_PHP_BIN")
+    fi
+
+    candidates+=(
+        '/opt/cpanel/ea-php84/root/usr/bin/php'
+        '/opt/cpanel/ea-php83/root/usr/bin/php'
+        '/usr/local/bin/ea-php84'
+        '/usr/local/bin/ea-php83'
+    )
+
+    path_php="$(command -v php 2>/dev/null || true)"
+    [[ -n "$path_php" ]] && candidates+=("$path_php")
+
+    for candidate in "${candidates[@]}"; do
+        if [[ -x "$candidate" ]] && "$candidate" -r 'exit(PHP_VERSION_ID >= 80300 ? 0 : 1);'; then
+            printf '%s\n' "$candidate"
+            return 0
+        fi
+    done
+
+    return 1
 }

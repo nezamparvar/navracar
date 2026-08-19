@@ -21,6 +21,7 @@ class SettingController extends Controller
             'customsRate' => Setting::get(Setting::CUSTOMS_RATE),
             'licenseFeeAed' => Setting::get(Setting::LICENSE_FEE_AED),
             'seaFreightAed' => Setting::get(Setting::SEA_FREIGHT_AED),
+            'otherCostsAed' => Setting::get(Setting::OTHER_COSTS_AED),
             'storageToman' => Setting::get(Setting::STORAGE_TOMAN),
             'scrapCertPriceToman' => Setting::get(Setting::SCRAP_CERT_PRICE_TOMAN),
             'scrapThresholdAed' => Setting::get(Setting::SCRAP_THRESHOLD_AED),
@@ -66,6 +67,7 @@ class SettingController extends Controller
             'customs_rate' => ['required', 'numeric', 'min:1'],
             'license_fee_aed' => ['required', 'numeric', 'min:0'],
             'sea_freight_aed' => ['required', 'numeric', 'min:0'],
+            'other_costs_aed' => ['required', 'numeric', 'min:0'],
             'storage_toman' => ['required', 'numeric', 'min:0'],
             'scrap_cert_price_toman' => ['required', 'numeric', 'min:0'],
             'scrap_threshold_aed' => ['required', 'numeric', 'min:0'],
@@ -110,6 +112,7 @@ class SettingController extends Controller
         Setting::set(Setting::CUSTOMS_RATE, (string) $data['customs_rate']);
         Setting::set(Setting::LICENSE_FEE_AED, (string) $data['license_fee_aed']);
         Setting::set(Setting::SEA_FREIGHT_AED, (string) $data['sea_freight_aed']);
+        Setting::set(Setting::OTHER_COSTS_AED, (string) $data['other_costs_aed']);
         Setting::set(Setting::STORAGE_TOMAN, (string) $data['storage_toman']);
         Setting::set(Setting::SCRAP_CERT_PRICE_TOMAN, (string) $data['scrap_cert_price_toman']);
         Setting::set(Setting::SCRAP_THRESHOLD_AED, (string) $data['scrap_threshold_aed']);

@@ -35,7 +35,7 @@
     .header .sub { font-size: 10px; color: #C9D6FF; margin-top: 3px; }
     .header .meta { font-size: 10px; text-align: left; line-height: 1.8; }
     .header .meta b { color: #E8C766; }
-    .body { padding: 12px 26px; }
+    .body { padding: 10px 26px; }
     .info-box {
         background-color: #F3F0FA;
         border-radius: 6px;
@@ -75,20 +75,21 @@
     table.totals tr.grand { background-color: #F7EFD2; }
     table.totals tr.grand td { font-size: 13px; font-weight: bold; color: #171433; }
     .footer-note {
-        margin-top: 12px;
-        padding-top: 8px;
+        margin-top: 5px;
+        padding-top: 4px;
         border-top: 1px dashed #E4DFD3;
-        font-size: 8.5px;
+        font-size: 7px;
         color: #8A8499;
-        line-height: 1.6;
+        line-height: 1.35;
+        page-break-inside: avoid;
     }
     .contact-box {
-        margin-top: 8px;
+        margin-top: 6px;
         background-color: #F7F5F1;
         border-radius: 6px;
-        padding: 8px 16px;
-        font-size: 9.5px;
-        line-height: 1.7;
+        padding: 6px 16px;
+        font-size: 9px;
+        line-height: 1.4;
     }
 </style>
 </head>

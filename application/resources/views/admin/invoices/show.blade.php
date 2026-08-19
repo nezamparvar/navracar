@@ -22,23 +22,23 @@
     <title>{{ $labels['title'] }} {{ $invoice->invoice_number }} | NavraCar</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="min-h-screen bg-ink-100 p-4 font-sans text-ink-900 sm:p-8">
+<body class="min-h-screen bg-v2-bg p-4 font-sans text-ink-900 sm:p-8">
 <style>.invoice-table{overflow-x:auto}.invoice-table table{min-width:38rem}</style>
 
     <div class="no-print mx-auto mb-5 flex max-w-3xl flex-wrap justify-end gap-2.5">
-        <a href="{{ route('admin.invoices.index') }}" class="rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm font-bold text-ink-600">{{ $labels['back'] }}</a>
-        <a href="{{ route('admin.invoices.create', ['id' => $invoice->id]) }}" class="rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 px-4 py-2.5 text-sm font-bold text-ink-950">✏️ ویرایش پیش‌فاکتور</a>
+        <a href="{{ route('admin.invoices.index') }}" class="rounded-xl border border-v2-border bg-v2-elevated px-4 py-2.5 text-sm font-bold text-v2-text hover:border-v2-primary/60">{{ $labels['back'] }}</a>
+        <a href="{{ route('admin.invoices.create', ['id' => $invoice->id]) }}" class="rounded-xl bg-v2-primary-action px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">✏️ ویرایش پیش‌فاکتور</a>
         <form method="POST" action="{{ route('admin.invoices.status', $invoice) }}">
             @csrf
-            <select name="status" onchange="this.form.submit()" class="rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm">
+            <select name="status" onchange="this.form.submit()" class="rounded-xl border border-v2-border bg-v2-elevated px-3 py-2.5 text-sm text-v2-text">
                 <option value="پیش‌نویس" @selected($invoice->status === 'پیش‌نویس')>پیش‌نویس</option>
                 <option value="ارسال‌شده" @selected($invoice->status === 'ارسال‌شده')>ارسال‌شده</option>
                 <option value="تایید شده" @selected($invoice->status === 'تایید شده')>تایید شده (فروخته شد)</option>
             </select>
         </form>
-        <a href="{{ route('admin.invoices.pdf', [$invoice, 'fa']) }}" title="دانلود PDF فارسی" class="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-bold text-white">دانلود فایل PDF</a>
-        <a href="{{ route('admin.invoices.pdf', [$invoice, 'en']) }}" class="rounded-xl border border-emerald-700 px-4 py-2.5 text-sm font-bold text-emerald-800">Download English PDF</a>
-        <button onclick="window.print()" class="rounded-xl bg-brand-700 px-4 py-2.5 text-sm font-bold text-white">چاپ / ذخیره PDF</button>
+        <a href="{{ route('admin.invoices.pdf', [$invoice, 'fa']) }}" title="دانلود PDF فارسی" class="rounded-xl bg-v2-success px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">دانلود فایل PDF</a>
+        <a href="{{ route('admin.invoices.pdf', [$invoice, 'en']) }}" class="rounded-xl border border-v2-success px-4 py-2.5 text-sm font-bold text-v2-success hover:bg-v2-success/10">Download English PDF</a>
+        <button onclick="window.print()" class="rounded-xl bg-v2-primary-action px-4 py-2.5 text-sm font-bold text-white hover:brightness-110">چاپ / ذخیره PDF</button>
     </div>
 
     <div class="mx-auto max-w-3xl overflow-hidden rounded-2xl shadow-soft-lg print:rounded-none print:shadow-none">
@@ -74,7 +74,7 @@
             <div class="invoice-table"><table class="w-full text-sm">
                 <thead><tr class="bg-ink-50 text-xs text-ink-500"><th class="p-2.5 text-start">شرح</th><th class="p-2.5 text-start">نرخ / توضیح</th><th class="p-2.5 text-start">مبلغ</th></tr></thead>
                 <tbody>
-                    @foreach ($breakdown as $row)
+                    @foreach ($invoice->breakdownForDisplay() as $row)
                         <tr class="border-b border-ink-100"><td class="p-2.5">{{ $row['label'] ?? '' }}</td><td class="p-2.5 text-xs text-ink-500">{{ $row['rate'] ?? '' }}</td><td class="num-font p-2.5 font-bold">{{ $money($row['amount'] ?? '') }}</td></tr>
                     @endforeach
                 </tbody>

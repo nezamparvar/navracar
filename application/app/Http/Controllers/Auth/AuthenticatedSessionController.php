@@ -34,8 +34,8 @@ class AuthenticatedSessionController extends Controller
 
         $homeRoute = match (true) {
             $user->isAdmin() => 'admin.dashboard',
-            $user->isSales() => 'admin.requests.index',
-            $user->isContentManager() => 'admin.car-listings.index',
+            $user->isSales() => 'admin.dashboard',
+            $user->isContentManager() => 'admin.content-dashboard',
             default => 'admin.dashboard',
         };
 

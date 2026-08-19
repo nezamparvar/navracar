@@ -4,16 +4,19 @@ namespace App\Models;
 
 use App\Services\VehiclePricing\VehiclePricingCatalog;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class QuoteRequest extends Model
 {
+    use SoftDeletes;
+
     public $timestamps = false;
 
     protected $fillable = [
         'name', 'phone', 'email', 'notes', 'car_label', 'category', 'temperature',
         'breakdown_json', 'totals_json', 'total_with_profit', 'email_sent', 'source',
         'budget_range', 'country', 'city', 'assigned_to', 'created_by', 'follow_up_status',
-        'current_stage_id', 'loss_reason', 'next_call_date', 'ip_address',
+        'current_stage_id', 'loss_reason', 'next_call_date', 'ip_address', 'is_archived',
     ];
 
     protected function casts(): array
@@ -22,6 +25,7 @@ class QuoteRequest extends Model
             'created_at' => 'datetime',
             'next_call_date' => 'date',
             'email_sent' => 'boolean',
+            'is_archived' => 'boolean',
         ];
     }
 
@@ -53,6 +57,11 @@ class QuoteRequest extends Model
     public function breakdown(): array
     {
         return json_decode($this->breakdown_json ?? '[]', true) ?: [];
+    }
+
+    public function breakdownForDisplay(): array
+    {
+        return array_filter($this->breakdown(), fn (array $row) => ($row['key'] ?? '') !== 'service_fee');
     }
 
     public function totals(): array
