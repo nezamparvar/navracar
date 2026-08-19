@@ -88,7 +88,7 @@
                                             <span class="rounded-md bg-v2-bg px-1.5 py-0.5 text-[11px] font-bold text-v2-text-muted">مدل {{ $listing->model_year }}</span>
                                         @endif
                                         @if ($listing->engine_capacity_cc)
-                                            <span class="rounded-md bg-v2-bg px-1.5 py-0.5 text-[11px] font-bold text-v2-text-muted num-font">{{ number_format($listing->engine_capacity_cc / 1000, 1) }}L</span>
+                                            <span class="rounded-md bg-v2-bg px-1.5 py-0.5 text-[11px] font-bold text-v2-text-muted num-font">{{ is_numeric($listing->engine_capacity_cc) ? number_format((float) $listing->engine_capacity_cc / 1000, 1).'L' : $listing->engine_capacity_cc }}</span>
                                         @endif
                                     </div>
                                 @endif
