@@ -1,6 +1,6 @@
 792b97fc33a0c4da1a53d7923218ca687183bda588a926e5382662d01a3ff3a0  ./.cpanel.yml
-e397dc60050d684e50353b56742a9e9728d53cccad70882274621092f7e075f8  ./DEPLOYMENT-METADATA.json
-e397dc60050d684e50353b56742a9e9728d53cccad70882274621092f7e075f8  ./application/.cpanel-release.json
+df5109bd9fd47f403d16839b98077a80633e663d97929c05a416e9e796fae159  ./DEPLOYMENT-METADATA.json
+df5109bd9fd47f403d16839b98077a80633e663d97929c05a416e9e796fae159  ./application/.cpanel-release.json
 37f367944fb18c5a23d8d702ed785071bdf1ed5735a79c72367d02f8777ae81b  ./application/.env.example
 62f6675f6a2f7f7f05e842ad37cc548e6e1ac502a5d74eac60842aa18236a952  ./application/app/Console/Commands/Admin/CreateUserCommand.php
 7696296601922e9d80a843bbd41aa66046abccfdbdbdae00195932c61f66c029  ./application/app/Console/Commands/GenerateExtensionPairingCode.php
@@ -230,7 +230,7 @@ d699f2a9bc300bc66dbbb260ec6be1f331a4d616498ad66834ff84395e318ed2  ./application/
 a909038f2fb5f47c256414f3bb5bf1b8b909d433f60816828a9f1240cd4e07b1  ./application/resources/views/public/car-prices/index.blade.php
 1ed88cc6aee917e2585f020149ce49e713054e12f364e3266101a85a60133010  ./application/resources/views/public/car-prices/show.blade.php
 b288a6b39904532405b665e1c0150d1359fbb8afc125ea9b205124a2e7986f0d  ./application/resources/views/public/car-prices/sitemap.blade.php
-ca08dc943195e4b0d8b22dfec9cc9348f42e9e0908853e93281d484585b7ab17  ./application/resources/views/public/home.blade.php
+d5ceb270dce4dd731b1f8d78a600493a4f1cd15d4e3b7a1e5b3f210538526a85  ./application/resources/views/public/home.blade.php
 3940a439a795f3c1faf116ab5b34c2065db4404d18e030dfcc96b3e759e365ff  ./application/resources/views/public/lead-form.blade.php
 e2870e1e2fc39b43e5ea0a320247f88e6d241990868e90a2de8e88a1d05d8a7e  ./application/resources/views/public/mobile-app.blade.php
 66ae98c62833df98abe55164d03127dac66589f2cb9d88f843ea543d23d37a8b  ./application/resources/views/public/sitemap.blade.php
@@ -345,7 +345,7 @@ c8cce4b6b9729f264ffdf9296d505d63432497feeed1f586d1902b942197e024  ./application/
 aaf36ae939c550571e229b309191a2c9996bf56b30f4516321a8aae09663f1e5  ./application/vendor/composer/autoload_real.php
 084d69b884741a9c8daddfc9490c083d12502976fde30e8164f013e5e405e8d5  ./application/vendor/composer/autoload_static.php
 35c2303c218102b2d50ab51c435d3f8fd47be20c4144c3cd27e3e5d01ba7eb1b  ./application/vendor/composer/installed.json
-a770f7e97454b14bd55e0d0d0081390187d7118d1d32da6018b0d4327046cf19  ./application/vendor/composer/installed.php
+3c2940482373460a7e6a10434b2aceb5cbe5d5c4b9cea89e741e0651233e0ea0  ./application/vendor/composer/installed.php
 45f40bb671c2e809778cd8065a7a40f1472e476e155275440e34ae43e3fc9e9c  ./application/vendor/composer/platform_check.php
 4344d6a2a60a415ac58cd2ebf44e49fdc3c82e5e6e5ff518bfda8528f868bb95  ./application/vendor/dflydev/dot-access-data/.editorconfig
 ef5e6e154d7cfcb96644c85e267ce71803c52d7e84cf3837577d423776236cd9  ./application/vendor/dflydev/dot-access-data/.github/CONTRIBUTING.md
